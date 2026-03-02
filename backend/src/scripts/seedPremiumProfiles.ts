@@ -140,7 +140,8 @@ async function seed() {
           ? MALE_NAMES[i % MALE_NAMES.length]
           : FEMALE_NAMES[i % FEMALE_NAMES.length];
       const surname = SURNAMES[i % SURNAMES.length];
-      const email = `${name.toLowerCase()}.${surname.toLowerCase()}.${i}@example.com`;
+      const timestamp = Date.now();
+      const email = `${name.toLowerCase()}.${surname.toLowerCase()}.${i}.${timestamp}@example.com`;
       const district = TN_DISTRICTS[i % TN_DISTRICTS.length];
 
       const user = await User.create({

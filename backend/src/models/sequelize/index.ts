@@ -33,6 +33,7 @@ import { Message } from "./Message";
 import { Plan } from "./Plan";
 import { Subscription } from "./Subscription";
 import { Payment } from "./Payment";
+import { Waitlist } from "./Waitlist";
 
 // Moderation
 import { Block, Report } from "./Moderation";
@@ -87,4 +88,5 @@ export {
   Block,
   Report,
   SuccessStory,
+  Waitlist,
 };

@@ -1,5 +1,6 @@
 import { SearchResultProfile } from "@/services/searchService";
 import { User, MapPin, Briefcase, GraduationCap } from "lucide-react";
+import { getImageUrl } from "@/lib/utils";
 
 interface SearchResultsProps {
   isLoading: boolean;
@@ -52,7 +53,7 @@ export default function SearchResults({
           <div className="h-48 bg-purple-100 flex items-center justify-center relative overflow-hidden">
             {profile.profilePicUrl ? (
               <img
-                src={profile.profilePicUrl}
+                src={getImageUrl(profile.profilePicUrl, profile.firstName)}
                 alt={profile.firstName}
                 className="w-full h-full object-cover"
               />

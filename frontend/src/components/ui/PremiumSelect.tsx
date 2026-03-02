@@ -36,7 +36,7 @@ export default function PremiumSelect({
             className={`relative w-full cursor-default rounded-2xl border bg-slate-900/50 py-4 pl-4 pr-10 text-left transition-all sm:text-sm focus:outline-none ${
               disabled
                 ? "border-white/5 opacity-60 cursor-not-allowed"
-                : "border-white/10 hover:border-purple-500/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                : "border-white/10 hover:border-[#D4AF37]/50 focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20"
             }`}
           >
             <span
@@ -57,13 +57,13 @@ export default function PremiumSelect({
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <Listbox.Options className="absolute isolate z-50 mt-2 max-h-60 w-full overflow-auto rounded-2xl bg-slate-900/90 border border-white/10 py-2 text-base shadow-2xl backdrop-blur-xl focus:outline-none sm:text-sm">
+            <Listbox.Options className="absolute isolate z-50 mt-2 max-h-60 w-full overflow-auto rounded-2xl bg-slate-900/95 border border-white/10 py-2 text-base shadow-2xl backdrop-blur-2xl focus:outline-none sm:text-sm">
               {options.map((option) => (
                 <Listbox.Option
                   key={option.id}
                   className={({ active }) =>
                     `relative cursor-default select-none py-3 pl-10 pr-4 transition-colors ${
-                      active ? "bg-purple-600/20 text-white" : "text-slate-300"
+                      active ? "bg-[#D4AF37]/10 text-white" : "text-slate-300"
                     }`
                   }
                   value={option.id}
@@ -77,7 +77,7 @@ export default function PremiumSelect({
                       </span>
                       {selected ? (
                         <span
-                          className={`absolute inset-y-0 left-0 flex items-center pl-3 ${active ? "text-purple-400" : "text-amber-400"}`}
+                          className={`absolute inset-y-0 left-0 flex items-center pl-3 ${active ? "text-[#D4AF37]" : "text-[#D4AF37]"}`}
                         >
                           <CheckIcon className="h-5 w-5" aria-hidden="true" />
                         </span>

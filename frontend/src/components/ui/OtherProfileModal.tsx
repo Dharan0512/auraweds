@@ -26,6 +26,7 @@ import {
   SubscriptionStatusResponse,
 } from "@/services/subscriptionService";
 import UpgradeModal from "./UpgradeModal";
+import { getImageUrl, calculateAge } from "@/lib/utils";
 
 interface OtherProfileModalProps {
   isOpen: boolean;
@@ -44,26 +45,6 @@ export default function OtherProfileModal({
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("about");
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
-  const BACKEND_URL =
-    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
-
-  const calculateAge = (dob: string) => {
-    if (!dob) return "";
-    const birthDate = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  };
-
-  const getPhotoUrl = (url: any) => {
-    if (!url || typeof url !== "string") return "";
-    if (url.startsWith("http")) return url;
-    return `${BACKEND_URL}${url}`;
-  };
 
   useEffect(() => {
     if (isOpen && userId) {
@@ -78,16 +59,15 @@ export default function OtherProfileModal({
       setLoading(true);
       const [profileRes, subRes] = await Promise.all([
         profileService.getOtherProfile(userId),
-        subscriptionService
-          .getStatus()
-          .catch(
-            () =>
-              ({
-                tier: "Free",
-                status: "None",
-                endDate: null,
-              }) as SubscriptionStatusResponse,
-          ),
+        subscriptionService.getStatus().catch(
+          () =>
+            ({
+              tier: "Free",
+              status: "None",
+              state: "FREE",
+              endDate: null,
+            }) as SubscriptionStatusResponse,
+        ),
       ]);
       setProfileData(profileRes);
       setSubscription(subRes);
@@ -139,10 +119,10 @@ export default function OtherProfileModal({
             {/* Hero Section */}
             <div className="profile-hero shrink-0">
               <img
-                src={
-                  getPhotoUrl(photos?.[0]?.url) ||
-                  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1000&auto=format&fit=crop"
-                }
+                src={getImageUrl(
+                  photos?.[0]?.url || photos?.[0],
+                  user?.firstName,
+                )}
                 alt={user?.firstName}
                 className="profile-hero-image"
               />
@@ -273,7 +253,10 @@ export default function OtherProfileModal({
                             className="gallery-item cursor-default group overflow-hidden"
                           >
                             <img
-                              src={getPhotoUrl(photo.url)}
+                              src={getImageUrl(
+                                photo.url || photo,
+                                user?.firstName,
+                              )}
                               alt={`Gallery ${idx}`}
                               className="transition-transform duration-500 group-hover:scale-110"
                             />
@@ -638,7 +621,7 @@ export default function OtherProfileModal({
                             Horoscope Chart
                           </span>
                           <img
-                            src={getPhotoUrl(
+                            src={getImageUrl(
                               profile.HoroscopeDetail.horoscopeImageUrl,
                             )}
                             alt="Horoscope Chart"

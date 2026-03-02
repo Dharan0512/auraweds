@@ -12,6 +12,7 @@ import {
 import SearchableDropdown from "@/components/ui/SearchableDropdown";
 import PremiumSelect from "@/components/ui/PremiumSelect";
 import { profileService } from "@/services/profileService";
+import { getImageUrl } from "@/lib/utils";
 import { Sparkles, Star, Upload, X, Camera } from "lucide-react";
 
 const religionSchema = z
@@ -112,9 +113,7 @@ export default function Step3Religion({ initialData, onNext, onBack }: Props) {
   };
 
   const getFullImageUrl = (url: string) => {
-    if (!url) return "";
-    if (url.startsWith("http")) return url;
-    return `${BACKEND_URL}${url}`;
+    return getImageUrl(url);
   };
 
   return (

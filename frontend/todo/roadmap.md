@@ -126,3 +126,6 @@ Before spending on traffic:
 - [ ] Do you have 300 real, active profiles?
 - [ ] Are at least 100 interactions happening monthly?
 - [ ] Do users feel urgency to upgrade within 7 days?
+
+common chats:
+the UI UX should be align with aura weds theme.

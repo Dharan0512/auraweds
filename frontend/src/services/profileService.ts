@@ -53,4 +53,10 @@ export const profileService = {
     const response = await apiClient.patch("/profile/privacy", settings);
     return response.data;
   },
+  searchProfiles: async (filters: any) => {
+    const response = await apiClient.get("/profile/search", {
+      params: filters,
+    });
+    return response.data;
+  },
 };

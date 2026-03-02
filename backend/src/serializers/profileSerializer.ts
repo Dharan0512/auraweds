@@ -38,7 +38,7 @@ export const profileSerializer = {
         profession: (profile as any).Occupation?.name || "Not specified",
         incomeRange: (profile as any).IncomeRange?.name || "Not specified",
       },
-      photos: (profile as any).UserPhotos?.map((p: any) => p.url) || [],
+      photos: (user as any)?.photos?.map((p: any) => p.url) || [],
       lifestyle: {
         diet: profile.diet,
         smoke: profile.smoke,

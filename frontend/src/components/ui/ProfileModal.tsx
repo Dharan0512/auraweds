@@ -25,6 +25,7 @@ import {
 import "./ProfileModal.css";
 import EditProfileForm from "../../features/profile/EditProfileForm";
 import { authService } from "@/services/authService";
+import { getImageUrl, calculateAge } from "@/lib/utils";
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -55,27 +56,6 @@ export default function ProfileModal({
   });
   const [privacySaving, setPrivacySaving] = useState(false);
 
-  const BACKEND_URL =
-    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
-
-  const calculateAge = (dob: string) => {
-    if (!dob) return "";
-    const birthDate = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  };
-
-  const getPhotoUrl = (url: any) => {
-    if (!url || typeof url !== "string") return "";
-    if (url.startsWith("http")) return url;
-    return `${BACKEND_URL}${url}`;
-  };
-
   useEffect(() => {
     if (isOpen) {
       fetchProfile();
@@ -85,7 +65,9 @@ export default function ProfileModal({
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const data = await profileService.getMyProfile();
+      const data = userId
+        ? await profileService.getOtherProfile(userId)
+        : await profileService.getMyProfile();
       setProfile(data);
     } catch (error) {
       console.error("Fetch profile error", error);
@@ -226,13 +208,12 @@ export default function ProfileModal({
           />
         ) : profile ? (
           <>
-            {/* Hero Section */}
             <div className="profile-hero">
               <img
-                src={
-                  getPhotoUrl(profile.photos?.[0]) ||
-                  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1000&auto=format&fit=crop"
-                }
+                src={getImageUrl(
+                  profile.photos?.[0]?.url || profile.photos?.[0],
+                  profile.user?.firstName,
+                )}
                 alt={profile.basicDetails?.name}
                 className="profile-hero-image"
               />
@@ -287,13 +268,15 @@ export default function ProfileModal({
                   )}
                 </div>
               </div>
-              <button
-                className="absolute bottom-6 right-8 premium-btn flex items-center gap-2"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Camera size={18} />
-                Add Photo
-              </button>
+              {!userId && (
+                <button
+                  className="absolute bottom-6 right-8 premium-btn flex items-center gap-2"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Camera size={18} />
+                  Add Photo
+                </button>
+              )}
               <input
                 type="file"
                 hidden
@@ -305,27 +288,28 @@ export default function ProfileModal({
 
             {/* Content Tabs Navigation */}
             <div className="flex px-8 border-b border-white/10 gap-8 mt-2 overflow-x-auto custom-scrollbar">
-              {["about", "background", "astrology", "partner", "manage"].map(
-                (tab) => (
-                  <button
-                    key={tab}
-                    className={`py-4 text-sm font-bold tracking-wider uppercase transition-colors whitespace-nowrap border-b-2 ${
-                      activeTab === tab
-                        ? "text-[#D4AF37] border-[#D4AF37]"
-                        : "text-slate-400 border-transparent hover:text-white"
-                    }`}
-                    onClick={() => setActiveTab(tab)}
-                  >
-                    {tab === "manage" ? (
-                      <span className="flex items-center gap-2">
-                        <Settings size={16} /> Manage
-                      </span>
-                    ) : (
-                      tab
-                    )}
-                  </button>
-                ),
-              )}
+              {(userId
+                ? ["about", "background", "astrology", "partner"]
+                : ["about", "background", "astrology", "partner", "manage"]
+              ).map((tab) => (
+                <button
+                  key={tab}
+                  className={`py-4 text-sm font-bold tracking-wider uppercase transition-colors whitespace-nowrap border-b-2 ${
+                    activeTab === tab
+                      ? "text-[#D4AF37] border-[#D4AF37]"
+                      : "text-slate-400 border-transparent hover:text-white"
+                  }`}
+                  onClick={() => setActiveTab(tab)}
+                >
+                  {tab === "manage" ? (
+                    <span className="flex items-center gap-2">
+                      <Settings size={16} /> Manage
+                    </span>
+                  ) : (
+                    tab
+                  )}
+                </button>
+              ))}
             </div>
 
             {/* Content Area */}
@@ -342,7 +326,10 @@ export default function ProfileModal({
                         profile.photos.map((photo: any, idx: number) => (
                           <div key={idx} className="gallery-item">
                             <img
-                              src={getPhotoUrl(photo.url)}
+                              src={getImageUrl(
+                                photo.url || photo,
+                                profile.user?.firstName,
+                              )}
                               alt={`Gallery ${idx}`}
                             />
                             <button
@@ -711,7 +698,7 @@ export default function ProfileModal({
                           Horoscope Chart
                         </span>
                         <img
-                          src={getPhotoUrl(
+                          src={getImageUrl(
                             profile.profile.HoroscopeDetail.horoscopeImageUrl,
                           )}
                           alt="Horoscope Chart"

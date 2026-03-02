@@ -1,8 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
-import { subscriptionService } from "@/services/subscriptionService";
-import { Check, X, Shield, Star, Crown, Zap } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import {
+  subscriptionService,
+  SubscriptionStatusResponse,
+} from "@/services/subscriptionService";
+import { Check, X, Shield, Star, Crown, Zap, Clock, Info } from "lucide-react";
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -19,46 +22,80 @@ export default function UpgradeModal({
 }: UpgradeModalProps) {
   const [duration, setDuration] = useState<Duration>("6M");
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<SubscriptionStatusResponse | null>(null);
+  const [waitlistEmail, setWaitlistEmail] = useState("");
+  const [waitlistSent, setWaitlistSent] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchStatus();
+    }
+  }, [isOpen]);
+
+  const fetchStatus = async () => {
+    try {
+      const data = await subscriptionService.getStatus();
+      setStatus(data);
+    } catch (error) {
+      console.error("Failed to fetch status", error);
+    }
+  };
 
   if (!isOpen) return null;
 
   const PRICING = {
+    Free: { "3M": 0, "6M": 0, "12M": 0 },
     Silver: { "3M": 3499, "6M": 5999, "12M": 9999 },
     Gold: { "3M": 8000, "6M": 14000, "12M": 24000 },
     EliteGold: { "3M": 50000, "6M": 90000, "12M": 150000 },
   };
 
-  const FEATURES = {
-    Silver: [
-      "Unlimited interests",
-      "View full profile details",
-      "View contact details",
-      "50 chat messages per day",
-      "Advanced search filters",
-      "View who viewed profile",
-      "Horoscope details access",
-      "Family photos access",
-    ],
-    Gold: [
-      "Everything in Silver",
-      "Profile highlighted in search",
-      "Featured in similar matches",
-      "1 profile boost per month",
-      "Monthly email blast to prospects",
-      "Hide last seen",
-      "Priority customer support",
-    ],
-    EliteGold: [
-      "Everything in Gold",
-      "Dedicated relationship manager",
-      "Curated handpicked matches",
-      "Assisted outreach to matches",
-      "WhatsApp coordination support",
-      "Profile optimization support",
-      "Priority verified badge",
-      "3 homepage featured placements",
-      "Unlimited boosts",
-    ],
+  const TIER_ORDER = ["Free", "Silver", "Gold", "Elite Gold"];
+
+  const getButtonProps = (tier: string) => {
+    const currentTier = status?.tier || "Free";
+    const state = status?.state || "FREE";
+
+    // Elite Coming Soon
+    if (tier === "Elite Gold") {
+      return { label: "Elite Gold", type: "waitlist" };
+    }
+
+    // Current Plan
+    if (tier === currentTier) {
+      if (state === "EXPIRED") return { label: "Renew Plan", type: "primary" };
+      return {
+        label: "Current Plan",
+        type: "disabled",
+        sub: status?.endDate
+          ? `Exp: ${new Date(status.endDate).toLocaleDateString()}`
+          : null,
+      };
+    }
+
+    // Upgrade Logic
+    const currentIndex = TIER_ORDER.indexOf(currentTier);
+    const targetIndex = TIER_ORDER.indexOf(tier);
+
+    if (targetIndex > currentIndex) {
+      const discount = status?.remainingValue || 0;
+      return {
+        label: discount > 0 ? `Upgrade (Save ₹${discount})` : `Select ${tier}`,
+        type: "primary",
+        discount,
+      };
+    }
+
+    // Downgrade Logic
+    if (targetIndex < currentIndex && currentIndex > 0) {
+      return {
+        label: "Downgrade",
+        type: "disabled",
+        tooltip: "Downgrade available after current plan expires",
+      };
+    }
+
+    return { label: `Select ${tier}`, type: "primary" };
   };
 
   const handleUpgrade = async (tier: "Silver" | "Gold" | "EliteGold") => {
@@ -75,6 +112,20 @@ export default function UpgradeModal({
     }
   };
 
+  const handleWaitlist = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!waitlistEmail) return;
+    try {
+      setLoading(true);
+      await subscriptionService.joinWaitlist(waitlistEmail, "Elite Gold");
+      setWaitlistSent(true);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/80 backdrop-blur-md"
@@ -82,197 +133,170 @@ export default function UpgradeModal({
     >
       <div className="min-h-full flex items-start justify-center p-4 py-8 sm:p-12">
         <div
-          className="relative w-full max-w-6xl bg-slate-900 border border-white/5 rounded-3xl shadow-2xl"
+          className="relative w-full max-w-7xl bg-slate-900 border border-white/5 rounded-[3rem] shadow-2xl overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Close Button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 md:top-6 md:right-6 p-2.5 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors z-50"
+            className="absolute top-6 right-6 p-3 bg-white/5 hover:bg-white/10 rounded-full text-white transition-all z-50 border border-white/5"
           >
             <X size={24} />
           </button>
 
-          <div className="p-8 md:p-12 text-center">
-            <Badge
-              icon={<Crown size={14} />}
-              text="Premium Matrimony Experience"
-            />
-            <h2 className="mt-6 text-4xl md:text-5xl font-serif font-bold text-white tracking-tight">
-              Find Your{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB]">
-                Perfect Match
-              </span>{" "}
-              Faster
+          <div className="p-8 md:p-16 text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[#D4AF37] text-xs font-black uppercase tracking-widest mb-8">
+              <Crown size={14} /> Premium Membership
+            </div>
+
+            <h2 className="text-4xl md:text-6xl font-serif font-bold text-white tracking-tight leading-tight">
+              Elevate Your{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#D4AF37]">
+                Matchmaking
+              </span>
             </h2>
-            <p className="mt-4 text-slate-400 max-w-2xl mx-auto text-lg">
-              Upgrade your membership to unlock exclusive features, direct
-              contact access, and personalized relationship assistance.
+
+            <p className="mt-6 text-slate-400 max-w-2xl mx-auto text-lg leading-relaxed">
+              Unlock the full potential of AuraWeds. High-intent matchmaking
+              with direct communication and priority visibility.
             </p>
 
             {/* Duration Toggle */}
-            <div className="flex justify-center mt-10">
-              <div className="inline-flex items-center p-1 bg-slate-950 rounded-2xl border border-white/5">
+            <div className="flex justify-center mt-12">
+              <div className="inline-flex items-center p-1.5 bg-slate-950 rounded-[2rem] border border-white/5 shadow-inner">
                 {(["3M", "6M", "12M"] as Duration[]).map((d) => (
                   <button
                     key={d}
                     onClick={() => setDuration(d)}
-                    className={`px-8 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${
+                    className={`px-10 py-4 text-sm font-black rounded-[1.5rem] transition-all duration-500 ${
                       duration === d
-                        ? "bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 shadow-lg"
-                        : "text-slate-400 hover:text-white"
+                        ? "bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 shadow-xl scale-105"
+                        : "text-slate-500 hover:text-white"
                     }`}
                   >
-                    {d.replace("M", " Months")}
+                    {d === "12M"
+                      ? "12 Months (Save 40%)"
+                      : d.replace("M", " Months")}
                   </button>
                 ))}
               </div>
             </div>
 
             {/* Pricing Cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-12 text-left">
-              {/* Silver Plan */}
-              <div className="relative p-8 rounded-3xl bg-slate-800/50 border border-white/10 flex flex-col">
-                <div className="mb-4">
-                  <h3 className="text-2xl font-bold text-white flex items-center gap-2">
-                    <Shield size={24} className="text-slate-400" /> Silver
-                  </h3>
-                  <p className="text-slate-400 mt-2 text-sm">
-                    Essential tools to connect and converse.
-                  </p>
-                </div>
-                <div className="my-6">
-                  <span className="text-4xl font-black text-white">
-                    ₹{PRICING.Silver[duration].toLocaleString()}
-                  </span>
-                  <span className="text-slate-500 font-medium">
-                    {" "}
-                    / {duration}
-                  </span>
-                </div>
-                <ul className="space-y-4 mb-8 flex-1">
-                  {FEATURES.Silver.map((feat, i) => (
-                    <li
-                      key={i}
-                      className="flex items-start gap-3 text-slate-300 text-sm"
-                    >
-                      <Check
-                        size={18}
-                        className="text-emerald-400 shrink-0 mt-0.5"
-                      />
-                      <span>{feat}</span>
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  onClick={() => handleUpgrade("Silver")}
-                  disabled={loading}
-                  className="w-full py-4 rounded-xl font-bold border border-white/20 text-white hover:bg-white/5 transition-colors disabled:opacity-50"
-                >
-                  {loading ? "Processing..." : "Select Silver"}
-                </button>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-16 text-left">
+              {/* Free Plan */}
+              <PlanCard
+                name="Free"
+                icon={<Zap size={20} className="text-slate-500" />}
+                price="0"
+                period="Lifetime"
+                features={[
+                  "10 Interests per month",
+                  "Basic Search Filters",
+                  "Blurred Photos",
+                  "Limited Chat",
+                ]}
+                status={getButtonProps("Free")}
+                isPremium={false}
+              />
 
-              {/* Gold Plan (Most Popular) */}
-              <div className="relative p-8 rounded-3xl bg-gradient-to-b from-[#1a1c29] to-slate-900 border-2 border-[#D4AF37] shadow-[0_0_40px_rgba(212,175,55,0.15)] flex flex-col transform lg:-translate-y-4">
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 px-4 py-1 rounded-full text-xs font-black tracking-widest uppercase shadow-lg">
-                  Most Popular
-                </div>
-                <div className="mb-4">
-                  <h3 className="text-2xl font-bold text-[#D4AF37] flex items-center gap-2">
-                    <Star size={24} className="fill-[#D4AF37]" /> Gold
-                  </h3>
-                  <p className="text-slate-400 mt-2 text-sm">
-                    Maximum visibility and priority placement.
-                  </p>
-                </div>
-                <div className="my-6">
-                  <span className="text-5xl font-black text-white">
-                    ₹{PRICING.Gold[duration].toLocaleString()}
-                  </span>
-                  <span className="text-slate-500 font-medium">
-                    {" "}
-                    / {duration}
-                  </span>
-                </div>
-                <ul className="space-y-4 mb-8 flex-1">
-                  {FEATURES.Gold.map((feat, i) => (
-                    <li
-                      key={i}
-                      className="flex items-start gap-3 text-white text-sm"
-                    >
-                      <Check
-                        size={18}
-                        className="text-[#D4AF37] shrink-0 mt-0.5"
-                      />
-                      <span
-                        className={i === 0 ? "font-bold text-[#D4AF37]" : ""}
-                      >
-                        {feat}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  onClick={() => handleUpgrade("Gold")}
-                  disabled={loading}
-                  className="w-full py-4 rounded-xl font-bold bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all disabled:opacity-50"
-                >
-                  {loading ? "Processing..." : "Select Gold"}
-                </button>
-              </div>
+              {/* Silver Plan */}
+              <PlanCard
+                name="Silver"
+                icon={<Shield size={20} className="text-slate-400" />}
+                price={PRICING.Silver[duration].toLocaleString()}
+                period={duration}
+                features={[
+                  "Unlimited Interests",
+                  "View Full Profiles",
+                  "Contact Access",
+                  "Advanced Filters",
+                  "View Who Viewed You",
+                ]}
+                status={getButtonProps("Silver")}
+                isPremium={true}
+                onSelect={() => handleUpgrade("Silver")}
+                loading={loading}
+              />
+
+              {/* Gold Plan */}
+              <PlanCard
+                name="Gold"
+                icon={
+                  <Star size={20} className="fill-[#D4AF37] text-[#D4AF37]" />
+                }
+                price={PRICING.Gold[duration].toLocaleString()}
+                period={duration}
+                features={[
+                  "Everything in Silver+",
+                  "Priority Search Ranking",
+                  "Profile Highlight",
+                  "Monthly Email Blast",
+                  "Direct Messenger",
+                ]}
+                status={getButtonProps("Gold")}
+                isPremium={true}
+                highlight
+                onSelect={() => handleUpgrade("Gold")}
+                loading={loading}
+              />
 
               {/* Elite Gold Plan */}
-              <div className="relative p-8 rounded-3xl bg-slate-950 border border-purple-500/20 shadow-[0_0_30px_rgba(168,85,247,0.1)] flex flex-col overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/20 blur-3xl rounded-full"></div>
-                <div className="mb-4 relative z-10">
-                  <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400 flex items-center gap-2">
-                    <Zap
-                      size={24}
-                      className="text-purple-400 fill-purple-400/20"
-                    />{" "}
-                    Elite Gold
+              <div className="relative p-8 rounded-[2.5rem] bg-slate-950 border border-purple-500/20 flex flex-col group overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 blur-[50px] rounded-full group-hover:bg-purple-500/10 transition-all duration-700"></div>
+
+                <div className="mb-6">
+                  <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400 flex items-center gap-3">
+                    <Crown size={24} className="text-purple-400" /> Elite Gold
                   </h3>
-                  <p className="text-slate-400 mt-2 text-sm">
-                    VIP concierge and relationship management.
+                  <div className="mt-3 inline-block px-3 py-1 bg-purple-500/10 border border-purple-500/20 rounded-full text-purple-400 text-[10px] font-black uppercase tracking-widest">
+                    Coming Soon
+                  </div>
+                </div>
+
+                <div className="mb-8">
+                  <span className="text-4xl font-black text-white/40 italic tracking-tighter">
+                    VIP Service
+                  </span>
+                  <p className="mt-3 text-slate-500 text-sm leading-relaxed">
+                    Personal relationship manager, handpicked matches, and
+                    assisted outreach.
                   </p>
                 </div>
-                <div className="my-6 relative z-10">
-                  <span className="text-4xl font-black text-white">
-                    ₹{PRICING.EliteGold[duration].toLocaleString()}
-                  </span>
-                  <span className="text-slate-500 font-medium">
-                    {" "}
-                    / {duration}
-                  </span>
-                </div>
-                <ul className="space-y-4 mb-8 flex-1 relative z-10">
-                  {FEATURES.EliteGold.map((feat, i) => (
-                    <li
-                      key={i}
-                      className="flex items-start gap-3 text-slate-300 text-sm"
-                    >
-                      <Check
-                        size={18}
-                        className="text-purple-400 shrink-0 mt-0.5"
+
+                {waitlistSent ? (
+                  <div className="flex-1 flex flex-col items-center justify-center text-center animate-in fade-in duration-500">
+                    <Check className="text-purple-400 mb-4" size={40} />
+                    <h4 className="text-white font-bold mb-2">
+                      You're on the list!
+                    </h4>
+                    <p className="text-slate-500 text-xs text-balance">
+                      We'll notify you as soon as Elite Gold launches.
+                    </p>
+                  </div>
+                ) : (
+                  <form
+                    onSubmit={handleWaitlist}
+                    className="flex-1 flex flex-col justify-end"
+                  >
+                    <div className="space-y-4">
+                      <input
+                        type="email"
+                        placeholder="Enter email for early access"
+                        value={waitlistEmail}
+                        onChange={(e) => setWaitlistEmail(e.target.value)}
+                        className="w-full bg-slate-900 border border-white/5 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-purple-500/50 transition-all"
                       />
-                      <span
-                        className={i === 0 ? "font-bold text-purple-400" : ""}
+                      <button
+                        type="submit"
+                        disabled={loading || !waitlistEmail}
+                        className="w-full py-4 rounded-2xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-purple-900/20"
                       >
-                        {feat}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  onClick={() => handleUpgrade("EliteGold")}
-                  disabled={loading}
-                  className="w-full py-4 rounded-xl font-bold relative group overflow-hidden bg-slate-800 text-white disabled:opacity-50"
-                >
-                  <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-purple-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <span className="relative z-10">
-                    {loading ? "Processing..." : "Select Elite Gold"}
-                  </span>
-                </button>
+                        {loading ? "..." : "Join VIP Waitlist"}
+                      </button>
+                    </div>
+                  </form>
+                )}
               </div>
             </div>
           </div>
@@ -282,11 +306,139 @@ export default function UpgradeModal({
   );
 }
 
-function Badge({ icon, text }: { icon: React.ReactNode; text: string }) {
+interface PlanCardProps {
+  name: string;
+  icon: React.ReactNode;
+  price: string;
+  period: string;
+  features: string[];
+  status: {
+    label: string;
+    type: string;
+    sub?: string | null;
+    tooltip?: string;
+    discount?: number;
+  };
+  isPremium: boolean;
+  highlight?: boolean;
+  onSelect?: () => void;
+  loading?: boolean;
+}
+
+function PlanCard({
+  name,
+  icon,
+  price,
+  period,
+  features,
+  status,
+  isPremium,
+  highlight,
+  onSelect,
+  loading,
+}: PlanCardProps) {
   return (
-    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[#D4AF37] text-xs font-bold uppercase tracking-wider mx-auto">
-      {icon}
-      <span>{text}</span>
+    <div
+      className={`relative p-8 rounded-[2.5rem] flex flex-col transition-all duration-500 group ${
+        highlight
+          ? "bg-slate-900 border-2 border-[#D4AF37] shadow-[0_20px_50px_rgba(212,175,55,0.1)] scale-105 z-10"
+          : "bg-slate-800/30 border border-white/5 hover:border-white/10"
+      }`}
+    >
+      {highlight && (
+        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 px-4 py-1 rounded-full text-[10px] font-black tracking-widest uppercase shadow-xl">
+          Recommended
+        </div>
+      )}
+
+      <div className="mb-6">
+        <h3
+          className={`text-2xl font-black flex items-center gap-3 ${highlight ? "text-[#D4AF37]" : "text-white"}`}
+        >
+          {icon} {name}
+        </h3>
+        <p className="mt-2 text-slate-500 text-xs">AuraWeds Membership</p>
+      </div>
+
+      <div className="mb-8">
+        <div className="flex items-baseline gap-1">
+          <span className="text-4xl font-black text-white">₹{price}</span>
+          <span className="text-slate-500 font-bold text-sm tracking-widest uppercase italic">
+            {" "}
+            / {period}
+          </span>
+        </div>
+        {status.discount && status.discount > 0 && (
+          <div className="mt-2 text-emerald-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
+            <Sparkles size={12} /> Prorated Discount Applied
+          </div>
+        )}
+      </div>
+
+      <ul className="space-y-4 mb-10 flex-1">
+        {features.map((feat, i) => (
+          <li
+            key={i}
+            className="flex items-start gap-3 text-slate-400 text-sm leading-snug"
+          >
+            <div
+              className={`mt-1 p-0.5 rounded-full ${highlight ? "bg-[#D4AF37]/20 text-[#D4AF37]" : "bg-white/10 text-white"}`}
+            >
+              <Check size={12} strokeWidth={4} />
+            </div>
+            <span>{feat}</span>
+          </li>
+        ))}
+      </ul>
+
+      <div className="relative">
+        <button
+          onClick={onSelect}
+          disabled={status.type === "disabled" || loading}
+          className={`w-full py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all duration-500 ${
+            status.type === "primary"
+              ? highlight
+                ? "bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 hover:shadow-[0_10px_30px_rgba(212,175,55,0.4)]"
+                : "bg-white/5 hover:bg-white/10 text-white border border-white/10"
+              : "bg-slate-900 text-slate-600 border border-white/5 cursor-not-allowed"
+          }`}
+        >
+          {loading ? "Processing..." : status.label}
+        </button>
+
+        {status.sub && (
+          <div className="mt-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center justify-center gap-1.5">
+            <Clock size={10} /> {status.sub}
+          </div>
+        )}
+
+        {status.tooltip && (
+          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-4 px-4 py-2 bg-slate-950 border border-white/10 text-white text-[10px] font-bold rounded-xl opacity-0 hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none group-hover:opacity-100 flex items-center gap-2">
+            <Info size={12} className="text-[#D4AF37]" /> {status.tooltip}
+          </div>
+        )}
+      </div>
     </div>
+  );
+}
+
+function Sparkles({ size }: { size: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+      <path d="M5 3v4" />
+      <path d="M19 17v4" />
+      <path d="M3 5h4" />
+      <path d="M17 19h4" />
+    </svg>
   );
 }

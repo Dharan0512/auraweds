@@ -63,3 +63,95 @@ export const requireTier = (minTier: "Silver" | "Gold" | "Elite Gold") => {
     }
   };
 };
+
+export const searchFilterGating = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: "Not authorized" });
+      return;
+    }
+
+    const activeSubscription = await Subscription.findOne({
+      where: {
+        userId: req.user.id,
+        status: "active",
+        endDate: { [Op.gt]: new Date() },
+      },
+      include: [{ model: Plan, attributes: ["name"] }],
+    });
+
+    const currentTier = (activeSubscription as any)?.Plan?.name || "Free";
+    const currentLevel = TIER_LEVELS[currentTier] || 0;
+
+    const queryFilters = Object.keys(req.query);
+
+    const SILVER_FILTERS = [
+      "educationId",
+      "occupationId",
+      "heightMin",
+      "heightMax",
+      "motherTongueId",
+      "diet",
+      "incomeRangeId",
+      "casteId",
+    ];
+    const GOLD_FILTERS = [
+      "horoscopeMatch",
+      "incomeSlider",
+      "familyStatus",
+      "smoking",
+      "drinking",
+      "isVerified",
+      "recentlyActive",
+      "onlineNow",
+      "profileStrength",
+    ];
+    const GOLD_ONLY_SORTS = [
+      "mostCompatible",
+      "recentlyActive",
+      "profileScore",
+    ];
+
+    let restrictedTierNeeded: string | null = null;
+
+    for (const filter of queryFilters) {
+      if (GOLD_FILTERS.includes(filter) && currentLevel < TIER_LEVELS["Gold"]) {
+        restrictedTierNeeded = "Gold";
+        break;
+      }
+      if (
+        SILVER_FILTERS.includes(filter) &&
+        currentLevel < TIER_LEVELS["Silver"]
+      ) {
+        restrictedTierNeeded = "Silver";
+        break;
+      }
+      if (
+        filter === "sort" &&
+        GOLD_ONLY_SORTS.includes(req.query.sort as string) &&
+        currentLevel < TIER_LEVELS["Gold"]
+      ) {
+        restrictedTierNeeded = "Gold";
+        break;
+      }
+    }
+
+    if (restrictedTierNeeded) {
+      res.status(403).json({
+        message: `Advanced filters require a ${restrictedTierNeeded} subscription.`,
+        upgradeRequired: restrictedTierNeeded,
+        restrictedFiltersAttempted: true,
+      });
+      return;
+    }
+
+    next();
+  } catch (error) {
+    console.error("Filter gating error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};

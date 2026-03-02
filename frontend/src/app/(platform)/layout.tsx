@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchApi } from "@/lib/api";
 import { MasterDataProvider } from "@/context/MasterDataContext";
 import ProfileModal from "@/components/ui/ProfileModal";
 import { User, LogOut } from "lucide-react";
+import { getImageUrl } from "@/lib/utils";
 
 export default function PlatformLayout({
   children,
@@ -18,6 +20,9 @@ export default function PlatformLayout({
   const [profile, setProfile] = useState<any>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { logout } = useAuth();
+  const pathname = usePathname();
+
+  const isActive = (path: string) => pathname === path;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -71,19 +76,41 @@ export default function PlatformLayout({
                 <div className="hidden sm:ml-10 sm:flex sm:space-x-10">
                   <Link
                     href="/dashboard"
-                    className="border-[#D4AF37] text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-semibold tracking-wide transition-all duration-300"
+                    className={`${
+                      isActive("/dashboard")
+                        ? "border-[#D4AF37] text-white"
+                        : "border-transparent text-slate-400 hover:text-white hover:border-white/20"
+                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-semibold tracking-wide transition-all duration-300`}
                   >
                     Matches
                   </Link>
                   <Link
+                    href="/search"
+                    className={`${
+                      isActive("/search")
+                        ? "border-[#D4AF37] text-white"
+                        : "border-transparent text-slate-400 hover:text-white hover:border-white/20"
+                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-300`}
+                  >
+                    Search
+                  </Link>
+                  <Link
                     href="/interests"
-                    className="border-transparent text-slate-400 hover:text-white hover:border-white/20 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-300"
+                    className={`${
+                      isActive("/interests")
+                        ? "border-[#D4AF37] text-white"
+                        : "border-transparent text-slate-400 hover:text-white hover:border-white/20"
+                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-300`}
                   >
                     Interests
                   </Link>
                   <Link
                     href="/chat"
-                    className="border-transparent text-slate-400 hover:text-white hover:border-white/20 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-300"
+                    className={`${
+                      isActive("/chat")
+                        ? "border-[#D4AF37] text-white"
+                        : "border-transparent text-slate-400 hover:text-white hover:border-white/20"
+                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-300`}
                   >
                     Messages
                   </Link>
@@ -106,7 +133,10 @@ export default function PlatformLayout({
                       <div className="h-10 w-10 rounded-full bg-slate-900 flex items-center justify-center text-white font-black overflow-hidden relative">
                         {profile?.photos?.[0] ? (
                           <img
-                            src={profile.photos[0].url}
+                            src={getImageUrl(
+                              profile.photos[0]?.url || profile.photos[0],
+                              profile.basicDetails?.name,
+                            )}
                             alt="Profile"
                             className="h-full w-full object-cover"
                           />

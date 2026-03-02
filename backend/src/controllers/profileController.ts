@@ -1,4 +1,5 @@
 import { Response } from "express";
+import { Op, WhereOptions } from "sequelize";
 import { AuthRequest } from "../middlewares/authMiddleware";
 import {
   User,
@@ -24,6 +25,7 @@ import {
   Badge,
 } from "../models/sequelize";
 import { sequelize } from "../config/db.postgres";
+import { profileSerializer } from "../serializers/profileSerializer";
 
 export const saveDraft = async (
   req: AuthRequest,
@@ -702,5 +704,179 @@ export const updatePrivacySettings = async (
   } catch (error) {
     console.error("Update privacy error:", error);
     res.status(500).json({ message: "Server error updating privacy settings" });
+  }
+};
+
+export const searchProfiles = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: "Not authorized" });
+      return;
+    }
+
+    const {
+      ageMin,
+      ageMax,
+      cityId,
+      stateId,
+      religionId,
+      maritalStatus,
+      educationId,
+      occupationId,
+      heightMin,
+      heightMax,
+      motherTongueId,
+      diet,
+      incomeRangeId,
+      casteId,
+      familyStatus,
+      smoking,
+      drinking,
+      isVerified,
+      profileStrength,
+      sort,
+    } = req.query;
+
+    const myUser = await User.findByPk(req.user.id);
+    let oppositeGender = "Female"; // Default fallback
+    if (myUser?.gender === "Female") oppositeGender = "Male";
+    else if (myUser?.gender === "Male") oppositeGender = "Female";
+
+    const where: WhereOptions = {
+      userId: { [Op.ne]: req.user.id },
+      [Op.or]: [
+        { profileVisibility: { [Op.ne]: "Hidden" } },
+        { profileVisibility: null },
+      ],
+    };
+
+    const userWhere: any = {
+      gender: oppositeGender,
+    };
+
+    if (ageMin || ageMax) {
+      const today = new Date();
+      const minDate = ageMax
+        ? new Date(
+            today.getFullYear() - Number(ageMax) - 1,
+            today.getMonth(),
+            today.getDate(),
+          )
+        : null;
+      const maxDate = ageMin
+        ? new Date(
+            today.getFullYear() - Number(ageMin),
+            today.getMonth(),
+            today.getDate(),
+          )
+        : null;
+
+      where.dob = {};
+      if (minDate) where.dob[Op.gte] = minDate;
+      if (maxDate) where.dob[Op.lte] = maxDate;
+    }
+
+    if (cityId) where.cityId = cityId;
+    if (stateId) where.stateId = stateId;
+    if (religionId) where.religionId = religionId;
+    if (maritalStatus) where.maritalStatus = maritalStatus;
+    if (educationId) where.educationId = educationId;
+    if (occupationId) where.occupationId = occupationId;
+    if (motherTongueId) where.motherTongueId = motherTongueId;
+    if (incomeRangeId) where.incomeRangeId = incomeRangeId;
+    if (casteId) where.casteId = casteId;
+    if (profileStrength)
+      where.profileStrength = { [Op.gte]: Number(profileStrength) };
+
+    if (heightMin || heightMax) {
+      where.heightCm = {};
+      if (heightMin) where.heightCm[Op.gte] = Number(heightMin);
+      if (heightMax) where.heightCm[Op.lte] = Number(heightMax);
+    }
+
+    const lifestyleWhere: any = {};
+    if (diet) lifestyleWhere.diet = diet;
+    if (smoking) lifestyleWhere.smoke = smoking;
+    if (drinking) lifestyleWhere.drink = drinking;
+
+    const familyWhere: any = {};
+    if (familyStatus) familyWhere.familyStatus = familyStatus;
+
+    const badgeWhere: any = {};
+    if (isVerified === "true") badgeWhere.mobileVerified = true;
+
+    let order: any = [["createdAt", "DESC"]];
+    if (sort === "recentlyJoined") order = [["createdAt", "DESC"]];
+    if (sort === "recentlyActive") order = [["updatedAt", "DESC"]]; // Simple fallback for recently active
+    if (sort === "profileScore") order = [["profileStrength", "DESC"]];
+    if (sort === "mostCompatible") order = [["matchScore", "DESC"]]; // Fallback to matchScore
+
+    const includes: any[] = [
+      {
+        model: User,
+        where: userWhere,
+        attributes: ["id", "firstName", "lastName", "gender"],
+        include: [
+          {
+            model: UserPhoto,
+            as: "photos",
+            required: false,
+          },
+        ],
+      },
+      Religion,
+      City,
+      Education,
+      Occupation,
+      MotherTongue,
+      Caste,
+      IncomeRange,
+    ];
+
+    if (Object.keys(lifestyleWhere).length > 0) {
+      includes.push({
+        model: LocationLifestyle,
+        where: lifestyleWhere,
+        required: true,
+      });
+    }
+
+    if (Object.keys(familyWhere).length > 0) {
+      includes.push({
+        model: FamilyDetails,
+        where: familyWhere,
+        required: true,
+      });
+    }
+
+    if (Object.keys(badgeWhere).length > 0) {
+      includes.push({
+        model: Badge,
+        where: badgeWhere,
+        required: true,
+      });
+    }
+
+    const { count, rows: results } = await UserProfile.findAndCountAll({
+      where,
+      include: includes,
+      order,
+      limit: 50,
+    });
+
+    const serializedResults = results.map((p) =>
+      profileSerializer.toPublicProfile(p),
+    );
+
+    res.status(200).json({
+      total: count,
+      results: serializedResults,
+    });
+  } catch (error) {
+    console.error("Search profiles error:", error);
+    res.status(500).json({ message: "Server error searching profiles" });
   }
 };

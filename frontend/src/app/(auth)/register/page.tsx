@@ -11,6 +11,7 @@ import * as z from "zod";
 import SearchableDropdown from "@/components/ui/SearchableDropdown";
 import MultiSearchableDropdown from "@/components/ui/MultiSearchableDropdown";
 import PremiumSelect from "@/components/ui/PremiumSelect";
+import { getImageUrl } from "@/lib/utils";
 import {
   masterService,
   Country,
@@ -232,28 +233,54 @@ export default function RegisterPage() {
   const [uploadedPhotos, setUploadedPhotos] = useState<
     { id: string; url: string }[]
   >([]);
+  const [pendingPhotos, setPendingPhotos] = useState<
+    Array<{ file: File; preview: string }>
+  >([]);
   const [horoscopeImage, setHoroscopeImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
+    const token = localStorage.getItem("token");
+
+    // If no token (Step 1 before register), just store locally
+    if (!token) {
+      const newPending = Array.from(files).map((file) => ({
+        file,
+        preview: URL.createObjectURL(file),
+      }));
+      setPendingPhotos((prev) => [...prev, ...newPending].slice(0, 5));
+      return;
+    }
+
+    // If token exists, upload immediately
     setUploading(true);
-    const formData = new FormData();
-    formData.append("photo", file);
-
     try {
-      const result = await profileService.uploadPhotos(formData);
-      setUploadedPhotos((prev) => [
-        ...prev,
-        { id: result.photo.id, url: result.photo.url },
-      ]);
+      for (const file of Array.from(files)) {
+        const formData = new FormData();
+        formData.append("photo", file);
+        const result = await profileService.uploadPhotos(formData);
+        setUploadedPhotos((prev) => [
+          ...prev,
+          { id: result.photo.id, url: result.photo.url },
+        ]);
+      }
     } catch (err) {
       console.error("Photo upload error:", err);
     } finally {
       setUploading(false);
     }
+  };
+
+  const handlePendingPhotoDelete = (index: number) => {
+    setPendingPhotos((prev) => {
+      const newPending = [...prev];
+      URL.revokeObjectURL(newPending[index].preview);
+      newPending.splice(index, 1);
+      return newPending;
+    });
   };
 
   const handlePhotoDelete = async (photoId: string) => {
@@ -522,6 +549,12 @@ export default function RegisterPage() {
   };
 
   const handleStep1Register = async () => {
+    // Validate Photos
+    if (uploadedPhotos.length + pendingPhotos.length === 0) {
+      alert("Please upload at least one profile photo to continue.");
+      return;
+    }
+
     const isValid = await (trigger as any)([
       "firstName",
       "email",
@@ -554,8 +587,30 @@ export default function RegisterPage() {
         null,
       );
 
-      // If success, move to next step
-      setIsOtpModalOpen(true); // Open OTP modal as requested
+      // If success, upload pending photos
+      if (pendingPhotos.length > 0) {
+        setUploading(true);
+        try {
+          for (const item of pendingPhotos) {
+            const fd = new FormData();
+            fd.append("photo", item.file);
+            const result = await profileService.uploadPhotos(fd);
+            setUploadedPhotos((prev) => [
+              ...prev,
+              { id: result.photo.id, url: result.photo.url },
+            ]);
+            URL.revokeObjectURL(item.preview);
+          }
+          setPendingPhotos([]);
+        } catch (err) {
+          console.error("Delayed photo upload error:", err);
+        } finally {
+          setUploading(false);
+        }
+      }
+
+      // Move to next step (OTP)
+      setIsOtpModalOpen(true);
     } catch (err) {
       // Error handled by useAuth hook's error state
       console.error("Registration error:", err);
@@ -775,26 +830,57 @@ export default function RegisterPage() {
                     Profile Photos (Min 1 required)
                   </label>
                   <div className="flex flex-wrap gap-4">
+                    {/* Uploaded Photos */}
                     {uploadedPhotos.map((photo) => (
                       <div
                         key={photo.id}
-                        className="relative w-24 h-24 rounded-2xl overflow-hidden border border-purple-500/20 group"
+                        className="relative w-24 h-24 rounded-2xl overflow-hidden border border-purple-500/20 group animate-in zoom-in-90 duration-300"
                       >
                         <img
-                          src={photo.url}
+                          src={getImageUrl(
+                            photo.url,
+                            control._formValues.firstName,
+                          )}
                           alt="Profile"
                           className="w-full h-full object-cover"
                         />
                         <button
                           type="button"
                           onClick={() => handlePhotoDelete(photo.id)}
-                          className="absolute top-1 right-1 p-1 bg-rose-500 rounded-lg text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-1 right-1 p-1.5 bg-rose-500/90 hover:bg-rose-600 rounded-lg text-white opacity-0 group-hover:opacity-100 transition-all transform hover:scale-110"
                         >
-                          <XMarkIcon className="w-3 h-3" />
+                          <XMarkIcon className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     ))}
-                    {uploadedPhotos.length < 5 && (
+
+                    {/* Pending Photos (Pre-registration) */}
+                    {pendingPhotos.map((photo, idx) => (
+                      <div
+                        key={`pending-${idx}`}
+                        className="relative w-24 h-24 rounded-2xl overflow-hidden border border-amber-500/40 group animate-pulse-subtle bg-slate-900/50"
+                      >
+                        <img
+                          src={photo.preview}
+                          alt="Pending"
+                          className="w-full h-full object-cover opacity-60"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-[8px] font-bold text-amber-400 bg-slate-950/80 px-2 py-1 rounded-full border border-amber-500/30">
+                            PENDING
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handlePendingPhotoDelete(idx)}
+                          className="absolute top-1 right-1 p-1.5 bg-rose-500/90 hover:bg-rose-600 rounded-lg text-white opacity-0 group-hover:opacity-100 transition-all transform hover:scale-110"
+                        >
+                          <XMarkIcon className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+
+                    {uploadedPhotos.length + pendingPhotos.length < 5 && (
                       <label className="w-24 h-24 rounded-2xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center cursor-pointer hover:border-purple-500/50 transition-all bg-slate-900/50">
                         <input
                           type="file"
@@ -1532,7 +1618,7 @@ export default function RegisterPage() {
                       {horoscopeImage ? (
                         <div className="relative w-48 h-64 rounded-2xl overflow-hidden border border-amber-500/20 group">
                           <img
-                            src={horoscopeImage}
+                            src={getImageUrl(horoscopeImage)}
                             alt="Horoscope"
                             className="w-full h-full object-cover"
                           />

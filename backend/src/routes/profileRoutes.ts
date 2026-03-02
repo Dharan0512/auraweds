@@ -10,8 +10,10 @@ import {
   getDraft,
   getOtherProfile,
   updatePrivacySettings,
+  searchProfiles,
 } from "../controllers/profileController";
 import { protect } from "../middlewares/authMiddleware";
+import { searchFilterGating } from "../middlewares/subscriptionMiddleware";
 import { upload } from "../middlewares/uploadMiddleware";
 
 const router = Router();
@@ -26,6 +28,7 @@ router.post("/horoscope", protect, upload.single("horoscope"), uploadHoroscope);
 router.delete("/horoscope", protect, deleteHoroscope);
 
 router.get("/user/:id", protect, getOtherProfile);
+router.get("/search", protect, searchFilterGating, searchProfiles);
 router.patch("/privacy", protect, updatePrivacySettings);
 
 export default router;

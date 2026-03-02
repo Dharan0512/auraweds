@@ -41,6 +41,10 @@ app.use("/api/profile", profileRoutes);
 import matchRoutes from "./routes/matchRoutes";
 app.use("/api/matches", matchRoutes);
 
+// Interest Routes
+import interestRoutes from "./routes/interestRoutes";
+app.use("/api/interests", interestRoutes);
+
 // Subscription Routes
 import subscriptionRoutes from "./routes/subscriptionRoutes";
 app.use("/api/subscription", subscriptionRoutes);
