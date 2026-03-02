@@ -14,7 +14,11 @@ export const profileSerializer = {
   /**
    * Formats a user and their related profile/preferences for match lists and profile views.
    */
-  toPublicProfile: (profile: any) => {
+  toPublicProfile: (
+    profile: any,
+    hasSentInterest: boolean = false,
+    includeContact: boolean = false,
+  ) => {
     // If handle is a Sequelize instance, we can extract models
     const user = (profile as any).User as User;
 
@@ -32,6 +36,9 @@ export const profileSerializer = {
         dob: profile.dob || "",
         religion: religionName,
         location: cityName,
+        // Disclose contact info only if explicitly requested (Gold users with accepted interest)
+        mobile: includeContact ? user?.mobile : undefined,
+        email: includeContact ? user?.email : undefined,
       },
       professionalInfo: {
         education: educationName,
@@ -45,6 +52,7 @@ export const profileSerializer = {
         drink: profile.drink,
       },
       matchScore: Math.floor(Math.random() * (98 - 75 + 1) + 75), // Future: Implement real algorithm
+      hasSentInterest: hasSentInterest || !!(profile as any).hasSentInterest,
     };
   },
 };

@@ -59,4 +59,8 @@ export const profileService = {
     });
     return response.data;
   },
+  sendInterest: async (targetUserId: string | number) => {
+    const response = await apiClient.post("/interests/send", { targetUserId });
+    return response.data;
+  },
 };

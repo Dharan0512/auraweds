@@ -57,8 +57,8 @@
 /* Hero Section */
 .profile-hero {
   position: relative;
-  height: 350px;
-  min-height: 350px;
+  height: 250px;
+  min-height: 250px;
   overflow: hidden;
 }
 
@@ -112,6 +112,52 @@
   letter-spacing: 0.05em;
   text-transform: uppercase;
   border: 1px solid rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+/* Hero Overlay Actions */
+.hero-action-overlay {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  display: flex;
+  gap: 12px;
+  z-index: 20;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.profile-hero:hover .hero-action-overlay {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hero-action-btn {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.hero-action-btn:hover {
+  background: white;
+  color: #0f172a;
+  transform: scale(1.1);
+  border-color: white;
+}
+
+.hero-action-btn.delete:hover {
+  background: #f43f5e;
+  border-color: #f43f5e;
   color: white;
 }
 
@@ -208,7 +254,7 @@
   font-weight: 600;
 }
 
-/* Photo Gallery */
+/* Photo Gallery Enhancements */
 .photo-gallery {
   display: flex;
   gap: 16px;
@@ -224,13 +270,79 @@
   overflow: hidden;
   position: relative;
   cursor: pointer;
-  border: 2px solid transparent;
+  border: 1px solid rgba(255, 255, 255, 0.05);
   transition: all 0.3s ease;
+  background: rgba(15, 23, 42, 0.4);
 }
 
 .gallery-item:hover {
   border-color: #d4af37;
   transform: translateY(-4px);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.gallery-item-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.gallery-item:hover .gallery-item-overlay {
+  opacity: 1;
+}
+
+.action-btn {
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  width: 100px;
+  justify-content: center;
+}
+
+.action-btn-preview {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.action-btn-preview:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.action-btn-edit {
+  background: rgba(212, 175, 55, 0.2);
+  color: #d4af37;
+  border-color: rgba(212, 175, 55, 0.3);
+}
+
+.action-btn-edit:hover {
+  background: rgba(212, 175, 55, 0.3);
+}
+
+.action-btn-delete {
+  background: rgba(244, 63, 94, 0.1);
+  color: #f43f5e;
+  border-color: rgba(244, 63, 94, 0.2);
+}
+
+.action-btn-delete:hover {
+  background: rgba(244, 63, 94, 0.2);
 }
 
 .gallery-item img {
@@ -239,35 +351,42 @@
   object-fit: cover;
 }
 
-.delete-photo-btn {
-  position: absolute;
-  bottom: 8px;
-  right: 8px;
-  background: rgba(255, 255, 255, 0.9);
-  color: #ff4d4d;
-  border: none;
-  border-radius: 8px;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  opacity: 0;
-  transform: translateY(4px);
+/* Horoscope Chart Enhancements */
+.horoscope-chart-container {
+  position: relative;
+  max-width: 450px;
+  margin: 0 auto;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.5);
 }
 
-.gallery-item:hover .delete-photo-btn {
+.horoscope-chart-overlay {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  gap: 8px;
+  z-index: 20;
+  opacity: 0;
+  transition: all 0.3s ease;
+  transform: translateY(-10px);
+}
+
+.horoscope-chart-container:hover .horoscope-chart-overlay {
   opacity: 1;
   transform: translateY(0);
 }
 
-.delete-photo-btn:hover {
-  background: #ff4d4d;
-  color: white;
-  transform: scale(1.1) !important;
+.horoscope-chart-image {
+  width: 100%;
+  display: block;
+  transition: transform 0.5s ease;
+}
+
+.horoscope-chart-container:hover .horoscope-chart-image {
+  transform: scale(1.02);
 }
 
 .add-photo-btn {

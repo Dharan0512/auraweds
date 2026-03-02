@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import {
   Heart,
   Send,
@@ -22,7 +23,7 @@ import PremiumSelect from "@/components/ui/PremiumSelect";
 import MatchCardSkeleton from "@/components/ui/MatchCardSkeleton";
 import ProfileModal from "@/components/ui/ProfileModal";
 
-type TabType = "received" | "sent" | "accepted" | "declined";
+type TabType = "received" | "sent" | "accepted" | "declined" | "blocked";
 
 const FILTER_OPTIONS = [
   { id: "newest", name: "Newest First" },
@@ -79,11 +80,17 @@ export default function InterestsPage() {
     action: "accepted" | "rejected",
   ) => {
     try {
-      if (action === "accepted") {
-        await interestService.accept(id);
-      } else {
-        await interestService.decline(id);
-      }
+      const promise =
+        action === "accepted"
+          ? interestService.accept(id)
+          : interestService.decline(id);
+      toast.promise(promise, {
+        loading: action === "accepted" ? "Accepting..." : "Declining...",
+        success:
+          action === "accepted" ? "Interest accepted!" : "Interest declined",
+        error: `Failed to ${action} interest.`,
+      });
+      await promise;
       fetchData();
     } catch (error) {
       console.error("Action error:", error);
@@ -91,24 +98,126 @@ export default function InterestsPage() {
   };
 
   const handleWithdraw = async (id: string | number) => {
-    if (!window.confirm("Are you sure you want to withdraw this interest?"))
-      return;
-    try {
-      await interestService.withdraw(id);
-      fetchData();
-    } catch (error) {
-      console.error("Withdraw error:", error);
-    }
+    toast(
+      (t) => (
+        <div className="flex flex-col gap-3 p-1">
+          <p className="text-sm font-semibold text-slate-200">
+            Are you sure you want to withdraw this interest?
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-3 py-1 text-xs text-slate-400 hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={async () => {
+                toast.dismiss(t.id);
+                try {
+                  const promise = interestService.withdraw(id);
+                  toast.promise(promise, {
+                    loading: "Withdrawing...",
+                    success: "Interest withdrawn",
+                    error: "Failed to withdraw",
+                  });
+                  await promise;
+                  fetchData();
+                } catch (e) {
+                  console.error(e);
+                }
+              }}
+              className="px-3 py-1 bg-rose-500/20 hover:bg-rose-500/40 text-rose-400 border border-rose-500/30 rounded-lg text-xs font-bold transition-all"
+            >
+              Withdraw
+            </button>
+          </div>
+        </div>
+      ),
+      { duration: 5000 },
+    );
+  };
+
+  const handleBlock = async (id: string | number) => {
+    toast(
+      (t) => (
+        <div className="flex flex-col gap-3 p-1">
+          <p className="text-sm font-semibold text-slate-200">
+            Block this profile? They will be moved to your blocked list.
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-3 py-1 text-xs text-slate-400 hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={async () => {
+                toast.dismiss(t.id);
+                try {
+                  const promise = interestService.blockInterest(id);
+                  toast.promise(promise, {
+                    loading: "Blocking...",
+                    success: "User blocked",
+                    error: "Failed to block user",
+                  });
+                  await promise;
+                  fetchData();
+                } catch (e) {
+                  console.error(e);
+                }
+              }}
+              className="px-3 py-1 bg-red-500/20 hover:bg-red-500/40 text-red-400 border border-red-500/30 rounded-lg text-xs font-bold transition-all"
+            >
+              Block
+            </button>
+          </div>
+        </div>
+      ),
+      { duration: 5000 },
+    );
   };
 
   const handleRemove = async (id: string | number) => {
-    if (!window.confirm("Remove this interest from your list?")) return;
-    try {
-      await interestService.remove(id);
-      fetchData();
-    } catch (error) {
-      console.error("Remove error:", error);
-    }
+    toast(
+      (t) => (
+        <div className="flex flex-col gap-3 p-1">
+          <p className="text-sm font-semibold text-slate-200">
+            Remove this interest from your list?
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-3 py-1 text-xs text-slate-400 hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={async () => {
+                toast.dismiss(t.id);
+                try {
+                  const promise = interestService.remove(id);
+                  toast.promise(promise, {
+                    loading: "Removing...",
+                    success: "Interest removed",
+                    error: "Failed to remove",
+                  });
+                  await promise;
+                  fetchData();
+                } catch (e) {
+                  console.error(e);
+                }
+              }}
+              className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-xs font-bold transition-all"
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+      ),
+      { duration: 5000 },
+    );
   };
 
   const handleViewProfile = (
@@ -136,6 +245,12 @@ export default function InterestsPage() {
       label: "Declined",
       icon: XCircle,
       count: counts.declined,
+    },
+    {
+      id: "blocked",
+      label: "Blocked",
+      icon: XCircle, // Fallback icon
+      count: 0, // Simplified for now
     },
   ];
 
@@ -268,14 +383,36 @@ export default function InterestsPage() {
                       interest={interest}
                       type={activeTab === "declined" ? "rejected" : activeTab}
                       userTier={userTier}
-                      onAction={handleAction}
                       onWithdraw={handleWithdraw}
                       onRemove={handleRemove}
+                      onBlock={handleBlock}
                       onViewProfile={(uid) =>
                         handleViewProfile(uid, interest.id)
                       }
-                      onMessage={() => alert("Chat coming soon!")}
-                      onContact={() => alert("Contact view requires Gold!")}
+                      onMessage={() => toast.success("Chat coming soon!")}
+                      onContact={async (uid) => {
+                        const currentInterest = interests.find(
+                          (i) => i.profile.userId === uid,
+                        );
+                        const mobile =
+                          currentInterest?.profile?.basicDetails?.mobile;
+                        const firstName =
+                          currentInterest?.profile?.basicDetails?.firstName ||
+                          "U***";
+
+                        if (mobile) {
+                          // Success case: notify user as well
+                          await interestService.notifyCall(uid);
+                          window.location.href = `tel:${mobile}`;
+                        } else {
+                          // Failure case (not mutual/premium): notify user and show connection wish
+                          await interestService.notifyCall(uid);
+                          toast.error(
+                            `Profile ${firstName} wants to connect with you. (Upgrade to Gold to view contact)`,
+                            { duration: 5000 },
+                          );
+                        }
+                      }}
                     />
                   ))}
                 </div>

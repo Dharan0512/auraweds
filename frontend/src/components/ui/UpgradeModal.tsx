@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import {
   subscriptionService,
   SubscriptionStatusResponse,
@@ -21,7 +22,7 @@ export default function UpgradeModal({
   onSuccess,
 }: UpgradeModalProps) {
   const [duration, setDuration] = useState<Duration>("6M");
-  const [loading, setLoading] = useState(false);
+  const [loadingTier, setLoadingTier] = useState<string | null>(null);
   const [status, setStatus] = useState<SubscriptionStatusResponse | null>(null);
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [waitlistSent, setWaitlistSent] = useState(false);
@@ -45,7 +46,7 @@ export default function UpgradeModal({
 
   const PRICING = {
     Free: { "3M": 0, "6M": 0, "12M": 0 },
-    Silver: { "3M": 3499, "6M": 5999, "12M": 9999 },
+    Silver: { "3M": 3499, "6M": 5000, "12M": 9999 },
     Gold: { "3M": 8000, "6M": 14000, "12M": 24000 },
     EliteGold: { "3M": 50000, "6M": 90000, "12M": 150000 },
   };
@@ -98,17 +99,76 @@ export default function UpgradeModal({
     return { label: `Select ${tier}`, type: "primary" };
   };
 
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handleUpgrade = async (tier: "Silver" | "Gold" | "EliteGold") => {
     try {
-      setLoading(true);
+      setLoadingTier(tier);
       const planKey = `${tier}-${duration}`;
-      const res = await subscriptionService.purchase(planKey);
-      onSuccess(res.tier);
+
+      // 1. Load Razorpay Script
+      const isLoaded = await loadRazorpayScript();
+      if (!isLoaded) {
+        toast.error(
+          "Failed to load payment gateway. Please check your connection.",
+        );
+        return;
+      }
+
+      // 2. Create Order on Backend
+      const orderData = await subscriptionService.createOrder(planKey);
+
+      // 3. Open Razorpay Checkout
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "AuraWeds",
+        description: `${tier} Membership (${duration})`,
+        order_id: orderData.orderId,
+        handler: async (response: any) => {
+          try {
+            setLoadingTier(tier);
+            const verifyRes = await subscriptionService.verifyPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              planKey,
+            });
+            toast.success(verifyRes.message);
+            onSuccess(verifyRes.tier);
+          } catch (error) {
+            console.error("Verification error:", error);
+            toast.error("Payment verification failed. Please contact support.");
+          } finally {
+            setLoadingTier(null);
+          }
+        },
+        prefill: {
+          name: "", // Can add user name if available
+          email: "", // Can add user email if available
+        },
+        theme: {
+          color: "#D4AF37",
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
     } catch (error) {
       console.error("Upgrade error:", error);
-      alert("Payment failed. Please try again.");
+      toast.error("Failed to initiate payment. Please try again.");
     } finally {
-      setLoading(false);
+      setLoadingTier(null);
     }
   };
 
@@ -116,13 +176,13 @@ export default function UpgradeModal({
     e.preventDefault();
     if (!waitlistEmail) return;
     try {
-      setLoading(true);
+      setLoadingTier("Elite Gold");
       await subscriptionService.joinWaitlist(waitlistEmail, "Elite Gold");
       setWaitlistSent(true);
     } catch (error) {
       console.error(error);
     } finally {
-      setLoading(false);
+      setLoadingTier(null);
     }
   };
 
@@ -200,10 +260,17 @@ export default function UpgradeModal({
                 isPremium={false}
               />
 
-              {/* Silver Plan */}
+              {/* Silver / Early Bird Plan */}
               <PlanCard
-                name="Silver"
-                icon={<Shield size={20} className="text-slate-400" />}
+                name={duration === "6M" ? "Early Bird Access" : "Silver"}
+                icon={
+                  <Shield
+                    size={20}
+                    className={
+                      duration === "6M" ? "text-[#D4AF37]" : "text-slate-400"
+                    }
+                  />
+                }
                 price={PRICING.Silver[duration].toLocaleString()}
                 period={duration}
                 features={[
@@ -216,7 +283,10 @@ export default function UpgradeModal({
                 status={getButtonProps("Silver")}
                 isPremium={true}
                 onSelect={() => handleUpgrade("Silver")}
-                loading={loading}
+                loading={loadingTier === "Silver"}
+                highlight={duration === "6M"}
+                badge={duration === "6M" ? "Limited Period Only" : undefined}
+                eliteTheme={duration === "6M"}
               />
 
               {/* Gold Plan */}
@@ -231,14 +301,13 @@ export default function UpgradeModal({
                   "Everything in Silver+",
                   "Priority Search Ranking",
                   "Profile Highlight",
-                  "Monthly Email Blast",
-                  "Direct Messenger",
+                  "Direct Messenger (Coming Soon)",
                 ]}
                 status={getButtonProps("Gold")}
                 isPremium={true}
-                highlight
+                highlight={duration !== "6M"}
                 onSelect={() => handleUpgrade("Gold")}
-                loading={loading}
+                loading={loadingTier === "Gold"}
               />
 
               {/* Elite Gold Plan */}
@@ -289,10 +358,12 @@ export default function UpgradeModal({
                       />
                       <button
                         type="submit"
-                        disabled={loading || !waitlistEmail}
+                        disabled={!!loadingTier || !waitlistEmail}
                         className="w-full py-4 rounded-2xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-purple-900/20"
                       >
-                        {loading ? "..." : "Join VIP Waitlist"}
+                        {loadingTier === "Elite Gold"
+                          ? "..."
+                          : "Join VIP Waitlist"}
                       </button>
                     </div>
                   </form>
@@ -323,6 +394,8 @@ interface PlanCardProps {
   highlight?: boolean;
   onSelect?: () => void;
   loading?: boolean;
+  badge?: string;
+  eliteTheme?: boolean;
 }
 
 function PlanCard({
@@ -336,18 +409,22 @@ function PlanCard({
   highlight,
   onSelect,
   loading,
+  badge,
+  eliteTheme,
 }: PlanCardProps) {
   return (
     <div
       className={`relative p-8 rounded-[2.5rem] flex flex-col transition-all duration-500 group ${
-        highlight
-          ? "bg-slate-900 border-2 border-[#D4AF37] shadow-[0_20px_50px_rgba(212,175,55,0.1)] scale-105 z-10"
-          : "bg-slate-800/30 border border-white/5 hover:border-white/10"
+        eliteTheme
+          ? "bg-gradient-to-br from-slate-900 via-slate-950 to-[#D4AF37]/10 border-2 border-[#D4AF37] shadow-[0_20px_50px_rgba(212,175,55,0.2)] scale-105 z-10"
+          : highlight
+            ? "bg-slate-900 border-2 border-[#D4AF37] shadow-[0_20px_50px_rgba(212,175,55,0.1)] scale-105 z-10"
+            : "bg-slate-800/30 border border-white/5 hover:border-white/10"
       }`}
     >
-      {highlight && (
-        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 px-4 py-1 rounded-full text-[10px] font-black tracking-widest uppercase shadow-xl">
-          Recommended
+      {(highlight || eliteTheme) && (
+        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 px-4 py-1 rounded-full text-[10px] font-black tracking-widest uppercase shadow-xl whitespace-nowrap">
+          {badge || "Recommended"}
         </div>
       )}
 
@@ -368,11 +445,13 @@ function PlanCard({
             / {period}
           </span>
         </div>
-        {status.discount && status.discount > 0 && (
-          <div className="mt-2 text-emerald-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
-            <Sparkles size={12} /> Prorated Discount Applied
-          </div>
-        )}
+        {status.discount
+          ? status.discount > 0 && (
+              <div className="mt-2 text-emerald-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                <Sparkles size={12} /> Prorated Discount Applied
+              </div>
+            )
+          : null}
       </div>
 
       <ul className="space-y-4 mb-10 flex-1">

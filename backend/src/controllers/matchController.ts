@@ -49,9 +49,25 @@ export const getDailyMatches = async (
       order: [["createdAt", "DESC"]],
     });
 
+    // 2. Fetch interests for these profiles to mark 'hasSentInterest'
+    const targetUserIds = matches.map((p) => p.userId);
+    const existingInterests = await Interest.findAll({
+      where: {
+        senderId: req.user.id,
+        receiverId: { [Op.in]: targetUserIds },
+        status: { [Op.ne]: "WITHDRAWN" },
+      },
+      attributes: ["receiverId"],
+    });
+
+    const sentInterestSet = new Set(existingInterests.map((i) => i.receiverId));
+
     // Discover matches using serializer to unify response
     const matchesWithScores = (matches as any).map((match: any) =>
-      profileSerializer.toPublicProfile(match),
+      profileSerializer.toPublicProfile(
+        match,
+        sentInterestSet.has(match.userId),
+      ),
     );
 
     res

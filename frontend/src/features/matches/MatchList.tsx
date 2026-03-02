@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { interestService, Interest } from "@/services/interestService";
 import { User, Check, X } from "lucide-react";
+import toast from "react-hot-toast";
 import { getImageUrl, calculateAge } from "@/lib/utils";
 
 export default function MatchList() {
@@ -19,9 +20,9 @@ export default function MatchList() {
     mutationFn: (id: string | number) => interestService.accept(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["interests", "received"] });
-      alert("Interest accepted! You can now chat with them.");
+      toast.success("Interest accepted! You can now chat with them.");
     },
-    onError: () => alert("Failed to accept interest."),
+    onError: () => toast.error("Failed to accept interest."),
   });
 
   // Decline Mutation

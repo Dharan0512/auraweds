@@ -7,8 +7,23 @@ import { useAuth } from "@/hooks/useAuth";
 import { fetchApi } from "@/lib/api";
 import { MasterDataProvider } from "@/context/MasterDataContext";
 import ProfileModal from "@/components/ui/ProfileModal";
-import { User, LogOut } from "lucide-react";
+import {
+  User,
+  LogOut,
+  Users,
+  Search as SearchIcon,
+  Star,
+  MessageSquare,
+  Infinity as InfinityIcon,
+  Sparkles,
+} from "lucide-react";
+import NotificationBell from "@/components/notifications/NotificationBell";
 import { getImageUrl } from "@/lib/utils";
+import UpgradeModal from "@/components/ui/UpgradeModal";
+import {
+  subscriptionService,
+  SubscriptionStatusResponse,
+} from "@/services/subscriptionService";
 
 export default function PlatformLayout({
   children,
@@ -18,6 +33,10 @@ export default function PlatformLayout({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [profile, setProfile] = useState<any>(null);
+  const [subStatus, setSubStatus] = useState<SubscriptionStatusResponse | null>(
+    null,
+  );
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { logout } = useAuth();
   const pathname = usePathname();
@@ -43,7 +62,18 @@ export default function PlatformLayout({
         // Silent fail
       }
     };
+
+    const fetchSubStatus = async () => {
+      try {
+        const data = await subscriptionService.getStatus();
+        setSubStatus(data);
+      } catch (err) {
+        console.error("Failed to fetch sub status", err);
+      }
+    };
+
     getProfile();
+    fetchSubStatus();
 
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -68,9 +98,13 @@ export default function PlatformLayout({
                 <div className="flex-shrink-0 flex items-center">
                   <Link
                     href="/dashboard"
-                    className="text-3xl font-serif font-bold tracking-tight bg-gradient-to-r from-white via-white to-[#D4AF37] bg-clip-text text-transparent hover:scale-105 transition-transform duration-300"
+                    className="hover:scale-105 transition-transform duration-300"
                   >
-                    Aura<span className="text-[#D4AF37]">Weds</span>
+                    <img
+                      src="/auraWedsLogo.png"
+                      alt="AuraWeds"
+                      className="h-16 w-auto object-contain"
+                    />
                   </Link>
                 </div>
                 <div className="hidden sm:ml-10 sm:flex sm:space-x-10">
@@ -80,8 +114,11 @@ export default function PlatformLayout({
                       isActive("/dashboard")
                         ? "border-[#D4AF37] text-white"
                         : "border-transparent text-slate-400 hover:text-white hover:border-white/20"
-                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-semibold tracking-wide transition-all duration-300`}
+                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-semibold tracking-wide transition-all duration-300 gap-2 group`}
                   >
+                    <InfinityIcon
+                      className={`w-4 h-4 ${isActive("/dashboard") ? "text-[#D4AF37]" : "text-slate-500 group-hover:text-purple-400"} transition-colors`}
+                    />
                     Matches
                   </Link>
                   <Link
@@ -90,8 +127,11 @@ export default function PlatformLayout({
                       isActive("/search")
                         ? "border-[#D4AF37] text-white"
                         : "border-transparent text-slate-400 hover:text-white hover:border-white/20"
-                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-300`}
+                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-300 gap-2 group`}
                   >
+                    <SearchIcon
+                      className={`w-4 h-4 ${isActive("/search") ? "text-[#D4AF37]" : "text-slate-500 group-hover:text-purple-400"} transition-colors`}
+                    />
                     Search
                   </Link>
                   <Link
@@ -100,8 +140,11 @@ export default function PlatformLayout({
                       isActive("/interests")
                         ? "border-[#D4AF37] text-white"
                         : "border-transparent text-slate-400 hover:text-white hover:border-white/20"
-                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-300`}
+                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-300 gap-2 group`}
                   >
+                    <Star
+                      className={`w-4 h-4 ${isActive("/interests") ? "text-[#D4AF37]" : "text-slate-500 group-hover:text-purple-400"} transition-colors`}
+                    />
                     Interests
                   </Link>
                   <Link
@@ -110,17 +153,32 @@ export default function PlatformLayout({
                       isActive("/chat")
                         ? "border-[#D4AF37] text-white"
                         : "border-transparent text-slate-400 hover:text-white hover:border-white/20"
-                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-300`}
+                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-300 gap-2 group`}
                   >
+                    <MessageSquare
+                      className={`w-4 h-4 ${isActive("/chat") ? "text-[#D4AF37]" : "text-slate-500 group-hover:text-purple-400"} transition-colors`}
+                    />
                     Messages
                   </Link>
                 </div>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-6">
-                <button className="relative group overflow-hidden bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300 hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:scale-105 active:scale-95">
-                  <span className="relative z-10">Upgrade to Gold</span>
-                  <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12" />
-                </button>
+                {(subStatus?.tier === "Free" ||
+                  subStatus?.tier === "Silver") && (
+                  <button
+                    onClick={() => setIsUpgradeModalOpen(true)}
+                    className="relative group overflow-hidden bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300 hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:scale-105 active:scale-95"
+                  >
+                    <span className="relative z-10">
+                      {subStatus?.tier === "Free"
+                        ? "Upgrade to Silver"
+                        : "Upgrade to Gold"}
+                    </span>
+                    <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12" />
+                  </button>
+                )}
+
+                <NotificationBell />
 
                 {/* Profile dropdown */}
                 <div className="ml-3 relative" ref={dropdownRef}>
@@ -199,6 +257,16 @@ export default function PlatformLayout({
         <ProfileModal
           isOpen={isProfileModalOpen}
           onClose={() => setIsProfileModalOpen(false)}
+        />
+
+        <UpgradeModal
+          isOpen={isUpgradeModalOpen}
+          onClose={() => setIsUpgradeModalOpen(false)}
+          onSuccess={(tier) => {
+            setIsUpgradeModalOpen(false);
+            // Refresh status
+            subscriptionService.getStatus().then(setSubStatus);
+          }}
         />
       </div>
     </MasterDataProvider>

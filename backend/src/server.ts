@@ -57,6 +57,10 @@ app.use("/api/master", masterRoutes);
 import moderationRoutes from "./routes/moderationRoutes";
 app.use("/api/moderation", moderationRoutes);
 
+// Notification Routes
+import notificationRoutes from "./routes/notificationRoutes";
+app.use("/api/notifications", notificationRoutes);
+
 import { seedMasterData } from "./config/masterSeeder";
 
 const startServer = async () => {

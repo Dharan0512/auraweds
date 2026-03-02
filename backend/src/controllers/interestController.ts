@@ -14,6 +14,7 @@ import {
 } from "../models/sequelize";
 import { Op } from "sequelize";
 import { profileSerializer } from "../serializers/profileSerializer";
+import { Notification } from "../models/sequelize/Notification";
 
 /**
  * GET /api/interests?type=received|sent|accepted|declined
@@ -136,6 +137,14 @@ export const getInterests = async (
       order: [["createdAt", "DESC"]], // basic sorting, premium sorting done in JS for now or complex SQL literal
     });
 
+    // 2. Fetch requester's subscription tier
+    const mySub = await Subscription.findOne({
+      where: { userId: req.user.id, status: "active" },
+      include: [Plan],
+    });
+    const myTier = mySub?.Plan?.name || "Free";
+    const isGoldRequester = myTier === "Gold" || myTier === "Elite Gold";
+
     const formattedInterests = (interests as any[]).map((interest: any) => {
       const otherUser =
         type === "sent"
@@ -147,16 +156,24 @@ export const getInterests = async (
               : interest.Sender;
       const otherProfile = otherUser?.UserProfile;
 
+      // Disclose contact info if requester is Gold and interest is ACCEPTED
+      const shouldDiscloseContact =
+        isGoldRequester && interest.status === "ACCEPTED";
+
       return {
         id: interest.id,
         status: interest.status,
         createdAt: interest.createdAt,
         viewedAt: interest.viewedAt,
         profile: otherProfile
-          ? profileSerializer.toPublicProfile({
-              ...otherProfile.toJSON(),
-              User: otherUser,
-            })
+          ? profileSerializer.toPublicProfile(
+              {
+                ...otherProfile.toJSON(),
+                User: otherUser,
+              },
+              false, // hasSentInterest - already known since it's an interest record
+              shouldDiscloseContact,
+            )
           : null,
         isPremium: !!otherUser?.Subscriptions?.length,
       };
@@ -195,27 +212,38 @@ export const expressInterest = async (
       return;
     }
 
-    const { receiverId } = req.body;
+    const { receiverId, targetUserId: bodyTargetId } = req.body;
     const senderId = req.user.id;
-    const targetUserId = parseInt(receiverId, 10);
+    const targetUserId = parseInt(bodyTargetId || receiverId, 10);
+
+    if (isNaN(targetUserId)) {
+      res.status(400).json({ message: "Invalid target user ID" });
+      return;
+    }
 
     if (senderId === targetUserId) {
       res.status(400).json({ message: "Cannot send to self" });
       return;
     }
 
-    // 1. Check existing pending interest
+    // 1. Check existing interest (any status)
     const existing = await Interest.findOne({
       where: {
         senderId,
         receiverId: targetUserId,
-        status: "PENDING",
       },
     });
 
     if (existing) {
-      res.status(400).json({ message: "Interest already pending" });
-      return;
+      if (existing.status === "PENDING") {
+        res.status(400).json({ message: "Interest already pending" });
+        return;
+      }
+      if (existing.status === "ACCEPTED") {
+        res.status(400).json({ message: "Already connected with this user" });
+        return;
+      }
+      // If WITHDRAWN, DECLINED, or EXPIRED, we allow "re-sending"
     }
 
     // 2. Check monetization limits
@@ -248,12 +276,22 @@ export const expressInterest = async (
       }
     }
 
-    // 3. Create record
-    const interest = await Interest.create({
-      senderId,
-      receiverId: targetUserId,
-      status: "PENDING",
-    });
+    // 3. Create or Update record
+    let interest;
+    if (existing) {
+      existing.status = "PENDING";
+      existing.viewedAt = undefined; // Reset viewed status
+      // We might want to update createdAt to "now" so it appears at top of received list
+      // existing.setDataValue('createdAt', new Date());
+      await existing.save();
+      interest = existing;
+    } else {
+      interest = await Interest.create({
+        senderId,
+        receiverId: targetUserId,
+        status: "PENDING",
+      });
+    }
 
     // Handle future real-time notification here (e.g., io.to(targetUserId).emit('new_interest'))
 
@@ -499,5 +537,98 @@ export const markViewed = async (
   } catch (error) {
     console.error("Mark interest as viewed error:", error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+/**
+ * PATCH /api/interests/:id/block
+ */
+export const blockInterest = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: "Not authorized" });
+      return;
+    }
+
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const interest = await Interest.findOne({
+      where: {
+        id,
+        [Op.or]: [{ senderId: userId }, { receiverId: userId }],
+      },
+    });
+
+    if (!interest) {
+      res.status(404).json({ message: "Interest not found" });
+      return;
+    }
+
+    interest.status = "BLOCKED";
+    await interest.save();
+
+    res.status(200).json({ message: "User blocked successfully", interest });
+  } catch (error) {
+    console.error("Block interest error:", error);
+    res.status(500).json({ message: "Server error blocking user" });
+  }
+};
+
+/**
+ * POST /api/interests/notify-call
+ */
+export const notifyCall = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: "Not authorized" });
+      return;
+    }
+
+    const { targetUserId } = req.body;
+    const sender = await User.findByPk(req.user.id);
+
+    if (!sender) {
+      res.status(404).json({ message: "Sender not found" });
+      return;
+    }
+
+    // Check recipient's subscription tier
+    const recipientSub = await Subscription.findOne({
+      where: { userId: targetUserId, status: "active" },
+      include: [Plan],
+    });
+
+    const recipientTier = recipientSub?.Plan?.name || "Free";
+    const isPremiumRecipient =
+      recipientTier === "Silver" ||
+      recipientTier === "Gold" ||
+      recipientTier === "Elite Gold";
+
+    // Only notify if recipient is NOT premium
+    if (!isPremiumRecipient) {
+      const userName = `${sender.firstName} ${sender.lastName || ""}`.trim();
+      await Notification.create({
+        userId: targetUserId,
+        senderId: req.user.id,
+        type: "CALL_ATTEMPT",
+        message: `Profile ${userName} tried to call you.`,
+      });
+    }
+
+    res.status(200).json({
+      message: isPremiumRecipient
+        ? "Recipient is premium, skipping notification"
+        : "Notification sent successfully",
+    });
+  } catch (error) {
+    console.error("Notify call error:", error);
+    res.status(500).json({ message: "Server error sending notification" });
   }
 };

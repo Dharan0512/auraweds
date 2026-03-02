@@ -23,6 +23,10 @@ import {
   LocationLifestyle,
   EducationCareer,
   Badge,
+  Subscription,
+  Plan,
+  Interest,
+  ProfileView,
 } from "../models/sequelize";
 import { sequelize } from "../config/db.postgres";
 import { profileSerializer } from "../serializers/profileSerializer";
@@ -522,8 +526,37 @@ export const getOtherProfile = async (
       return;
     }
 
+    // 0. Check for mutual accepted interest and tier for contact disclosure
+    let includeContact = false;
+    if (req.user) {
+      const mutualInterest = await Interest.findOne({
+        where: {
+          status: "ACCEPTED",
+          [Op.or]: [
+            { senderId: req.user.id, receiverId: parsedId },
+            { senderId: parsedId, receiverId: req.user.id },
+          ],
+        },
+      });
+
+      if (mutualInterest) {
+        const sub = await Subscription.findOne({
+          where: { userId: req.user.id, status: "active" },
+          include: [Plan],
+        });
+        const tier = sub?.Plan?.name || "Free";
+        if (tier === "Gold" || tier === "Elite Gold") {
+          includeContact = true;
+        }
+      }
+    }
+
     const user = await User.findByPk(parsedId, {
-      attributes: { exclude: ["password", "email", "mobile", "countryCodeId"] }, // Protect PII
+      attributes: {
+        exclude: includeContact
+          ? ["password", "countryCodeId"]
+          : ["password", "email", "mobile", "countryCodeId"],
+      }, // Protect PII conditionally
     });
 
     if (!user) {
@@ -636,7 +669,11 @@ export const getOtherProfile = async (
 
     res.status(200).json({
       user,
-      profile: safeProfile,
+      profile: profileSerializer.toPublicProfile(
+        { ...safeProfile, User: user },
+        false,
+        includeContact,
+      ),
       photos: userPhotos.map((p) => ({ id: p.id, url: p.url })),
       privacySettings: privacy, // Optional: for frontend to know what it is allowed to show functionally (e.g for "showAstroMatch")
     });
@@ -810,9 +847,9 @@ export const searchProfiles = async (
 
     let order: any = [["createdAt", "DESC"]];
     if (sort === "recentlyJoined") order = [["createdAt", "DESC"]];
-    if (sort === "recentlyActive") order = [["updatedAt", "DESC"]]; // Simple fallback for recently active
+    if (sort === "recentlyActive") order = [["updatedAt", "DESC"]];
     if (sort === "profileScore") order = [["profileStrength", "DESC"]];
-    if (sort === "mostCompatible") order = [["matchScore", "DESC"]]; // Fallback to matchScore
+    if (sort === "mostCompatible") order = [["matchScore", "DESC"]];
 
     const includes: any[] = [
       {
@@ -867,8 +904,21 @@ export const searchProfiles = async (
       limit: 50,
     });
 
+    // 2. Fetch interests for these profiles to mark 'hasSentInterest'
+    const targetUserIds = results.map((p) => p.userId);
+    const existingInterests = await Interest.findAll({
+      where: {
+        senderId: req.user.id,
+        receiverId: { [Op.in]: targetUserIds },
+        status: { [Op.ne]: "WITHDRAWN" }, // Withdrawn ones can be re-sent, so we don't mark as 'Sent'
+      },
+      attributes: ["receiverId"],
+    });
+
+    const sentInterestSet = new Set(existingInterests.map((i) => i.receiverId));
+
     const serializedResults = results.map((p) =>
-      profileSerializer.toPublicProfile(p),
+      profileSerializer.toPublicProfile(p, sentInterestSet.has(p.userId)),
     );
 
     res.status(200).json({
@@ -878,5 +928,66 @@ export const searchProfiles = async (
   } catch (error) {
     console.error("Search profiles error:", error);
     res.status(500).json({ message: "Server error searching profiles" });
+  }
+};
+
+export const getViewers = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: "Not authorized" });
+      return;
+    }
+
+    const userId = req.user.id;
+
+    // Gate by Silver+ tier
+    const sub = await Subscription.findOne({
+      where: { userId, status: "active" },
+      include: [Plan],
+    });
+    const tier = sub?.Plan?.name || "Free";
+    if (tier === "Free") {
+      res.status(403).json({
+        message:
+          "Viewing who viewed your profile is a Premium feature. Upgrade to Silver or higher to see!",
+        upgradeRequired: "Silver",
+      });
+      return;
+    }
+
+    const views = await ProfileView.findAll({
+      where: { viewedId: userId },
+      include: [
+        {
+          model: User,
+          as: "Viewer",
+          include: [
+            { model: UserProfile, include: [Religion, City] },
+            { model: UserPhoto, as: "photos", required: false },
+          ],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+      limit: 50,
+    });
+
+    const formattedViewers = views.map((view: any) => {
+      const viewer = view.Viewer;
+      return {
+        viewedAt: view.createdAt,
+        profile: profileSerializer.toPublicProfile({
+          ...viewer.UserProfile.toJSON(),
+          User: viewer,
+        }),
+      };
+    });
+
+    res.status(200).json({ viewers: formattedViewers });
+  } catch (error) {
+    console.error("Get viewers error:", error);
+    res.status(500).json({ message: "Server error fetching viewers" });
   }
 };

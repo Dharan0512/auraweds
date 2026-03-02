@@ -4,6 +4,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import {
   useReligions,
   useCastes,
@@ -106,7 +107,7 @@ export default function Step3Religion({ initialData, onNext, onBack }: Props) {
       setValue("horoscopeImageUrl", response.horoscope.horoscopeImageUrl);
     } catch (err) {
       console.error("Horoscope upload failed", err);
-      alert("Failed to upload horoscope. Please try again.");
+      toast.error("Failed to upload horoscope. Please try again.");
     } finally {
       setUploading(false);
     }

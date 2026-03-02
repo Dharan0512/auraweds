@@ -34,6 +34,8 @@ import { Plan } from "./Plan";
 import { Subscription } from "./Subscription";
 import { Payment } from "./Payment";
 import { Waitlist } from "./Waitlist";
+import { Notification } from "./Notification";
+import { ProfileView } from "./ProfileView";
 
 // Moderation
 import { Block, Report } from "./Moderation";
@@ -89,4 +91,6 @@ export {
   Report,
   SuccessStory,
   Waitlist,
+  Notification,
+  ProfileView,
 };

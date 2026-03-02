@@ -125,23 +125,23 @@ export const seedMasterData = async () => {
     }
 
     // Check and seed Plans
-    const planCount = await Plan.count();
-    if (planCount === 0) {
-      console.log("Seeding subscription plans...");
-      const PREMIUM_PLANS = [
-        { id: 1, name: "Silver", monthlyPrice: 3499, isActive: true },
-        { id: 2, name: "Silver", monthlyPrice: 5999, isActive: true },
-        { id: 3, name: "Silver", monthlyPrice: 9999, isActive: true },
-        { id: 4, name: "Gold", monthlyPrice: 8000, isActive: true },
-        { id: 5, name: "Gold", monthlyPrice: 14000, isActive: true },
-        { id: 6, name: "Gold", monthlyPrice: 24000, isActive: true },
-        { id: 10, name: "Elite Gold", monthlyPrice: 50000, isActive: true },
-        { id: 11, name: "Elite Gold", monthlyPrice: 90000, isActive: true },
-        { id: 12, name: "Elite Gold", monthlyPrice: 150000, isActive: true },
-      ];
-      await Plan.bulkCreate(PREMIUM_PLANS);
-      console.log("Plans seeded successfully.");
+    console.log("Syncing subscription plans...");
+    const PREMIUM_PLANS = [
+      { id: 1, name: "Silver", monthlyPrice: 3499, isActive: true },
+      { id: 2, name: "Silver", monthlyPrice: 5000, isActive: true }, // Early Bird 6M
+      { id: 3, name: "Silver", monthlyPrice: 9999, isActive: true },
+      { id: 4, name: "Gold", monthlyPrice: 8000, isActive: true },
+      { id: 5, name: "Gold", monthlyPrice: 14000, isActive: true },
+      { id: 6, name: "Gold", monthlyPrice: 24000, isActive: true },
+      { id: 10, name: "Elite Gold", monthlyPrice: 50000, isActive: true },
+      { id: 11, name: "Elite Gold", monthlyPrice: 90000, isActive: true },
+      { id: 12, name: "Elite Gold", monthlyPrice: 150000, isActive: true },
+    ];
+
+    for (const planData of PREMIUM_PLANS) {
+      await Plan.upsert(planData);
     }
+    console.log("Plans synchronized successfully.");
   } catch (error) {
     console.error("Error seeding master data:", error);
   }

@@ -23,6 +23,13 @@ export interface PurchaseResponse {
   endDate: string;
 }
 
+export interface RazorpayOrderResponse {
+  orderId: string;
+  amount: number;
+  currency: string;
+  keyId: string;
+}
+
 export const subscriptionService = {
   /**
    * Fetch the current user's active subscription tier, state and proration data
@@ -33,12 +40,25 @@ export const subscriptionService = {
   },
 
   /**
-   * Mock a purchase for a specific plan
+   * Create a Razorpay Order
    */
-  purchase: async (planKey: string): Promise<PurchaseResponse> => {
-    const response = await apiClient.post("/subscription/purchase", {
+  createOrder: async (planKey: string): Promise<RazorpayOrderResponse> => {
+    const response = await apiClient.post("/subscription/create-order", {
       planKey,
     });
+    return response.data;
+  },
+
+  /**
+   * Verify Razorpay Payment
+   */
+  verifyPayment: async (data: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+    planKey: string;
+  }): Promise<PurchaseResponse> => {
+    const response = await apiClient.post("/subscription/verify-payment", data);
     return response.data;
   },
 

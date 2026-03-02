@@ -11,6 +11,7 @@ import {
   getOtherProfile,
   updatePrivacySettings,
   searchProfiles,
+  getViewers,
 } from "../controllers/profileController";
 import { protect } from "../middlewares/authMiddleware";
 import { searchFilterGating } from "../middlewares/subscriptionMiddleware";
@@ -30,5 +31,6 @@ router.delete("/horoscope", protect, deleteHoroscope);
 router.get("/user/:id", protect, getOtherProfile);
 router.get("/search", protect, searchFilterGating, searchProfiles);
 router.patch("/privacy", protect, updatePrivacySettings);
+router.get("/viewers", protect, getViewers);
 
 export default router;

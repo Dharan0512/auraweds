@@ -4,7 +4,13 @@ export interface Interest {
   id: string | number;
   senderId?: string | number;
   receiverId?: string | number;
-  status: "PENDING" | "ACCEPTED" | "DECLINED" | "WITHDRAWN" | "EXPIRED";
+  status:
+    | "PENDING"
+    | "ACCEPTED"
+    | "DECLINED"
+    | "WITHDRAWN"
+    | "EXPIRED"
+    | "BLOCKED";
   createdAt: string;
   viewedAt: string | null;
   profile?: any; // The other user's profile
@@ -112,5 +118,13 @@ export const interestService = {
     } catch {
       console.log("Mock: Marked as viewed", interestId);
     }
+  },
+
+  blockInterest: async (interestId: string | number): Promise<void> => {
+    await apiClient.patch(`/interests/${interestId}/block`);
+  },
+
+  notifyCall: async (targetUserId: string | number): Promise<void> => {
+    await apiClient.post("/interests/notify-call", { targetUserId });
   },
 };

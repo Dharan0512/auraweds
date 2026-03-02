@@ -6,7 +6,13 @@ interface InterestAttributes {
   id: number;
   senderId: number;
   receiverId: number;
-  status: "PENDING" | "ACCEPTED" | "DECLINED" | "WITHDRAWN" | "EXPIRED";
+  status:
+    | "PENDING"
+    | "ACCEPTED"
+    | "DECLINED"
+    | "WITHDRAWN"
+    | "EXPIRED"
+    | "BLOCKED";
   viewedAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
@@ -24,7 +30,13 @@ export class Interest
   public id!: number;
   public senderId!: number;
   public receiverId!: number;
-  public status!: "PENDING" | "ACCEPTED" | "DECLINED" | "WITHDRAWN" | "EXPIRED";
+  public status!:
+    | "PENDING"
+    | "ACCEPTED"
+    | "DECLINED"
+    | "WITHDRAWN"
+    | "EXPIRED"
+    | "BLOCKED";
   public viewedAt?: Date;
 
   public readonly createdAt!: Date;
@@ -57,6 +69,7 @@ Interest.init(
         "DECLINED",
         "WITHDRAWN",
         "EXPIRED",
+        "BLOCKED",
       ),
       defaultValue: "PENDING",
     },

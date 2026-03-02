@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import { useSearchFilters } from "@/hooks/useSearchFilters";
 import { searchService } from "@/services/searchService";
 import {
@@ -34,11 +35,11 @@ export default function SearchFeature() {
     try {
       // NOTE: Send interest API call
       // await interestService.sendInterest(profileId);
-      alert(
+      toast.success(
         `Interest sent successfully to AW${profileId.substring(0, 6).toUpperCase()}`,
       );
     } catch (e) {
-      alert("Failed to send interest. Please try again.");
+      toast.error("Failed to send interest. Please try again.");
     }
   };
 

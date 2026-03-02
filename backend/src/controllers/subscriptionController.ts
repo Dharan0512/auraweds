@@ -1,7 +1,14 @@
 import { Response } from "express";
 import { AuthRequest } from "../middlewares/authMiddleware";
-import { Subscription, Plan, Waitlist } from "../models/sequelize";
+import { Subscription, Plan, Waitlist, Payment } from "../models/sequelize";
 import { Op } from "sequelize";
+import Razorpay from "razorpay";
+import crypto from "crypto";
+
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_placeholder",
+  key_secret: process.env.RAZORPAY_KEY_SECRET || "placeholder_secret",
+});
 
 // Predefined Plans
 const PREMIUM_PLANS: Record<
@@ -101,14 +108,12 @@ export const getSubscriptionStatus = async (
     });
 
     if (lastSub && lastSub.endDate < now) {
-      res
-        .status(200)
-        .json({
-          tier: "Free",
-          state: "EXPIRED",
-          lastTier: (lastSub as any).Plan?.name,
-          endDate: lastSub.endDate,
-        });
+      res.status(200).json({
+        tier: "Free",
+        state: "EXPIRED",
+        lastTier: (lastSub as any).Plan?.name,
+        endDate: lastSub.endDate,
+      });
       return;
     }
 
@@ -121,9 +126,9 @@ export const getSubscriptionStatus = async (
 };
 
 /**
- * Handle Purchase / Upgrade with Proration
+ * Create Razorpay Order
  */
-export const purchaseSubscription = async (
+export const createRazorpayOrder = async (
   req: AuthRequest,
   res: Response,
 ): Promise<void> => {
@@ -143,7 +148,7 @@ export const purchaseSubscription = async (
       return;
     }
 
-    // Proration Logic
+    // Proration Logic (same as before)
     const currentActive = await Subscription.findOne({
       where: { userId, status: "active", endDate: { [Op.gt]: now } },
       include: [{ model: Plan }],
@@ -158,30 +163,117 @@ export const purchaseSubscription = async (
         (currentActive.endDate.getTime() - now.getTime()) / 86400000;
       const originalPrice = (currentActive as any).Plan?.monthlyPrice || 0;
       deduction = (remainingDays / totalDays) * originalPrice;
-
-      // Mark old as cancelled
-      await currentActive.update({ status: "cancelled" });
     }
 
     const finalPrice = Math.max(0, planDef.price - deduction);
-    const endDate = new Date(now.setMonth(now.getMonth() + planDef.months));
+
+    // Create Razorpay Order
+    const options = {
+      amount: Math.round(finalPrice * 100), // amount in lowest currency unit (paise)
+      currency: "INR",
+      receipt: `receipt_sub_${userId}_${Date.now()}`,
+      notes: {
+        userId: userId,
+        planKey: planKey,
+      },
+    };
+
+    const order = await razorpay.orders.create(options);
+
+    res.status(200).json({
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      keyId: process.env.RAZORPAY_KEY_ID,
+    });
+  } catch (error) {
+    console.error("Create order error:", error);
+    res.status(500).json({ message: "Failed to create payment order" });
+  }
+};
+
+/**
+ * Verify Razorpay Payment and Activate Subscription
+ */
+export const verifyRazorpayPayment = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: "Not authorized" });
+      return;
+    }
+
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      planKey,
+    } = req.body;
+
+    const userId = req.user.id;
+
+    // 1. Verify Signature
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSignature = crypto
+      .createHmac(
+        "sha256",
+        process.env.RAZORPAY_KEY_SECRET || "placeholder_secret",
+      )
+      .update(body.toString())
+      .digest("hex");
+
+    if (expectedSignature !== razorpay_signature) {
+      res.status(400).json({ message: "Invalid payment signature" });
+      return;
+    }
+
+    // 2. Process Subscription
+    const planDef = PREMIUM_PLANS[planKey];
+    if (!planDef) {
+      res.status(400).json({ message: "Invalid plan" });
+      return;
+    }
+
+    const now = new Date();
+
+    // Deactivate current if any
+    await Subscription.update(
+      { status: "cancelled" },
+      { where: { userId, status: "active" } },
+    );
+
+    const endDate = new Date(
+      new Date().setMonth(now.getMonth() + planDef.months),
+    );
 
     const subscription = await Subscription.create({
       userId,
       planId: planDef.id,
-      startDate: new Date(),
+      startDate: now,
       endDate,
       status: "active",
     });
 
+    // 3. Log Payment
+    await Payment.create({
+      userId,
+      subscriptionId: subscription.id,
+      amount: planDef.price, // Store full price or effective price? Storing full for now.
+      currency: "INR",
+      paymentStatus: "success",
+      providerTransactionId: razorpay_payment_id,
+    });
+
     res.status(200).json({
-      message: `Successfully upgraded! Effective Price: ₹${Math.round(finalPrice)}`,
+      message: "Payment verified and subscription activated!",
       tier: planDef.name,
       endDate: subscription.endDate,
     });
   } catch (error) {
-    console.error("Purchase error:", error);
-    res.status(500).json({ message: "Purchase failed" });
+    console.error("Verify payment error:", error);
+    res.status(500).json({ message: "Payment verification failed" });
   }
 };
 

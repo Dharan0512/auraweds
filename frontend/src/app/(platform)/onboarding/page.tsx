@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { fetchApi } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
@@ -60,7 +61,7 @@ export default function OnboardingPage() {
       router.push("/dashboard");
     } catch (e) {
       console.error(e);
-      alert("Error saving profile");
+      toast.error("Error saving profile");
     } finally {
       setLoading(false);
     }

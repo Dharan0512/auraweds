@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import toast from "react-hot-toast";
 import { profileService } from "@/services/profileService";
 import {
   X,
@@ -26,6 +27,8 @@ import "./ProfileModal.css";
 import EditProfileForm from "../../features/profile/EditProfileForm";
 import { authService } from "@/services/authService";
 import { getImageUrl, calculateAge } from "@/lib/utils";
+import ImagePreviewModal from "./ImagePreviewModal";
+import ImageCropperModal from "./ImageCropperModal";
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -50,11 +53,22 @@ export default function ProfileModal({
     confirmPassword: "",
   });
   const [passwordStatus, setPasswordStatus] = useState({
-    error: "",
-    success: "",
     loading: false,
   });
   const [privacySaving, setPrivacySaving] = useState(false);
+
+  // New features state
+  const [previewImage, setPreviewImage] = useState<{
+    url: string;
+    title?: string;
+    showDownload?: boolean;
+  } | null>(null);
+  const [croppingImage, setCroppingImage] = useState<{
+    url: string;
+    type: "photo" | "horoscope";
+    id?: number;
+    aspect?: number;
+  } | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -77,29 +91,153 @@ export default function ProfileModal({
   };
 
   const handleDeletePhoto = async (photoId: number) => {
-    if (!window.confirm("Are you sure you want to delete this photo?")) return;
-    try {
-      await profileService.deletePhoto(photoId);
-      // Refresh profile data
-      fetchProfile();
-    } catch (error) {
-      console.error("Failed to delete photo", error);
-      alert("Failed to delete photo. Please try again.");
-    }
+    toast(
+      (t) => (
+        <div className="flex flex-col gap-3 p-1">
+          <p className="text-sm font-semibold text-slate-200">
+            Are you sure you want to delete this photo?
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-3 py-1 text-xs text-slate-400 hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={async () => {
+                toast.dismiss(t.id);
+                try {
+                  const promise = profileService.deletePhoto(photoId);
+                  toast.promise(promise, {
+                    loading: "Deleting photo...",
+                    success: "Photo deleted",
+                    error: "Failed to delete photo",
+                  });
+                  await promise;
+                  fetchProfile();
+                } catch (e) {
+                  console.error(e);
+                }
+              }}
+              className="px-3 py-1 bg-rose-500/20 hover:bg-rose-500/40 text-rose-400 border border-rose-500/30 rounded-lg text-xs font-bold transition-all"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      ),
+      { duration: 5000 },
+    );
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files?.[0]) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCroppingImage({ url: reader.result as string, type: "photo" });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = ""; // Reset input
+  };
+
+  const handleHoroscopeFileSelect = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCroppingImage({ url: reader.result as string, type: "horoscope" });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = ""; // Reset input
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    if (!croppingImage) return;
 
     const formData = new FormData();
-    formData.append("photo", e.target.files[0]);
+    const fileName =
+      croppingImage.type === "photo" ? "profile_photo.jpg" : "horoscope.jpg";
+    formData.append(
+      croppingImage.type === "photo" ? "photo" : "horoscope",
+      croppedBlob,
+      fileName,
+    );
 
     try {
-      await profileService.uploadPhotos(formData);
-      fetchProfile(); // Refresh profile to show new photo
+      if (croppingImage.type === "photo") {
+        // If we're editing an existing photo, delete the old one first
+        if (croppingImage.id) {
+          await profileService.deletePhoto(croppingImage.id);
+        }
+        const promise = profileService.uploadPhotos(formData);
+        toast.promise(promise, {
+          loading: "Saving photo...",
+          success: "Photo saved!",
+          error: "Failed to save photo",
+        });
+        await promise;
+      } else {
+        const promise = profileService.uploadHoroscope(formData);
+        toast.promise(promise, {
+          loading: "Saving horoscope...",
+          success: "Horoscope saved!",
+          error: "Failed to save horoscope",
+        });
+        await promise;
+      }
+      fetchProfile();
     } catch (error) {
-      console.error("Upload failed", error);
+      console.error("Save failed", error);
+    } finally {
+      setCroppingImage(null);
     }
+  };
+
+  const handleDeleteHoroscope = async () => {
+    toast(
+      (t) => (
+        <div className="flex flex-col gap-3 p-1">
+          <p className="text-sm font-semibold text-slate-200">
+            Delete your horoscope chart?
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-3 py-1 text-xs text-slate-400 hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={async () => {
+                toast.dismiss(t.id);
+                try {
+                  const promise = profileService.deleteHoroscope();
+                  toast.promise(promise, {
+                    loading: "Deleting horoscope...",
+                    success: "Horoscope deleted",
+                    error: "Failed to delete horoscope",
+                  });
+                  await promise;
+                  fetchProfile();
+                } catch (e) {
+                  console.error(e);
+                }
+              }}
+              className="px-3 py-1 bg-rose-500/20 hover:bg-rose-500/40 text-rose-400 border border-rose-500/30 rounded-lg text-xs font-bold transition-all"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      ),
+      { duration: 5000 },
+    );
   };
 
   const handlePrivacyChange = async (key: string, value: boolean) => {
@@ -116,7 +254,7 @@ export default function ProfileModal({
       });
     } catch (e) {
       console.error(e);
-      alert("Failed to update privacy settings.");
+      toast.error("Failed to update privacy settings.");
     } finally {
       setPrivacySaving(false);
     }
@@ -132,7 +270,7 @@ export default function ProfileModal({
       });
     } catch (e) {
       console.error(e);
-      alert("Failed to update profile status.");
+      toast.error("Failed to update profile status.");
     } finally {
       setPrivacySaving(false);
     }
@@ -140,21 +278,15 @@ export default function ProfileModal({
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    setPasswordStatus({ error: "", success: "", loading: true });
+    setPasswordStatus({ loading: true });
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setPasswordStatus({
-        error: "New passwords do not match",
-        success: "",
-        loading: false,
-      });
+      toast.error("New passwords do not match");
+      setPasswordStatus({ loading: false });
       return;
     }
     if (passwordData.newPassword.length < 6) {
-      setPasswordStatus({
-        error: "Password must be at least 6 characters",
-        success: "",
-        loading: false,
-      });
+      toast.error("Password must be at least 6 characters");
+      setPasswordStatus({ loading: false });
       return;
     }
     try {
@@ -162,22 +294,16 @@ export default function ProfileModal({
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword,
       });
-      setPasswordStatus({
-        error: "",
-        success: "Password changed successfully!",
-        loading: false,
-      });
+      toast.success("Password changed successfully!");
+      setPasswordStatus({ loading: false });
       setPasswordData({
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
       });
     } catch (error: any) {
-      setPasswordStatus({
-        error: error.response?.data?.message || "Failed to change password",
-        success: "",
-        loading: false,
-      });
+      toast.error(error.response?.data?.message || "Failed to change password");
+      setPasswordStatus({ loading: false });
     }
   };
 
@@ -214,10 +340,58 @@ export default function ProfileModal({
                   profile.photos?.[0]?.url || profile.photos?.[0],
                   profile.user?.firstName,
                 )}
-                alt={profile.basicDetails?.name}
+                alt={profile.user?.firstName}
                 className="profile-hero-image"
               />
               <div className="profile-hero-gradient"></div>
+
+              {!userId && profile.photos?.[0] && (
+                <div className="hero-action-overlay">
+                  <button
+                    className="hero-action-btn"
+                    title="Preview Cover"
+                    onClick={() =>
+                      setPreviewImage({
+                        url: getImageUrl(
+                          profile.photos?.[0]?.url || profile.photos?.[0],
+                          profile.user?.firstName,
+                        ),
+                        title: "Cover Photo",
+                        showDownload: true,
+                      })
+                    }
+                  >
+                    <Eye size={18} />
+                  </button>
+                  <button
+                    className="hero-action-btn"
+                    title="Crop / Edit Cover"
+                    onClick={() =>
+                      setCroppingImage({
+                        url: getImageUrl(
+                          profile.photos?.[0]?.url || profile.photos?.[0],
+                          profile.user?.firstName,
+                        ),
+                        type: "photo",
+                        id: profile.photos?.[0]?.id,
+                        aspect: 21 / 9,
+                      })
+                    }
+                  >
+                    <Edit2 size={18} />
+                  </button>
+                  <button
+                    className="hero-action-btn delete"
+                    title="Delete Cover"
+                    onClick={() => {
+                      const photoId = profile.photos?.[0]?.id;
+                      if (photoId) handleDeletePhoto(photoId);
+                    }}
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              )}
               <div className="profile-hero-info">
                 <h2 className="profile-name">
                   {profile.user?.firstName} {profile.user?.lastName}
@@ -323,27 +497,59 @@ export default function ProfileModal({
                     </div>
                     <div className="photo-gallery">
                       {profile.photos && profile.photos.length > 0 ? (
-                        profile.photos.map((photo: any, idx: number) => (
-                          <div key={idx} className="gallery-item">
-                            <img
-                              src={getImageUrl(
-                                photo.url || photo,
-                                profile.user?.firstName,
-                              )}
-                              alt={`Gallery ${idx}`}
-                            />
-                            <button
-                              className="delete-photo-btn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (photo.id) handleDeletePhoto(photo.id);
-                              }}
-                              title="Delete photo"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        ))
+                        profile.photos.map((photo: any, idx: number) => {
+                          const photoUrl = getImageUrl(
+                            photo.url || photo,
+                            profile.user?.firstName,
+                          );
+                          return (
+                            <div key={idx} className="gallery-item">
+                              <img src={photoUrl} alt={`Gallery ${idx}`} />
+                              <div className="gallery-item-overlay">
+                                <button
+                                  className="action-btn action-btn-preview"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPreviewImage({
+                                      url: photoUrl,
+                                      title: `Photo ${idx + 1}`,
+                                      showDownload: !userId, // Only allow download if it's the own profile
+                                    });
+                                  }}
+                                >
+                                  <Eye size={12} /> Preview
+                                </button>
+                                {!userId && (
+                                  <>
+                                    <button
+                                      className="action-btn action-btn-edit"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCroppingImage({
+                                          url: photoUrl,
+                                          type: "photo",
+                                          id: photo.id,
+                                        });
+                                      }}
+                                    >
+                                      <Edit2 size={12} /> Edit
+                                    </button>
+                                    <button
+                                      className="action-btn action-btn-delete"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (photo.id)
+                                          handleDeletePhoto(photo.id);
+                                      }}
+                                    >
+                                      <Trash2 size={12} /> Delete
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
                       ) : (
                         <div className="text-slate-500 italic text-sm py-4">
                           No gallery photos yet. Add some to stand out!
@@ -692,20 +898,82 @@ export default function ProfileModal({
                     </div>
 
                     {profile.profile?.HoroscopeDetail?.horoscopeImageUrl && (
-                      <div className="mt-6 p-4 bg-slate-900/40 rounded-3xl border border-white/5">
-                        <span className="detail-label block mb-4 flex items-center gap-2">
-                          <Sparkles size={16} className="text-amber-400" />{" "}
-                          Horoscope Chart
+                      <div className="mt-8">
+                        <span className="section-title mb-6">
+                          <Eye size={20} /> Horoscope Chart
                         </span>
-                        <img
-                          src={getImageUrl(
-                            profile.profile.HoroscopeDetail.horoscopeImageUrl,
-                          )}
-                          alt="Horoscope Chart"
-                          className="w-full max-w-sm mx-auto rounded-2xl shadow-2xl border border-white/10"
-                        />
+                        <div className="horoscope-chart-container group cursor-pointer">
+                          <img
+                            src={getImageUrl(
+                              profile.profile.HoroscopeDetail.horoscopeImageUrl,
+                            )}
+                            alt="Horoscope Chart"
+                            className="horoscope-chart-image"
+                          />
+                          <div className="horoscope-chart-overlay">
+                            <button
+                              className="action-btn action-btn-preview"
+                              onClick={() =>
+                                setPreviewImage({
+                                  url: getImageUrl(
+                                    profile.profile.HoroscopeDetail
+                                      .horoscopeImageUrl,
+                                  ),
+                                  title: "Horoscope Chart",
+                                })
+                              }
+                            >
+                              <Eye size={14} /> Preview
+                            </button>
+                            {!userId && (
+                              <>
+                                <button
+                                  className="action-btn action-btn-edit"
+                                  onClick={() =>
+                                    setCroppingImage({
+                                      url: getImageUrl(
+                                        profile.profile.HoroscopeDetail
+                                          .horoscopeImageUrl,
+                                      ),
+                                      type: "horoscope",
+                                    })
+                                  }
+                                >
+                                  <Edit2 size={14} /> Edit
+                                </button>
+                                <button
+                                  className="action-btn action-btn-delete"
+                                  onClick={handleDeleteHoroscope}
+                                >
+                                  <Trash2 size={14} /> Delete
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     )}
+
+                    {!userId &&
+                      !profile.profile?.HoroscopeDetail?.horoscopeImageUrl && (
+                        <div className="mt-8">
+                          <label className="w-full h-40 rounded-3xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center cursor-pointer hover:border-[#D4AF37]/50 transition-all bg-slate-900/40 group">
+                            <input
+                              type="file"
+                              className="hidden"
+                              onChange={handleHoroscopeFileSelect}
+                              accept="image/*"
+                            />
+                            <Camera
+                              size={32}
+                              className="text-slate-600 mb-3 group-hover:text-[#D4AF37] transition-colors"
+                            />
+                            <span className="text-sm font-bold text-slate-500 group-hover:text-slate-300">
+                              Upload Horoscope Chart
+                            </span>
+                          </label>
+                        </div>
+                      )}
                   </div>
                 </div>
               )}
@@ -898,16 +1166,6 @@ export default function ProfileModal({
                       onSubmit={handlePasswordChange}
                       className="p-6 bg-slate-900/40 rounded-2xl border border-white/5 space-y-4 max-w-lg"
                     >
-                      {passwordStatus.error && (
-                        <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg text-sm">
-                          {passwordStatus.error}
-                        </div>
-                      )}
-                      {passwordStatus.success && (
-                        <div className="p-3 bg-green-500/10 border border-green-500/20 text-green-400 rounded-lg text-sm">
-                          {passwordStatus.success}
-                        </div>
-                      )}
                       <div>
                         <label className="block text-xs font-medium text-slate-400 mb-1 tracking-wider uppercase">
                           Current Password
@@ -1002,6 +1260,29 @@ export default function ProfileModal({
               Retry
             </button>
           </div>
+        )}
+
+        {/* Global Preview Modal */}
+        <ImagePreviewModal
+          isOpen={!!previewImage}
+          onClose={() => setPreviewImage(null)}
+          imageUrl={previewImage?.url || ""}
+          title={previewImage?.title}
+          showDownload={previewImage?.showDownload}
+        />
+
+        {/* Global Cropper Modal */}
+        {croppingImage && (
+          <ImageCropperModal
+            isOpen={!!croppingImage}
+            onClose={() => setCroppingImage(null)}
+            imageSrc={croppingImage.url}
+            aspect={
+              croppingImage.aspect ||
+              (croppingImage.type === "photo" ? 4 / 5 : 1 / 1)
+            }
+            onCropComplete={handleCropComplete}
+          />
         )}
       </div>
     </div>

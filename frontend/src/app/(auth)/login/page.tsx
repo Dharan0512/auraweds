@@ -1,13 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import toast from "react-hot-toast";
 
 export default function LoginPage() {
   const { login, loading, error } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [lastError, setLastError] = useState("");
+
+  useEffect(() => {
+    if (error && error !== lastError) {
+      toast.error(error);
+      setLastError(error);
+    }
+  }, [error, lastError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,9 +32,11 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-10">
           <Link href="/" className="inline-block mb-6 group">
-            <h1 className="text-4xl font-black tracking-tighter text-white">
-              AURA<span className="text-[#D4AF37]">WEDS</span>
-            </h1>
+            <img
+              src="/auraWedsLogo.png"
+              alt="AuraWeds"
+              className="h-28 w-auto object-contain mb-2"
+            />
             <div className="h-1 w-0 group-hover:w-full bg-gradient-to-r from-purple-500 to-[#D4AF37] transition-all duration-500 rounded-full" />
           </Link>
           <h2 className="text-2xl font-bold text-white tracking-tight">
@@ -41,15 +52,6 @@ export default function LoginPage() {
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent rounded-[40px] pointer-events-none" />
 
           <form className="space-y-6 relative z-10" onSubmit={handleSubmit}>
-            {error && (
-              <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl animate-in fade-in slide-in-from-top-2">
-                <p className="text-rose-400 text-sm font-bold flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                  {error}
-                </p>
-              </div>
-            )}
-
             <div className="space-y-2">
               <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1 ml-1">
                 Security Identity (Email)

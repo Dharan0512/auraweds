@@ -19,8 +19,10 @@ import {
   Cigarette,
   Scale,
   Lock,
+  Eye,
 } from "lucide-react";
 import "./ProfileModal.css";
+import ImagePreviewModal from "./ImagePreviewModal";
 import {
   subscriptionService,
   SubscriptionStatusResponse,
@@ -45,6 +47,11 @@ export default function OtherProfileModal({
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("about");
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState<{
+    url: string;
+    title?: string;
+    showDownload?: boolean;
+  } | null>(null);
 
   useEffect(() => {
     if (isOpen && userId) {
@@ -247,21 +254,30 @@ export default function OtherProfileModal({
                     <div>
                       <div className="section-title">Photo Gallery</div>
                       <div className="photo-gallery">
-                        {photos.map((photo: any, idx: number) => (
-                          <div
-                            key={idx}
-                            className="gallery-item cursor-default group overflow-hidden"
-                          >
-                            <img
-                              src={getImageUrl(
-                                photo.url || photo,
-                                user?.firstName,
-                              )}
-                              alt={`Gallery ${idx}`}
-                              className="transition-transform duration-500 group-hover:scale-110"
-                            />
-                          </div>
-                        ))}
+                        {photos.map((photo: any, idx: number) => {
+                          const photoUrl = getImageUrl(
+                            photo.url || photo,
+                            user?.firstName,
+                          );
+                          return (
+                            <div key={idx} className="gallery-item">
+                              <img src={photoUrl} alt={`Gallery ${idx}`} />
+                              <div className="gallery-item-overlay">
+                                <button
+                                  className="action-btn action-btn-preview"
+                                  onClick={() =>
+                                    setPreviewImage({
+                                      url: photoUrl,
+                                      title: `${user?.firstName}'s Photo ${idx + 1}`,
+                                    })
+                                  }
+                                >
+                                  <Eye size={12} /> Preview
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -615,18 +631,34 @@ export default function OtherProfileModal({
                       </div>
 
                       {profile.HoroscopeDetail.horoscopeImageUrl && (
-                        <div className="mt-6 p-4 bg-slate-900/40 rounded-3xl border border-white/5">
-                          <span className="detail-label block mb-4 flex items-center gap-2">
-                            <Sparkles size={16} className="text-amber-400" />{" "}
-                            Horoscope Chart
+                        <div className="mt-8">
+                          <span className="section-title mb-6">
+                            <Eye size={20} /> Horoscope Chart
                           </span>
-                          <img
-                            src={getImageUrl(
-                              profile.HoroscopeDetail.horoscopeImageUrl,
-                            )}
-                            alt="Horoscope Chart"
-                            className="w-full max-w-sm mx-auto rounded-2xl shadow-2xl border border-white/10"
-                          />
+                          <div
+                            className="horoscope-chart-container group cursor-pointer"
+                            onClick={() =>
+                              setPreviewImage({
+                                url: getImageUrl(
+                                  profile.HoroscopeDetail.horoscopeImageUrl,
+                                ),
+                                title: `${user?.firstName}'s Horoscope Chart`,
+                              })
+                            }
+                          >
+                            <img
+                              src={getImageUrl(
+                                profile.HoroscopeDetail.horoscopeImageUrl,
+                              )}
+                              alt="Horoscope Chart"
+                              className="horoscope-chart-image"
+                            />
+                            <div className="horoscope-chart-overlay">
+                              <button className="action-btn action-btn-preview">
+                                <Eye size={14} /> Preview
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -669,6 +701,15 @@ export default function OtherProfileModal({
           setIsUpgradeModalOpen(false);
           subscriptionService.getStatus().then(setSubscription);
         }}
+      />
+
+      {/* Global Preview Modal */}
+      <ImagePreviewModal
+        isOpen={!!previewImage}
+        onClose={() => setPreviewImage(null)}
+        imageUrl={previewImage?.url || ""}
+        title={previewImage?.title}
+        showDownload={false} // Always false for other profiles
       />
     </div>
   );

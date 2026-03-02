@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect, Fragment } from "react";
+import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { profileService } from "@/services/profileService";
@@ -184,25 +185,13 @@ const registerSchema = z
   .superRefine((data, ctx) => {
     if (data.showHoroscope) {
       if (!data.rasi || data.rasi.trim() === "") {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Rasi is required if horoscope is enabled",
-          path: ["rasi"],
-        });
+        // Optional: Removed mandatory check
       }
       if (!data.birthTime || data.birthTime.trim() === "") {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Birth time is required if horoscope is enabled",
-          path: ["birthTime"],
-        });
+        // Optional: Removed mandatory check
       }
       if (!data.horoscopeImage) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Horoscope image is required if horoscope is enabled",
-          path: ["horoscopeImage"],
-        });
+        // Optional: Removed mandatory check
       }
     }
   });
@@ -228,7 +217,14 @@ export default function RegisterPage() {
 
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
   const [otpInput, setOtpInput] = useState("");
-  const [otpError, setOtpError] = useState("");
+  const [lastAuthError, setLastAuthError] = useState("");
+
+  useEffect(() => {
+    if (error && error !== lastAuthError) {
+      toast.error(error);
+      setLastAuthError(error);
+    }
+  }, [error, lastAuthError]);
 
   const [uploadedPhotos, setUploadedPhotos] = useState<
     { id: string; url: string }[]
@@ -544,16 +540,14 @@ export default function RegisterPage() {
       setIsOtpModalOpen(false);
       setStep(2);
     } else {
-      setOtpError("Invalid OTP. Use dummy OTP: 1111");
+      toast.error("Invalid OTP. Use dummy OTP: 1111");
     }
   };
 
   const handleStep1Register = async () => {
-    // Validate Photos
-    if (uploadedPhotos.length + pendingPhotos.length === 0) {
-      alert("Please upload at least one profile photo to continue.");
-      return;
-    }
+    // Validate Photos - Optional now
+    const totalPhotos = uploadedPhotos.length + pendingPhotos.length;
+    // Removed mandatory check as per user request
 
     const isValid = await (trigger as any)([
       "firstName",
@@ -713,11 +707,6 @@ export default function RegisterPage() {
                       placeholder="• • • •"
                       className="block w-full py-4 px-4 text-center tracking-[1em] text-3xl bg-slate-800/50 border border-purple-500/20 text-white rounded-2xl focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all"
                     />
-                    {otpError && (
-                      <p className="mt-3 text-center text-xs text-rose-500 font-medium">
-                        {otpError}
-                      </p>
-                    )}
                   </div>
                   <div className="mt-8 space-y-3">
                     <button
@@ -745,6 +734,13 @@ export default function RegisterPage() {
           <div className="inline-flex items-center justify-center space-x-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-bold tracking-widest uppercase mb-4">
             <SparklesIcon className="w-4 h-4" />
             <span>Premium Onboarding</span>
+          </div>
+          <div className="flex justify-center mb-6">
+            <img
+              src="/auraWedsLogo.png"
+              alt="AuraWeds"
+              className="h-32 w-auto object-contain"
+            />
           </div>
           <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-tight">
             Create Your{" "}
@@ -814,12 +810,6 @@ export default function RegisterPage() {
             onSubmit={handleSubmit(onSubmit)}
             className="space-y-8 relative"
           >
-            {error && (
-              <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-400 text-sm font-medium">
-                {error}
-              </div>
-            )}
-
             {/* Step 1: Basic Identity */}
             {step === 1 && (
               <div className="space-y-6 animate-in fade-in slide-in-from-right-10 duration-500">
@@ -827,7 +817,7 @@ export default function RegisterPage() {
                 <div className="pb-6 border-b border-purple-500/10">
                   <label className="block text-sm font-bold text-slate-300 mb-4 flex items-center gap-2">
                     <PhotoIcon className="w-5 h-5 text-purple-400" />
-                    Profile Photos (Min 1 required)
+                    Profile Photos (Optional)
                   </label>
                   <div className="flex flex-wrap gap-4">
                     {/* Uploaded Photos */}

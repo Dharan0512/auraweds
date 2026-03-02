@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { profileService } from "@/services/profileService";
 import { matchService, MatchProfile } from "@/services/matchService";
 import {
@@ -221,7 +222,7 @@ export default function DashboardPage() {
         onSuccess={(tier) => {
           setIsUpgradeModalOpen(false);
           subscriptionService.getStatus().then((data) => setSubscription(data));
-          alert(`Successfully authenticated and upgraded to ${tier}!`);
+          toast.success(`Successfully authenticated and upgraded to ${tier}!`);
         }}
       />
     </div>

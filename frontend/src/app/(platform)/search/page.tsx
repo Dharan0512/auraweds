@@ -151,6 +151,32 @@ export default function SearchPage() {
     }
   };
 
+  const [connectingId, setConnectingId] = useState<string | number | null>(
+    null,
+  );
+
+  const handleConnect = async (targetUserId: string | number) => {
+    try {
+      setConnectingId(targetUserId);
+      await profileService.sendInterest(targetUserId);
+      // Update local state to show interest sent
+      setResults((prev) =>
+        prev.map((r) =>
+          r.userId === targetUserId ? { ...r, hasSentInterest: true } : r,
+        ),
+      );
+    } catch (error: any) {
+      if (error.response?.status === 403) {
+        setIsUpgradeModalOpen(true);
+      } else {
+        console.error("Connect error:", error);
+      }
+      throw error; // Re-throw for the button to handle if needed
+    } finally {
+      setConnectingId(null);
+    }
+  };
+
   const updateFilter = (key: string, value: any) => {
     const isSilver = SILVER_FILTERS.includes(key);
     const isGold = GOLD_FILTERS.includes(key);
@@ -624,7 +650,9 @@ export default function SearchPage() {
                   key={match.userId}
                   match={match}
                   onViewProfile={setSelectedProfileId}
-                  onConnect={(id) => console.log("Connect with", id)}
+                  onConnect={() => handleConnect(match.userId)}
+                  hasSentInterest={match.hasSentInterest}
+                  isLoading={connectingId === match.userId}
                 />
               ))
             )}

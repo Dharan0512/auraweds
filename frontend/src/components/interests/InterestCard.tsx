@@ -11,10 +11,12 @@ import {
   ShieldCheck,
   Lock,
   Star,
+  Ban,
 } from "lucide-react";
 import { Interest } from "@/services/interestService";
 import { MatchProfile } from "@/services/matchService";
 import { getImageUrl } from "@/lib/utils";
+import ConnectButton from "../ui/ConnectButton";
 
 function timeAgo(date: Date) {
   const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
@@ -33,7 +35,7 @@ function timeAgo(date: Date) {
 
 interface InterestCardProps {
   interest: Interest;
-  type: "received" | "sent" | "accepted" | "rejected";
+  type: "received" | "sent" | "accepted" | "rejected" | "blocked";
   userTier: string;
   onAction?: (id: string | number, action: "accepted" | "rejected") => void;
   onViewProfile: (userId: string | number) => void;
@@ -42,6 +44,7 @@ interface InterestCardProps {
   onWithdraw?: (id: string | number) => void;
   onRemove?: (id: string | number) => void;
   onSendReminder?: (id: string | number) => void;
+  onBlock?: (id: string | number) => void;
 }
 
 export default function InterestCard({
@@ -55,6 +58,7 @@ export default function InterestCard({
   onWithdraw,
   onRemove,
   onSendReminder,
+  onBlock,
 }: InterestCardProps) {
   const profile: MatchProfile = interest.profile;
   const isFree = userTier === "Free";
@@ -88,6 +92,12 @@ export default function InterestCard({
             <X size={12} /> Withdrawn
           </span>
         );
+      case "BLOCKED":
+        return (
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 text-red-500 text-[10px] font-bold uppercase tracking-wider border border-red-500/20">
+            <Ban size={12} /> Blocked
+          </span>
+        );
       default:
         return (
           <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-[10px] font-bold uppercase tracking-wider border border-amber-500/20">
@@ -97,10 +107,13 @@ export default function InterestCard({
     }
   };
 
+  const firstName = profile.basicDetails.firstName || "";
+  const lastName = profile.basicDetails.lastName || "";
+
   const name =
     isFree && type === "received"
-      ? `${profile.basicDetails.firstName[0]}*** ${profile.basicDetails.lastName[0]}***`
-      : `${profile.basicDetails.firstName} ${profile.basicDetails.lastName}`;
+      ? `${firstName[0] || ""}*** ${lastName ? lastName[0] + "***" : ""}`
+      : `${firstName} ${lastName}`.trim();
 
   const isExpired =
     new Date().getTime() - new Date(interest.createdAt).getTime() >
@@ -295,6 +308,16 @@ export default function InterestCard({
                   title="Remove from list"
                 >
                   <X size={18} />
+                </button>
+              )}
+
+              {(type === "accepted" || type === "received") && onBlock && (
+                <button
+                  onClick={() => onBlock(interest.id)}
+                  className="p-2.5 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all border border-red-500/20 active:scale-95"
+                  title="Block Profile"
+                >
+                  <Ban size={18} />
                 </button>
               )}
 

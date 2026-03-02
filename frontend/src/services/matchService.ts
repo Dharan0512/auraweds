@@ -14,6 +14,8 @@ export interface MatchProfile {
     height: string;
     maritalStatus: string;
     motherTongue: string;
+    mobile?: string;
+    email?: string;
   };
   professionalInfo: {
     education: string;
@@ -34,6 +36,9 @@ export interface MatchProfile {
     adminApproved: boolean;
   };
   matchScore: number;
+  hasSentInterest?: boolean;
+  interestSent?: boolean;
+  isPremiumMatch?: boolean;
 }
 
 export const matchService = {
@@ -41,6 +46,15 @@ export const matchService = {
     try {
       const response = await apiClient.get("/matches/daily");
       return Array.isArray(response.data) ? response.data : [];
+    } catch {
+      return [];
+    }
+  },
+
+  getViewers: async (): Promise<any[]> => {
+    try {
+      const response = await apiClient.get("/profile/viewers");
+      return response.data?.viewers || [];
     } catch {
       return [];
     }

@@ -3,12 +3,15 @@
 import React from "react";
 import { MatchProfile } from "@/services/matchService";
 import { getImageUrl, calculateAge } from "@/lib/utils";
+import ConnectButton from "./ConnectButton";
 
 interface MatchCardProps {
   match: MatchProfile;
   onViewProfile: (userId: string | number) => void;
   onConnect: (userId: string | number) => void;
   isLocked?: boolean;
+  hasSentInterest?: boolean;
+  isLoading?: boolean;
 }
 
 export default function MatchCard({
@@ -16,6 +19,8 @@ export default function MatchCard({
   onViewProfile,
   onConnect,
   isLocked = false,
+  hasSentInterest = false,
+  isLoading = false,
 }: MatchCardProps) {
   const age = calculateAge(match.basicDetails.dob);
 
@@ -58,7 +63,7 @@ export default function MatchCard({
         {/* Name & Location */}
         <div className="absolute bottom-6 left-6 right-6 z-10">
           <h3 className="text-3xl font-serif font-bold text-white mb-1">
-            {match.basicDetails.firstName}, {age}
+            {match.basicDetails.firstName || "Profile"}, {age}
           </h3>
           <div className="flex items-center text-slate-300 text-sm font-medium gap-2">
             <svg
@@ -106,17 +111,33 @@ export default function MatchCard({
         {/* Actions */}
         <div className="flex gap-3">
           <button
-            className="flex-1 bg-slate-800/40 hover:bg-slate-800/60 text-slate-200 text-[10px] font-black uppercase tracking-[0.2em] py-4 rounded-2xl border border-white/10 hover:border-white/20 transition-all active:scale-95 outline-none"
+            className="w-[50px] h-[50px] flex items-center justify-center bg-white/5 hover:bg-white/10 text-slate-200 rounded-2xl border border-white/10 hover:border-white/20 transition-all active:scale-95 outline-none group/btn shrink-0"
             onClick={() => onViewProfile(match.userId)}
+            title="View Profile"
           >
-            Profile
+            <svg
+              className="w-5 h-5 text-slate-400 group-hover/btn:text-white transition-colors"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              />
+            </svg>
           </button>
-          <button
-            className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[10px] font-black uppercase tracking-[0.2em] py-4 rounded-2xl shadow-xl hover:shadow-purple-500/20 hover:brightness-110 active:scale-95 transition-all outline-none"
-            onClick={() => onConnect(match.userId)}
-          >
-            Connect
-          </button>
+          <ConnectButton
+            onConnect={() => onConnect(match.userId)}
+            className="flex-1"
+            hasSentInterest={
+              hasSentInterest || !!match.interestSent || !!match.hasSentInterest
+            }
+            isLoading={isLoading}
+            isPremiumUser={!!match.isPremiumMatch}
+          />
         </div>
       </div>
     </div>
