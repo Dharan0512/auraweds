@@ -8,11 +8,19 @@ import {
   MatchProfile,
   DUMMY_MATCHES,
 } from "@/services/matchService";
+import {
+  subscriptionService,
+  SubscriptionStatusResponse,
+} from "@/services/subscriptionService";
 import MatchCardSkeleton from "@/components/ui/MatchCardSkeleton";
 import OtherProfileModal from "@/components/ui/OtherProfileModal";
+import UpgradeModal from "@/components/ui/UpgradeModal";
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<any>(null);
+  const [subscription, setSubscription] =
+    useState<SubscriptionStatusResponse | null>(null);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState<
     string | number | null
   >(null);
@@ -26,6 +34,11 @@ export default function DashboardPage() {
       .getMyProfile()
       .then((data) => setProfile(data))
       .catch((err) => console.error("Profile fetch error:", err));
+
+    subscriptionService
+      .getStatus()
+      .then((data) => setSubscription(data))
+      .catch((err) => console.error("Sub fetch error:", err));
 
     matchService
       .getDailyMatches()
@@ -61,12 +74,36 @@ export default function DashboardPage() {
               aspirations.
             </p>
           </div>
+          {/* Subscription Badge */}
           <div className="flex gap-4">
-            <div className="p-0.5 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500">
-              <div className="bg-slate-900 px-6 py-2 rounded-full text-white text-sm font-medium">
-                Premium Member
+            {subscription ? (
+              <div
+                className={`p-0.5 rounded-full ${
+                  subscription.tier === "Elite Gold"
+                    ? "bg-gradient-to-br from-purple-500 to-indigo-500"
+                    : subscription.tier === "Gold"
+                      ? "bg-gradient-to-br from-[#D4AF37] to-[#B8860B]"
+                      : subscription.tier === "Silver"
+                        ? "bg-gradient-to-br from-slate-300 to-slate-500"
+                        : "bg-slate-800"
+                }`}
+              >
+                <div
+                  className="bg-slate-900 px-6 py-2 rounded-full text-white text-sm font-medium flex items-center gap-2 cursor-pointer shadow-lg"
+                  onClick={() => setIsUpgradeModalOpen(true)}
+                >
+                  {subscription.tier === "Elite Gold"
+                    ? "⚡ Elite Member"
+                    : subscription.tier === "Gold"
+                      ? "⭐ Gold Member"
+                      : subscription.tier === "Silver"
+                        ? "🛡️ Silver Member"
+                        : "Free Tier"}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="w-32 h-10 bg-white/5 rounded-full animate-pulse" />
+            )}
           </div>
         </div>
       </div>
@@ -111,6 +148,37 @@ export default function DashboardPage() {
           </Link>
         </div>
       </div>
+
+      {/* Subscription Upgrade Promo Banner (Shown if not Elite Gold) */}
+      {(!subscription || subscription.tier !== "Elite Gold") && (
+        <div
+          className="relative group mb-16 px-1 cursor-pointer"
+          onClick={() => setIsUpgradeModalOpen(true)}
+        >
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] rounded-3xl blur opacity-30 group-hover:opacity-60 transition duration-1000"></div>
+          <div className="relative bg-[#1a1c29] border border-[#D4AF37]/30 p-8 rounded-3xl flex flex-col md:flex-row justify-between items-center gap-8 shadow-[0_0_30px_rgba(212,175,55,0.1)]">
+            <div className="flex gap-6 items-center">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#B8860B] flex items-center justify-center text-slate-950 shadow-inner">
+                <svg className="w-8 h-8 fill-current" viewBox="0 0 24 24">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-xl font-bold text-white">
+                  Unlock Premium Matrimony Matches
+                </p>
+                <p className="text-slate-400 mt-1 max-w-md">
+                  View direct contact numbers, get priority placement, and
+                  browse in invisible mode. Upgrade to Gold today.
+                </p>
+              </div>
+            </div>
+            <button className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 rounded-2xl font-black hover:scale-[1.02] active:scale-95 transition-all shadow-xl uppercase tracking-wider text-sm">
+              Upgrade Now
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center gap-4 mb-10">
         <h2 className="text-2xl font-serif font-bold text-white">
@@ -246,6 +314,16 @@ export default function DashboardPage() {
         isOpen={!!selectedProfileId}
         onClose={() => setSelectedProfileId(null)}
         userId={selectedProfileId as any}
+      />
+
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        onSuccess={(tier) => {
+          setIsUpgradeModalOpen(false);
+          subscriptionService.getStatus().then((data) => setSubscription(data));
+          alert(`Successfully authenticated and upgraded to ${tier}!`);
+        }}
       />
     </div>
   );

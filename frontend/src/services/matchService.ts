@@ -38,7 +38,7 @@ export interface MatchProfile {
 
 export const DUMMY_MATCHES: MatchProfile[] = [
   {
-    userId: "dummy-1",
+    userId: "125",
     basicDetails: {
       firstName: "Priya",
       lastName: "Krishnamurthy",

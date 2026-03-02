@@ -18,8 +18,14 @@ import {
   Wine,
   Cigarette,
   Scale,
+  Lock,
 } from "lucide-react";
 import "./ProfileModal.css";
+import {
+  subscriptionService,
+  SubscriptionStatusResponse,
+} from "@/services/subscriptionService";
+import UpgradeModal from "./UpgradeModal";
 
 interface OtherProfileModalProps {
   isOpen: boolean;
@@ -33,8 +39,11 @@ export default function OtherProfileModal({
   userId,
 }: OtherProfileModalProps) {
   const [profileData, setProfileData] = useState<any>(null);
+  const [subscription, setSubscription] =
+    useState<SubscriptionStatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("about");
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const BACKEND_URL =
     process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
@@ -67,8 +76,21 @@ export default function OtherProfileModal({
   const fetchOtherProfile = async () => {
     try {
       setLoading(true);
-      const data = await profileService.getOtherProfile(userId);
-      setProfileData(data);
+      const [profileRes, subRes] = await Promise.all([
+        profileService.getOtherProfile(userId),
+        subscriptionService
+          .getStatus()
+          .catch(
+            () =>
+              ({
+                tier: "Free",
+                status: "None",
+                endDate: null,
+              }) as SubscriptionStatusResponse,
+          ),
+      ]);
+      setProfileData(profileRes);
+      setSubscription(subRes);
     } catch (error) {
       console.error("Fetch other profile error", error);
     } finally {
@@ -159,39 +181,54 @@ export default function OtherProfileModal({
                   </span>
                 </div>
 
-                {/* Social Links (if allowed) */}
-                <div className="flex gap-4 mt-4 relative z-10 w-full mb-1">
-                  {profile?.linkedInUrl && (
-                    <a
-                      href={profile.linkedInUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-white hover:text-[#D4AF37] transition-colors"
+                {/* Subscription Action or Social Links */}
+                {!subscription || subscription.tier === "Free" ? (
+                  <div className="mt-6 flex flex-col items-start gap-2">
+                    <p className="text-white/60 text-sm flex items-center gap-1.5 font-medium bg-black/40 px-3 py-1.5 rounded-lg border border-white/5">
+                      <Lock size={14} className="text-[#D4AF37]" /> Upgrade to
+                      view contact info
+                    </p>
+                    <button
+                      onClick={() => setIsUpgradeModalOpen(true)}
+                      className="px-6 py-2 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 font-bold rounded-xl hover:shadow-[0_0_15px_rgba(212,175,55,0.3)] transition-all text-sm uppercase tracking-wider"
                     >
-                      <Linkedin size={20} />
-                    </a>
-                  )}
-                  {profile?.instagramUrl && (
-                    <a
-                      href={profile.instagramUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-white hover:text-[#D4AF37] transition-colors"
-                    >
-                      <Instagram size={20} />
-                    </a>
-                  )}
-                  {profile?.facebookUrl && (
-                    <a
-                      href={profile.facebookUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-white hover:text-[#D4AF37] transition-colors"
-                    >
-                      <Facebook size={20} />
-                    </a>
-                  )}
-                </div>
+                      View Contact Details
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-4 mt-6 relative z-10 w-full mb-1">
+                    {profile?.linkedInUrl && (
+                      <a
+                        href={profile.linkedInUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-white hover:text-[#D4AF37] transition-colors bg-white/5 p-2 rounded-full border border-white/10"
+                      >
+                        <Linkedin size={20} />
+                      </a>
+                    )}
+                    {profile?.instagramUrl && (
+                      <a
+                        href={profile.instagramUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-white hover:text-[#D4AF37] transition-colors bg-white/5 p-2 rounded-full border border-white/10"
+                      >
+                        <Instagram size={20} />
+                      </a>
+                    )}
+                    {profile?.facebookUrl && (
+                      <a
+                        href={profile.facebookUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-white hover:text-[#D4AF37] transition-colors bg-white/5 p-2 rounded-full border border-white/10"
+                      >
+                        <Facebook size={20} />
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -641,6 +678,15 @@ export default function OtherProfileModal({
           </div>
         )}
       </div>
+
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        onSuccess={(tier) => {
+          setIsUpgradeModalOpen(false);
+          subscriptionService.getStatus().then(setSubscription);
+        }}
+      />
     </div>
   );
 }
