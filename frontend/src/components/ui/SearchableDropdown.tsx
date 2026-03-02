@@ -74,7 +74,7 @@ export default function SearchableDropdown({
                 }
               }}
             />
-            <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-4 cursor-pointer w-full justify-end">
+            <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-4 cursor-pointer">
               <ChevronUpDownIcon
                 className="h-5 w-5 text-slate-400"
                 aria-hidden="true"

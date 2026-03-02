@@ -86,3 +86,42 @@ export const useIncomeRanges = (currencyId: string | number | null) => {
     staleTime: 1000 * 60 * 60 * 24,
   });
 };
+
+export const useStars = () => {
+  return useQuery({
+    queryKey: ["stars"],
+    queryFn: masterService.getStars,
+    staleTime: 1000 * 60 * 60 * 24,
+  });
+};
+
+export const useRasis = () => {
+  return useQuery({
+    queryKey: ["rasis"],
+    queryFn: masterService.getRasis,
+    staleTime: 1000 * 60 * 60 * 24,
+  });
+};
+
+export const useLaknams = () => {
+  return useQuery({
+    queryKey: ["laknams"],
+    queryFn: masterService.getLaknams,
+    staleTime: 1000 * 60 * 60 * 24,
+  });
+};
+
+export const useGothrams = () => {
+  return useQuery({
+    queryKey: ["gothrams"],
+    queryFn: masterService.getGothrams,
+    staleTime: 1000 * 60 * 60 * 24,
+  });
+};
+export const useAllCities = () => {
+  return useQuery({
+    queryKey: ["cities", "all"],
+    queryFn: masterService.getAllCities,
+    staleTime: 1000 * 60 * 60 * 24,
+  });
+};

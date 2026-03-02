@@ -13,6 +13,10 @@ import { EmploymentType } from "./master/EmploymentType";
 import { Occupation } from "./master/Occupation";
 import { Currency } from "./master/Currency";
 import { IncomeRange } from "./master/IncomeRange";
+import { Star } from "./master/Star";
+import { Gothram } from "./master/Gothram";
+import { Laknam } from "./master/Laknam";
+import { Rasi } from "./master/Rasi";
 
 // Core Models
 import { User } from "./User";
@@ -71,6 +75,10 @@ export {
   Occupation,
   Currency,
   IncomeRange,
+  Star,
+  Gothram,
+  Laknam,
+  Rasi,
   User,
   UserProfile,
   UserPreference,

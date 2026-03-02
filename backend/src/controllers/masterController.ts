@@ -12,6 +12,10 @@ import {
   Occupation,
   Currency,
   IncomeRange,
+  Star,
+  Rasi,
+  Laknam,
+  Gothram,
 } from "../models/sequelize";
 
 // Locations
@@ -174,5 +178,48 @@ export const getIncomeRanges = async (
     res.json(data);
   } catch (error) {
     res.status(500).json({ message: "Error fetching income ranges" });
+  }
+};
+
+// Horoscope Master Data
+export const getStars = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const data = await Star.findAll({ where: { isActive: true } });
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching stars" });
+  }
+};
+
+export const getRasis = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const data = await Rasi.findAll({ where: { isActive: true } });
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching rasis" });
+  }
+};
+
+export const getLaknams = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const data = await Laknam.findAll({ where: { isActive: true } });
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching laknams" });
+  }
+};
+
+export const getGothrams = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const data = await Gothram.findAll({ where: { isActive: true } });
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching gothrams" });
   }
 };

@@ -5,6 +5,10 @@ import {
   Religion,
   Caste,
   Plan,
+  Star,
+  Gothram,
+  Laknam,
+  Rasi,
 } from "../models/sequelize";
 
 const seedCountries = [
@@ -142,6 +146,98 @@ export const seedMasterData = async () => {
       await Plan.upsert(planData);
     }
     console.log("Plans synchronized successfully.");
+
+    // Seed Horoscope Master Data
+    console.log("Seeding Horoscope Master Data...");
+
+    const gothrams = [
+      "Shiva",
+      "Kashyapa",
+      "Bharadwaja",
+      "Vasishta",
+      "Agasthya",
+      "Atri",
+      "Gautama",
+      "Koundinya",
+      "Vishwamitra",
+      "Haritha",
+      "Angirasa",
+      "Other",
+    ];
+    for (const name of gothrams) {
+      await Gothram.upsert({ name, isActive: true });
+    }
+
+    const laknams = [
+      "Mesham",
+      "Rishabam",
+      "Mithunam",
+      "Kadagam",
+      "Simmam",
+      "Kanni",
+      "Thulam",
+      "Vrischikam",
+      "Dhanusu",
+      "Makaram",
+      "Kumbam",
+      "Meenam",
+    ];
+    for (const name of laknams) {
+      await Laknam.upsert({ name, isActive: true });
+    }
+
+    const rasis = [
+      "Mesham",
+      "Rishabam",
+      "Mithunam",
+      "Kadagam",
+      "Simmam",
+      "Kanni",
+      "Thulam",
+      "Vrischikam",
+      "Dhanusu",
+      "Makaram",
+      "Kumbam",
+      "Meenam",
+    ];
+    for (const name of rasis) {
+      await Rasi.upsert({ name, isActive: true });
+    }
+
+    const stars = [
+      "Ashwini",
+      "Bharani",
+      "Krittika",
+      "Rohini",
+      "Mrigashirsha",
+      "Ardra",
+      "Punarvasu",
+      "Pushya",
+      "Ashlesha",
+      "Magha",
+      "Purva Phalguni",
+      "Uttara Phalguni",
+      "Hasta",
+      "Chitra",
+      "Swati",
+      "Vishakha",
+      "Anuradha",
+      "Jyeshtha",
+      "Mula",
+      "Purva Ashadha",
+      "Uttara Ashadha",
+      "Shravana",
+      "Dhanishta",
+      "Shatabhisha",
+      "Purva Bhadrapada",
+      "Uttara Bhadrapada",
+      "Revati",
+    ];
+    for (const name of stars) {
+      await Star.upsert({ name, isActive: true });
+    }
+
+    console.log("Horoscope Master Data synchronized.");
   } catch (error) {
     console.error("Error seeding master data:", error);
   }

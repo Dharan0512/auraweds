@@ -9,6 +9,11 @@ import {
   useReligions,
   useCastes,
   useMotherTongues,
+  useStars,
+  useRasis,
+  useLaknams,
+  useGothrams,
+  useAllCities,
 } from "@/hooks/useMasterData";
 import SearchableDropdown from "@/components/ui/SearchableDropdown";
 import PremiumSelect from "@/components/ui/PremiumSelect";
@@ -30,8 +35,13 @@ const religionSchema = z
     gothram: z.string().optional(),
     sevvaiDhosham: z.string().optional(),
     rahuKetuDhosham: z.string().optional(),
+    starId: z.string().optional(),
+    rasiId: z.string().optional(),
+    laknamId: z.string().optional(),
+    gothramId: z.string().optional(),
     birthTime: z.string().optional(),
     birthPlace: z.string().optional(),
+    birthCityId: z.string().optional(),
     horoscopeImageUrl: z.string().optional(),
 
     // Family Details
@@ -46,11 +56,11 @@ const religionSchema = z
   })
   .superRefine((data, ctx) => {
     if (data.showHoroscope) {
-      if (!data.rasi) {
+      if (!data.rasiId && !data.rasi) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "Rasi is required when Horoscope is enabled",
-          path: ["rasi"],
+          path: ["rasiId"],
         });
       }
     }
@@ -85,6 +95,11 @@ export default function Step3Religion({ initialData, onNext, onBack }: Props) {
     useCastes(selectedReligion);
   const { data: motherTongues, isLoading: loadingMotherTongues } =
     useMotherTongues();
+  const { data: stars } = useStars();
+  const { data: rasis } = useRasis();
+  const { data: laknams } = useLaknams();
+  const { data: gothrams } = useGothrams();
+  const { data: allCities } = useAllCities();
 
   const [uploading, setUploading] = useState(false);
   const horoscopeImageUrl = watch("horoscopeImageUrl");
@@ -332,37 +347,74 @@ export default function Step3Religion({ initialData, onNext, onBack }: Props) {
           <>
             <div className="space-y-3">
               <label>Star (Nakshatram)</label>
-              <input
-                {...register("star")}
-                type="text"
-                placeholder="e.g. Rohini"
+              <SearchableDropdown
+                options={stars || []}
+                value={
+                  stars?.find(
+                    (s: any) => s.id.toString() === watch("starId"),
+                  ) || null
+                }
+                onChange={(option) =>
+                  setValue("starId", option?.id.toString() || "")
+                }
+                placeholder="Search Star..."
               />
             </div>
 
             <div className="space-y-3">
               <label>Rasi</label>
-              <input
-                {...register("rasi")}
-                type="text"
-                placeholder="e.g. Rishabham"
+              <Controller
+                control={control}
+                name="rasiId"
+                render={({ field }) => (
+                  <PremiumSelect
+                    options={(rasis || []).map((r: any) => ({
+                      id: r.id.toString(),
+                      name: r.name,
+                    }))}
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                  />
+                )}
               />
+              {errors.rasiId && (
+                <p className="text-xs text-rose-400 font-bold mt-2">
+                  {errors.rasiId.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-3">
               <label>Laknam</label>
-              <input
-                {...register("laknam")}
-                type="text"
-                placeholder="e.g. Mesham"
+              <Controller
+                control={control}
+                name="laknamId"
+                render={({ field }) => (
+                  <PremiumSelect
+                    options={(laknams || []).map((l: any) => ({
+                      id: l.id.toString(),
+                      name: l.name,
+                    }))}
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                  />
+                )}
               />
             </div>
 
             <div className="space-y-3">
               <label>Gothram</label>
-              <input
-                {...register("gothram")}
-                type="text"
-                placeholder="e.g. Shiva"
+              <SearchableDropdown
+                options={gothrams || []}
+                value={
+                  gothrams?.find(
+                    (g) => g.id.toString() === watch("gothramId"),
+                  ) || null
+                }
+                onChange={(option) =>
+                  setValue("gothramId", option?.id.toString() || "")
+                }
+                placeholder="Search Gothram..."
               />
             </div>
 
@@ -409,10 +461,23 @@ export default function Step3Religion({ initialData, onNext, onBack }: Props) {
 
             <div className="space-y-3">
               <label>Birth Place</label>
-              <input
-                {...register("birthPlace")}
-                type="text"
-                placeholder="e.g. Madurai"
+              <Controller
+                control={control}
+                name="birthCityId"
+                render={({ field }) => (
+                  <SearchableDropdown
+                    options={allCities || []}
+                    value={
+                      allCities?.find(
+                        (c: any) => c.id.toString() === field.value,
+                      ) || null
+                    }
+                    onChange={(option) =>
+                      field.onChange(option?.id.toString() || "")
+                    }
+                    placeholder="Search & Select Birth City..."
+                  />
+                )}
               />
             </div>
 

@@ -562,7 +562,9 @@ export default function OtherProfileModal({
                         <div className="detail-item">
                           <span className="detail-label">Star / Nakshatra</span>
                           <span className="detail-value text-[#D4AF37] font-semibold">
-                            {profile.HoroscopeDetail.star || "-"}
+                            {profile.HoroscopeDetail.Star?.name ||
+                              profile.HoroscopeDetail.star ||
+                              "-"}
                           </span>
                         </div>
                         <div className="detail-item">
@@ -570,20 +572,26 @@ export default function OtherProfileModal({
                             Raasi / Moon Sign
                           </span>
                           <span className="detail-value">
-                            {profile.HoroscopeDetail.rasi || "-"}
+                            {profile.HoroscopeDetail.Rasi?.name ||
+                              profile.HoroscopeDetail.rasi ||
+                              "-"}
                           </span>
                         </div>
                         <div className="detail-item">
                           <span className="detail-label">Laknam</span>
                           <span className="detail-value">
-                            {profile.HoroscopeDetail.laknam || "-"}
+                            {profile.HoroscopeDetail.Laknam?.name ||
+                              profile.HoroscopeDetail.laknam ||
+                              "-"}
                           </span>
                         </div>
-                        {profile.HoroscopeDetail.gothram && (
+                        {(profile.HoroscopeDetail.Gothram?.name ||
+                          profile.HoroscopeDetail.gothram) && (
                           <div className="detail-item">
                             <span className="detail-label">Gothram</span>
                             <span className="detail-value">
-                              {profile.HoroscopeDetail.gothram}
+                              {profile.HoroscopeDetail.Gothram?.name ||
+                                profile.HoroscopeDetail.gothram}
                             </span>
                           </div>
                         )}
@@ -624,7 +632,8 @@ export default function OtherProfileModal({
                           <div className="detail-item">
                             <span className="detail-label">Birth Place</span>
                             <span className="detail-value">
-                              {profile.HoroscopeDetail.birthPlace}
+                              {profile.HoroscopeDetail.BirthCity?.name ||
+                                profile.HoroscopeDetail.birthPlace}
                             </span>
                           </div>
                         )}

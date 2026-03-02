@@ -32,13 +32,19 @@ export const mapProfileToFormData = (profile: any) => {
 
     // Horoscope
     star: profile.profile?.HoroscopeDetail?.star || "",
+    starId: profile.profile?.HoroscopeDetail?.starId?.toString() || "",
     rasi: profile.profile?.HoroscopeDetail?.rasi || "",
+    rasiId: profile.profile?.HoroscopeDetail?.rasiId?.toString() || "",
     laknam: profile.profile?.HoroscopeDetail?.laknam || "",
+    laknamId: profile.profile?.HoroscopeDetail?.laknamId?.toString() || "",
     gothram: profile.profile?.HoroscopeDetail?.gothram || "",
+    gothramId: profile.profile?.HoroscopeDetail?.gothramId?.toString() || "",
     sevvaiDhosham: profile.profile?.HoroscopeDetail?.sevvaiDhosham || "No",
     rahuKetuDhosham: profile.profile?.HoroscopeDetail?.rahuKetuDhosham || "No",
     birthTime: profile.profile?.HoroscopeDetail?.birthTime || "",
     birthPlace: profile.profile?.HoroscopeDetail?.birthPlace || "",
+    birthCityId:
+      profile.profile?.HoroscopeDetail?.birthCityId?.toString() || "",
     horoscopeImageUrl:
       profile.profile?.HoroscopeDetail?.horoscopeImageUrl || "",
 

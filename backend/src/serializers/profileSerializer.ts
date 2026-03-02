@@ -51,6 +51,29 @@ export const profileSerializer = {
         smoke: profile.smoke,
         drink: profile.drink,
       },
+      horoscope: profile.HoroscopeDetails
+        ? {
+            star:
+              profile.HoroscopeDetails.Star?.name ||
+              profile.HoroscopeDetails.star,
+            rasi:
+              profile.HoroscopeDetails.Rasi?.name ||
+              profile.HoroscopeDetails.rasi,
+            laknam:
+              profile.HoroscopeDetails.Laknam?.name ||
+              profile.HoroscopeDetails.laknam,
+            gothram:
+              profile.HoroscopeDetails.Gothram?.name ||
+              profile.HoroscopeDetails.gothram,
+            sevvaiDhosham: profile.HoroscopeDetails.sevvaiDhosham,
+            rahuKetuDhosham: profile.HoroscopeDetails.rahuKetuDhosham,
+            birthTime: profile.HoroscopeDetails.birthTime,
+            birthPlace:
+              profile.HoroscopeDetails.BirthCity?.name ||
+              profile.HoroscopeDetails.birthPlace,
+            horoscopeImageUrl: profile.HoroscopeDetails.horoscopeImageUrl,
+          }
+        : null,
       matchScore: Math.floor(Math.random() * (98 - 75 + 1) + 75), // Future: Implement real algorithm
       hasSentInterest: hasSentInterest || !!(profile as any).hasSentInterest,
     };

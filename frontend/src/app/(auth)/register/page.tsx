@@ -27,6 +27,10 @@ import {
   Occupation,
   Currency,
   IncomeRange,
+  Star,
+  Rasi,
+  Laknam,
+  Gothram,
 } from "@/services/masterService";
 import { Dialog, Transition } from "@headlessui/react";
 import {
@@ -113,14 +117,17 @@ const registerSchema = z
 
     // Step 3A: Horoscope
     showHoroscope: z.boolean().default(true),
-    star: z.string().optional(),
-    rasi: z.string().optional(),
-    laknam: z.string().optional(),
-    gothram: z.string().optional(),
+    starId: z.union([z.number(), z.string()]).optional(),
+    rasiId: z
+      .union([z.number(), z.string()])
+      .refine((val) => val !== "", "Rasi is required"),
+    laknamId: z.union([z.number(), z.string()]).optional(),
+    gothramId: z.union([z.number(), z.string()]).optional(),
     sevvaiDhosham: z.enum(["Yes", "No", "Don't Know"]).optional(),
     rahuKetuDhosham: z.enum(["Yes", "No", "Don't Know"]).optional(),
     birthTime: z.string().optional(),
     birthPlace: z.string().optional(),
+    birthCityId: z.union([z.number(), z.string()]).optional(),
     horoscopeImage: z.string().optional(),
 
     // Step 4: Location & Lifestyle
@@ -184,7 +191,7 @@ const registerSchema = z
   })
   .superRefine((data, ctx) => {
     if (data.showHoroscope) {
-      if (!data.rasi || data.rasi.trim() === "") {
+      if (!data.rasiId || String(data.rasiId).trim() === "") {
         // Optional: Removed mandatory check
       }
       if (!data.birthTime || data.birthTime.trim() === "") {
@@ -214,6 +221,11 @@ export default function RegisterPage() {
   const [occupations, setOccupations] = useState<Occupation[]>([]);
   const [currencies, setCurrencies] = useState<Currency[]>([]);
   const [incomeRanges, setIncomeRanges] = useState<IncomeRange[]>([]);
+  const [stars, setStars] = useState<Star[]>([]);
+  const [rasis, setRasis] = useState<Rasi[]>([]);
+  const [laknams, setLaknams] = useState<Laknam[]>([]);
+  const [gothrams, setGothrams] = useState<Gothram[]>([]);
+  const [birthCitiesList, setBirthCitiesList] = useState<City[]>([]);
 
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
   const [otpInput, setOtpInput] = useState("");
@@ -365,14 +377,15 @@ export default function RegisterPage() {
       nativeDistrict: "",
       // Horoscope
       showHoroscope: true,
-      star: "",
-      rasi: "",
-      laknam: "",
-      gothram: "",
+      starId: "",
+      rasiId: "",
+      laknamId: "",
+      gothramId: "",
       sevvaiDhosham: "No",
       rahuKetuDhosham: "No",
       birthTime: "",
       birthPlace: "",
+      birthCityId: "",
       horoscopeImage: "",
       // Location & Lifestyle
       country: "India",
@@ -459,6 +472,11 @@ export default function RegisterPage() {
       .then(setEmploymentTypes)
       .catch(console.error);
     masterService.getCurrencies().then(setCurrencies).catch(console.error);
+    masterService.getStars().then(setStars).catch(console.error);
+    masterService.getRasis().then(setRasis).catch(console.error);
+    masterService.getLaknams().then(setLaknams).catch(console.error);
+    masterService.getGothrams().then(setGothrams).catch(console.error);
+    masterService.getAllCities().then(setBirthCitiesList).catch(console.error);
   }, [setValue]);
 
   useEffect(() => {
@@ -1491,26 +1509,43 @@ export default function RegisterPage() {
                       <label className="block text-sm font-bold text-slate-300 mb-2">
                         Star (Nakshatram)
                       </label>
-                      <input
-                        type="text"
-                        {...register("star")}
-                        placeholder="Select or type..."
-                        className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none"
+                      <Controller
+                        control={control}
+                        name="starId"
+                        render={({ field }) => (
+                          <SearchableDropdown
+                            options={stars}
+                            value={
+                              stars.find((s) => s.id === Number(field.value)) ||
+                              null
+                            }
+                            onChange={(val) => field.onChange(val?.id || "")}
+                            placeholder="Select star"
+                          />
+                        )}
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-slate-300 mb-2">
                         Rasi <span className="text-rose-500">*</span>
                       </label>
-                      <input
-                        type="text"
-                        {...register("rasi")}
-                        placeholder="Select or type..."
-                        className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none"
+                      <Controller
+                        control={control}
+                        name="rasiId"
+                        render={({ field }) => (
+                          <PremiumSelect
+                            options={rasis.map((r) => ({
+                              id: String(r.id),
+                              name: r.name,
+                            }))}
+                            value={String(field.value)}
+                            onChange={field.onChange}
+                          />
+                        )}
                       />
-                      {errors.rasi && (
+                      {errors.rasiId && (
                         <p className="text-rose-500 text-xs mt-1">
-                          {errors.rasi.message}
+                          {errors.rasiId.message}
                         </p>
                       )}
                     </div>
@@ -1518,22 +1553,40 @@ export default function RegisterPage() {
                       <label className="block text-sm font-bold text-slate-300 mb-2">
                         Laknam
                       </label>
-                      <input
-                        type="text"
-                        {...register("laknam")}
-                        placeholder="e.g. Mesha"
-                        className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none"
+                      <Controller
+                        control={control}
+                        name="laknamId"
+                        render={({ field }) => (
+                          <PremiumSelect
+                            options={laknams.map((l) => ({
+                              id: String(l.id),
+                              name: l.name,
+                            }))}
+                            value={String(field.value)}
+                            onChange={field.onChange}
+                          />
+                        )}
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-slate-300 mb-2">
                         Gothram
                       </label>
-                      <input
-                        type="text"
-                        {...register("gothram")}
-                        placeholder="e.g. Shiva"
-                        className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none"
+                      <Controller
+                        control={control}
+                        name="gothramId"
+                        render={({ field }) => (
+                          <SearchableDropdown
+                            options={gothrams}
+                            value={
+                              gothrams.find(
+                                (g) => g.id === Number(field.value),
+                              ) || null
+                            }
+                            onChange={(val) => field.onChange(val?.id || "")}
+                            placeholder="Search gothram"
+                          />
+                        )}
                       />
                     </div>
                     <div>
@@ -1555,11 +1608,21 @@ export default function RegisterPage() {
                       <label className="block text-sm font-bold text-slate-300 mb-2">
                         Birth Place
                       </label>
-                      <input
-                        type="text"
-                        {...register("birthPlace")}
-                        placeholder="e.g. Chennai"
-                        className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none"
+                      <Controller
+                        control={control}
+                        name="birthCityId"
+                        render={({ field }) => (
+                          <SearchableDropdown
+                            options={birthCitiesList}
+                            value={
+                              birthCitiesList.find(
+                                (c) => c.id === Number(field.value),
+                              ) || null
+                            }
+                            onChange={(val) => field.onChange(val?.id || "")}
+                            placeholder="Search & Select City"
+                          />
+                        )}
                       />
                     </div>
                     <div>
@@ -1674,10 +1737,10 @@ export default function RegisterPage() {
                         "siblingsCount",
                         "ownHouse",
                         "showHoroscope",
-                        "star",
-                        "rasi",
-                        "laknam",
-                        "gothram",
+                        "starId",
+                        "rasiId",
+                        "laknamId",
+                        "gothramId",
                         "birthTime",
                         "birthPlace",
                         "sevvaiDhosham",

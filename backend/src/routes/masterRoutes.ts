@@ -12,6 +12,10 @@ import {
   getOccupations,
   getCurrencies,
   getIncomeRanges,
+  getStars,
+  getRasis,
+  getLaknams,
+  getGothrams,
 } from "../controllers/masterController";
 
 const router = express.Router();
@@ -37,5 +41,11 @@ router.get("/occupations", getOccupations);
 // Income
 router.get("/currencies", getCurrencies);
 router.get("/income-ranges", getIncomeRanges);
+
+// Horoscope Master Data
+router.get("/stars", getStars);
+router.get("/rasis", getRasis);
+router.get("/laknams", getLaknams);
+router.get("/gothrams", getGothrams);
 
 export default router;

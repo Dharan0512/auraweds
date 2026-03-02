@@ -842,28 +842,32 @@ export default function ProfileModal({
                       <div className="detail-item">
                         <span className="detail-label">Star (Nakshatram)</span>
                         <span className="detail-value">
-                          {profile.profile?.HoroscopeDetail?.star ||
+                          {profile.profile?.HoroscopeDetail?.Star?.name ||
+                            profile.profile?.HoroscopeDetail?.star ||
                             "Not specified"}
                         </span>
                       </div>
                       <div className="detail-item">
                         <span className="detail-label">Rasi</span>
                         <span className="detail-value">
-                          {profile.profile?.HoroscopeDetail?.rasi ||
+                          {profile.profile?.HoroscopeDetail?.Rasi?.name ||
+                            profile.profile?.HoroscopeDetail?.rasi ||
                             "Not specified"}
                         </span>
                       </div>
                       <div className="detail-item">
                         <span className="detail-label">Laknam</span>
                         <span className="detail-value">
-                          {profile.profile?.HoroscopeDetail?.laknam ||
+                          {profile.profile?.HoroscopeDetail?.Laknam?.name ||
+                            profile.profile?.HoroscopeDetail?.laknam ||
                             "Not specified"}
                         </span>
                       </div>
                       <div className="detail-item">
                         <span className="detail-label">Gothram</span>
                         <span className="detail-value">
-                          {profile.profile?.HoroscopeDetail?.gothram ||
+                          {profile.profile?.HoroscopeDetail?.Gothram?.name ||
+                            profile.profile?.HoroscopeDetail?.gothram ||
                             "Not specified"}
                         </span>
                       </div>
@@ -891,7 +895,8 @@ export default function ProfileModal({
                       <div className="detail-item">
                         <span className="detail-label">Birth Place</span>
                         <span className="detail-value">
-                          {profile.profile?.HoroscopeDetail?.birthPlace ||
+                          {profile.profile?.HoroscopeDetail?.BirthCity?.name ||
+                            profile.profile?.HoroscopeDetail?.birthPlace ||
                             "Not specified"}
                         </span>
                       </div>

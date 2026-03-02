@@ -26,7 +26,12 @@ import {
   Subscription,
   Plan,
   Interest,
+  Notification,
   ProfileView,
+  Star,
+  Gothram,
+  Laknam,
+  Rasi,
 } from "../models/sequelize";
 import { sequelize } from "../config/db.postgres";
 import { profileSerializer } from "../serializers/profileSerializer";
@@ -194,13 +199,18 @@ export const createOrUpdateProfile = async (
       {
         userProfileId,
         star: profileData.star || null,
+        starId: parseId(profileData.starId),
         rasi: profileData.rasi || null,
+        rasiId: parseId(profileData.rasiId),
         laknam: profileData.laknam || null,
+        laknamId: parseId(profileData.laknamId),
         gothram: profileData.gothram || null,
+        gothramId: parseId(profileData.gothramId),
         sevvaiDhosham: profileData.sevvaiDhosham || null,
         rahuKetuDhosham: profileData.rahuKetuDhosham || null,
         birthTime: profileData.birthTime || null,
         birthPlace: profileData.birthPlace || null,
+        birthCityId: parseId(profileData.birthCityId),
       },
       { transaction },
     );
@@ -310,7 +320,10 @@ export const getMyProfile = async (
         MotherTongue,
         Caste,
         FamilyDetails,
-        HoroscopeDetails,
+        {
+          model: HoroscopeDetails,
+          include: [Star, Rasi, Laknam, Gothram],
+        },
         LocationLifestyle,
         EducationCareer,
         Badge,
@@ -574,7 +587,10 @@ export const getOtherProfile = async (
         MotherTongue,
         Caste,
         FamilyDetails,
-        HoroscopeDetails,
+        {
+          model: HoroscopeDetails,
+          include: [Star, Rasi, Laknam, Gothram],
+        },
         LocationLifestyle,
         EducationCareer,
         Badge,

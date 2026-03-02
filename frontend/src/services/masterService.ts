@@ -31,6 +31,10 @@ export interface Currency extends MasterItem {
 export interface IncomeRange extends MasterItem {
   currencyId: string | number;
 }
+export interface Star extends MasterItem {}
+export interface Rasi extends MasterItem {}
+export interface Laknam extends MasterItem {}
+export interface Gothram extends MasterItem {}
 
 export interface Height {
   id: number;
@@ -79,6 +83,10 @@ export const masterService = {
     const { data } = await apiClient.get(`/master/cities?state_id=${stateId}`);
     return data;
   },
+  getAllCities: async (): Promise<City[]> => {
+    const { data } = await apiClient.get("/master/cities");
+    return data;
+  },
 
   getEducations: async (): Promise<Education[]> => {
     const { data } = await apiClient.get("/master/educations");
@@ -110,6 +118,22 @@ export const masterService = {
     const { data } = await apiClient.get(
       `/master/income-ranges?currency_id=${currencyId}`,
     );
+    return data;
+  },
+  getStars: async (): Promise<Star[]> => {
+    const { data } = await apiClient.get("/master/stars");
+    return data;
+  },
+  getRasis: async (): Promise<Rasi[]> => {
+    const { data } = await apiClient.get("/master/rasis");
+    return data;
+  },
+  getLaknams: async (): Promise<Laknam[]> => {
+    const { data } = await apiClient.get("/master/laknams");
+    return data;
+  },
+  getGothrams: async (): Promise<Gothram[]> => {
+    const { data } = await apiClient.get("/master/gothrams");
     return data;
   },
 };
