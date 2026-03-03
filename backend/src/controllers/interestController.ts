@@ -70,6 +70,14 @@ export const getInterests = async (
           ],
         };
         break;
+      case "blocked":
+        whereClause = {
+          [Op.or]: [
+            { senderId: req.user.id, status: "BLOCKED" },
+            { receiverId: req.user.id, status: "BLOCKED" },
+          ],
+        };
+        break;
       default:
         res.status(400).json({ message: "Invalid interest type" });
         return;
@@ -497,8 +505,14 @@ export const getInterestCounts = async (
         [Op.or]: [{ senderId: userId }, { receiverId: userId }],
       },
     });
+    const blocked = await Interest.count({
+      where: {
+        status: "BLOCKED",
+        [Op.or]: [{ senderId: userId }, { receiverId: userId }],
+      },
+    });
 
-    res.status(200).json({ received, sent, accepted, declined });
+    res.status(200).json({ received, sent, accepted, declined, blocked });
   } catch (error) {
     console.error("Get interest counts error:", error);
     res.status(500).json({ message: "Server error" });
@@ -630,5 +644,44 @@ export const notifyCall = async (
   } catch (error) {
     console.error("Notify call error:", error);
     res.status(500).json({ message: "Server error sending notification" });
+  }
+};
+
+/**
+ * PATCH /api/interests/:id/unblock
+ */
+export const unblockInterest = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: "Not authorized" });
+      return;
+    }
+
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const interest = await Interest.findOne({
+      where: {
+        id,
+        [Op.or]: [{ senderId: userId }, { receiverId: userId }],
+        status: "BLOCKED",
+      },
+    });
+
+    if (!interest) {
+      res.status(404).json({ message: "Blocked interest not found" });
+      return;
+    }
+
+    interest.status = "ACCEPTED";
+    await interest.save();
+
+    res.status(200).json({ message: "User unblocked successfully", interest });
+  } catch (error) {
+    console.error("Unblock interest error:", error);
+    res.status(500).json({ message: "Server error unblocking user" });
   }
 };

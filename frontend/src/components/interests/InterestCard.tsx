@@ -45,6 +45,7 @@ interface InterestCardProps {
   onRemove?: (id: string | number) => void;
   onSendReminder?: (id: string | number) => void;
   onBlock?: (id: string | number) => void;
+  onUnblock?: (id: string | number) => void;
 }
 
 export default function InterestCard({
@@ -59,6 +60,7 @@ export default function InterestCard({
   onRemove,
   onSendReminder,
   onBlock,
+  onUnblock,
 }: InterestCardProps) {
   const profile: MatchProfile = interest.profile;
   const isFree = userTier === "Free";
@@ -318,6 +320,15 @@ export default function InterestCard({
                   title="Block Profile"
                 >
                   <Ban size={18} />
+                </button>
+              )}
+
+              {type === "blocked" && onUnblock && (
+                <button
+                  onClick={() => onUnblock(interest.id)}
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#D4AF37] text-slate-950 hover:bg-[#B8860B] transition-all shadow-[0_4px_12px_rgba(212,175,55,0.3)] text-[10px] font-black uppercase tracking-widest active:scale-95"
+                >
+                  <ShieldCheck size={14} /> Unblock
                 </button>
               )}
 

@@ -22,6 +22,7 @@ export interface InterestCounts {
   sent: number;
   accepted: number;
   declined: number;
+  blocked: number;
 }
 
 export interface PaginatedInterests {
@@ -65,9 +66,10 @@ export const interestService = {
         sent: data?.sent || 0,
         accepted: data?.accepted || 0,
         declined: data?.declined || 0,
+        blocked: data?.blocked || 0,
       };
     } catch {
-      return { received: 0, sent: 0, accepted: 0, declined: 0 };
+      return { received: 0, sent: 0, accepted: 0, declined: 0, blocked: 0 };
     }
   },
 
@@ -126,5 +128,9 @@ export const interestService = {
 
   notifyCall: async (targetUserId: string | number): Promise<void> => {
     await apiClient.post("/interests/notify-call", { targetUserId });
+  },
+
+  unblockInterest: async (interestId: string | number): Promise<void> => {
+    await apiClient.patch(`/interests/${interestId}/unblock`);
   },
 };

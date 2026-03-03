@@ -38,6 +38,7 @@ export default function InterestsPage() {
     sent: 0,
     accepted: 0,
     declined: 0,
+    blocked: 0,
   });
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -179,6 +180,21 @@ export default function InterestsPage() {
     );
   };
 
+  const handleUnblock = async (id: string | number) => {
+    try {
+      const promise = interestService.unblockInterest(id);
+      toast.promise(promise, {
+        loading: "Unblocking...",
+        success: "User unblocked and moved to Accepted",
+        error: "Failed to unblock user",
+      });
+      await promise;
+      fetchData();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleRemove = async (id: string | number) => {
     toast(
       (t) => (
@@ -250,7 +266,7 @@ export default function InterestsPage() {
       id: "blocked",
       label: "Blocked",
       icon: XCircle, // Fallback icon
-      count: 0, // Simplified for now
+      count: counts.blocked,
     },
   ];
 
@@ -386,6 +402,7 @@ export default function InterestsPage() {
                       onWithdraw={handleWithdraw}
                       onRemove={handleRemove}
                       onBlock={handleBlock}
+                      onUnblock={handleUnblock}
                       onViewProfile={(uid) =>
                         handleViewProfile(uid, interest.id)
                       }
