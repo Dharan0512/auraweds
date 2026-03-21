@@ -43,6 +43,8 @@ interface UserProfileAttributes {
   familyStatus: string | null;
   incomeCurrencyId: number | null;
   profileVisibility: "Public" | "Members Only" | "Hidden";
+  approvalStatus: "pending" | "approved" | "rejected";
+  moderationReason: string | null;
   privacySettings: any | null; // JSONB
   createdAt?: Date;
   updatedAt?: Date;
@@ -75,6 +77,8 @@ interface UserProfileCreationAttributes extends Optional<
   | "incomeCurrencyId"
   | "profileVisibility"
   | "privacySettings"
+  | "approvalStatus"
+  | "moderationReason"
 > {}
 
 export class UserProfile
@@ -114,6 +118,8 @@ export class UserProfile
   public incomeCurrencyId!: number | null;
   public profileVisibility!: "Public" | "Members Only" | "Hidden";
   public profileStrength!: number;
+  public approvalStatus!: "pending" | "approved" | "rejected";
+  public moderationReason!: string | null;
   public privacySettings!: any | null;
 
   public readonly createdAt!: Date;
@@ -240,6 +246,14 @@ UserProfile.init(
       validate: {
         isIn: [["Public", "Members Only", "Hidden"]],
       },
+    },
+    approvalStatus: {
+      type: DataTypes.ENUM("pending", "approved", "rejected"),
+      defaultValue: "pending",
+    },
+    moderationReason: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
     profileStrength: { type: DataTypes.INTEGER, defaultValue: 0 },
     privacySettings: {

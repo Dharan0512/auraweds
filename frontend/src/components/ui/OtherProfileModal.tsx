@@ -69,7 +69,7 @@ export default function OtherProfileModal({
         subscriptionService.getStatus().catch(
           () =>
             ({
-              tier: "Free",
+              tier: "Basic Member",
               status: "None",
               state: "FREE",
               endDate: null,
@@ -169,7 +169,7 @@ export default function OtherProfileModal({
                 </div>
 
                 {/* Subscription Action or Social Links */}
-                {!subscription || subscription.tier === "Free" ? (
+                {!subscription || subscription.tier === "Basic Member" ? (
                   <div className="mt-6 flex flex-col items-start gap-2">
                     <p className="text-white/60 text-sm flex items-center gap-1.5 font-medium bg-black/40 px-3 py-1.5 rounded-lg border border-white/5">
                       <Lock size={14} className="text-[#D4AF37]" /> Upgrade to

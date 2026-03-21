@@ -58,7 +58,7 @@ export default function WhoViewedPage() {
             </span>{" "}
             members and above.
           </p>
-          <button className="bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 px-10 py-4 rounded-full font-black text-lg transition-all duration-300 hover:shadow-[0_0_30px_rgba(212,175,55,0.4)] hover:scale-105 active:scale-95">
+          <button className="bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 px-10 py-3 rounded-2xl font-black uppercase tracking-wider text-xs transition-all duration-300 hover:shadow-[0_0_30px_rgba(212,175,55,0.4)] hover:scale-105 active:scale-95">
             Upgrade Now
           </button>
         </div>

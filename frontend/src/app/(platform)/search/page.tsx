@@ -36,6 +36,8 @@ const SILVER_FILTERS = [
   "diet",
   "incomeRangeId",
   "casteId",
+  "cityId",
+  "maritalStatus",
 ];
 const GOLD_FILTERS = [
   "horoscopeMatch",
@@ -48,6 +50,9 @@ const GOLD_FILTERS = [
   "onlineNow",
   "profileStrength",
   "sort",
+  "starId",
+  "rasiId",
+  "dosham",
 ];
 
 const MARITAL_STATUS_OPTIONS = [
@@ -83,6 +88,8 @@ export default function SearchPage() {
     fetchCastes,
     fetchOccupations,
     fetchIncomeRanges,
+    stars,
+    rasis,
     loading: masterLoading,
   } = useMasterData();
 
@@ -107,6 +114,9 @@ export default function SearchPage() {
     religionId: "",
     maritalStatus: "",
     sort: "recentlyJoined",
+    starId: "",
+    rasiId: "",
+    dosham: "",
   });
 
   const [appliedFilters, setAppliedFilters] = useState<any>(filters);
@@ -187,7 +197,7 @@ export default function SearchPage() {
     ];
     const isGoldSort = key === "sort" && GOLD_ONLY_SORTS.includes(value);
 
-    const userTier = subscription?.tier || "Free";
+    const userTier = subscription?.tier || "Basic Member";
 
     if (
       (isGold || isGoldSort) &&
@@ -197,7 +207,7 @@ export default function SearchPage() {
       setIsUpgradeModalOpen(true);
       return;
     }
-    if (isSilver && userTier === "Free") {
+    if (isSilver && userTier === "Basic Member") {
       setIsUpgradeModalOpen(true);
       return;
     }
@@ -214,6 +224,9 @@ export default function SearchPage() {
       religionId: "",
       maritalStatus: "",
       sort: "recentlyJoined",
+      starId: "",
+      rasiId: "",
+      dosham: "",
     };
     setFilters(defaultFilters);
     setStates([]);
@@ -248,7 +261,7 @@ export default function SearchPage() {
   }, [filters.stateId]);
 
   const isFilterLocked = (filterKey: string, value?: any) => {
-    const userTier = subscription?.tier || "Free";
+    const userTier = subscription?.tier || "Basic Member";
     const GOLD_ONLY_SORTS = [
       "mostCompatible",
       "recentlyActive",
@@ -262,7 +275,7 @@ export default function SearchPage() {
       return userTier !== "Gold" && userTier !== "Elite Gold";
     }
     if (SILVER_FILTERS.includes(filterKey)) {
-      return userTier === "Free";
+      return userTier === "Basic Member";
     }
     return false;
   };
@@ -278,14 +291,14 @@ export default function SearchPage() {
   ).length;
 
   return (
-    <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 pb-32">
-      <div className="flex flex-col lg:flex-row gap-10">
+    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 pb-32">
+      <div className="flex flex-col lg:flex-row gap-8">
         {/* Sidebar - Desktop */}
-        <aside className="hidden lg:block w-80 shrink-0 sticky top-28 h-fit max-h-[calc(100vh-8rem)] overflow-y-auto pb-10">
-          <div className="bg-slate-900/40 backdrop-blur-2xl border border-white/5 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden">
+        <aside className="hidden lg:block w-80 shrink-0 sticky top-24 h-fit max-h-[calc(100vh*1.2-6rem)] overflow-y-auto pb-10">
+          <div className="bg-slate-900/40 backdrop-blur-2xl border border-white/5 rounded-3xl p-6 shadow-2xl relative overflow-hidden min-h-[calc(100vh*1.2-10rem)]">
             <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 blur-[60px] rounded-full -mr-10 -mt-10"></div>
 
-            <div className="flex items-center justify-between mb-8 relative z-10">
+            <div className="flex items-center justify-between mb-6 relative z-10">
               <h2 className="text-xl font-bold text-white flex items-center gap-3">
                 <Filter size={20} className="text-[#D4AF37]" /> Filters
               </h2>
@@ -347,22 +360,6 @@ export default function SearchPage() {
                     className="premium-select-filter"
                   />
                 </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                    Marital Status
-                  </label>
-                  <PremiumSelect
-                    options={[
-                      { id: "", name: "Any Status" },
-                      ...MARITAL_STATUS_OPTIONS,
-                    ]}
-                    value={filters.maritalStatus}
-                    onChange={(val) => updateFilter("maritalStatus", val)}
-                    placeholder="Any Marital Status"
-                    className="premium-select-filter"
-                  />
-                </div>
               </FilterSection>
 
               {/* Location */}
@@ -384,21 +381,6 @@ export default function SearchPage() {
                     value={filters.stateId}
                     onChange={(val) => updateFilter("stateId", val)}
                     placeholder="Any State"
-                    className="premium-select-filter"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                    City
-                  </label>
-                  <PremiumSelect
-                    options={[
-                      { id: "", name: "Any City" },
-                      ...cities.map((c) => ({ id: c.id, name: c.name })),
-                    ]}
-                    value={filters.cityId}
-                    onChange={(val) => updateFilter("cityId", val)}
-                    placeholder="Any City"
                     className="premium-select-filter"
                   />
                 </div>
@@ -443,6 +425,38 @@ export default function SearchPage() {
                       />
                     </div>
                     <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                        City
+                      </label>
+                      <PremiumSelect
+                        options={[
+                          { id: "", name: "Any City" },
+                          ...cities.map((c) => ({ id: c.id, name: c.name })),
+                        ]}
+                        value={filters.cityId}
+                        onChange={(val) => updateFilter("cityId", val)}
+                        disabled={isFilterLocked("cityId")}
+                        placeholder="Any City"
+                        className="premium-select-filter"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                        Marital Status
+                      </label>
+                      <PremiumSelect
+                        options={[
+                          { id: "", name: "Any Status" },
+                          ...MARITAL_STATUS_OPTIONS,
+                        ]}
+                        value={filters.maritalStatus}
+                        onChange={(val) => updateFilter("maritalStatus", val)}
+                        disabled={isFilterLocked("maritalStatus")}
+                        placeholder="Any Status"
+                        className="premium-select-filter"
+                      />
+                    </div>
+                    <div className="space-y-2">
                       <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex justify-between">
                         Income
                       </label>
@@ -481,6 +495,58 @@ export default function SearchPage() {
                           onChange={(val) => updateFilter("sort", val)}
                           disabled={isFilterLocked("sort")}
                           placeholder="Sort Results"
+                          className="premium-select-filter"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                          Star (Nakshatram)
+                        </label>
+                        <PremiumSelect
+                          options={[
+                            { id: "", name: "Any Star" },
+                            ...stars.map((s) => ({ id: s.id, name: s.name })),
+                          ]}
+                          value={filters.starId}
+                          onChange={(val) => updateFilter("starId", val)}
+                          disabled={isFilterLocked("starId")}
+                          placeholder="Any Star"
+                          className="premium-select-filter"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                          Rasi
+                        </label>
+                        <PremiumSelect
+                          options={[
+                            { id: "", name: "Any Rasi" },
+                            ...rasis.map((r) => ({ id: r.id, name: r.name })),
+                          ]}
+                          value={filters.rasiId}
+                          onChange={(val) => updateFilter("rasiId", val)}
+                          disabled={isFilterLocked("rasiId")}
+                          placeholder="Any Rasi"
+                          className="premium-select-filter"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                          Dosham
+                        </label>
+                        <PremiumSelect
+                          options={[
+                            { id: "", name: "Any" },
+                            { id: "sevvai", name: "Sevvai Dosham" },
+                            { id: "rahu", name: "Rahu Ketu Dosham" },
+                          ]}
+                          value={filters.dosham}
+                          onChange={(val) => updateFilter("dosham", val)}
+                          disabled={isFilterLocked("dosham")}
+                          placeholder="Any Dosham"
                           className="premium-select-filter"
                         />
                       </div>
@@ -542,9 +608,9 @@ export default function SearchPage() {
 
         {/* Results Area */}
         <main className="flex-1">
-          <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-12">
+          <div className="flex flex-col md:flex-row justify-between items-end gap-5 mb-8">
             <div>
-              <h1 className="text-4xl font-serif font-bold text-white tracking-tight">
+              <h1 className="text-3xl font-serif font-bold text-white tracking-tight">
                 Advanced{" "}
                 <span className="bg-gradient-to-r from-[#D4AF37] to-slate-400 bg-clip-text text-transparent">
                   Search
@@ -594,7 +660,7 @@ export default function SearchPage() {
           )}
 
           {/* Grid */}
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
             {loading ? (
               [1, 2, 3, 4, 5, 6].map((i) => <MatchCardSkeleton key={i} />)
             ) : results.length === 0 ? (
@@ -653,6 +719,7 @@ export default function SearchPage() {
                   onConnect={() => handleConnect(match.userId)}
                   hasSentInterest={match.hasSentInterest}
                   isLoading={connectingId === match.userId}
+                  isLocked={false}
                 />
               ))
             )}
@@ -662,8 +729,8 @@ export default function SearchPage() {
 
       {/* Sticky Apply Bar */}
       {isFiltersChanged && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 duration-500">
-          <div className="bg-slate-900/80 backdrop-blur-2xl border border-[#D4AF37]/30 px-8 py-5 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-10">
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 duration-500">
+          <div className="bg-slate-900/80 backdrop-blur-2xl border border-[#D4AF37]/30 px-6 py-4 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-8">
             <div className="flex flex-col">
               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">
                 Smart Search

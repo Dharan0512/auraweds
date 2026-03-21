@@ -22,13 +22,18 @@ import {
   Lock,
   Eye,
   EyeOff,
+  Phone,
+  Mail,
 } from "lucide-react";
+import { useSubscription } from "@/hooks/useSubscription";
+import UpgradeModal from "./UpgradeModal";
 import "./ProfileModal.css";
 import EditProfileForm from "../../features/profile/EditProfileForm";
 import { authService } from "@/services/authService";
 import { getImageUrl, calculateAge } from "@/lib/utils";
 import ImagePreviewModal from "./ImagePreviewModal";
 import ImageCropperModal from "./ImageCropperModal";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -44,7 +49,11 @@ export default function ProfileModal({
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState("about");
+  const { tier } = useSubscription();
+  const { theme, setTheme } = useTheme();
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [isViewingContact, setIsViewingContact] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("about");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [passwordData, setPasswordData] = useState({
@@ -81,7 +90,7 @@ export default function ProfileModal({
       setLoading(true);
       const data = userId
         ? await profileService.getOtherProfile(userId)
-        : await profileService.getMyProfile();
+        : await profileService.getMyProfile(true);
       setProfile(data);
     } catch (error) {
       console.error("Fetch profile error", error);
@@ -341,7 +350,7 @@ export default function ProfileModal({
                   profile.user?.firstName,
                 )}
                 alt={profile.user?.firstName}
-                className="profile-hero-image"
+                className={`profile-hero-image ${tier === "Basic Member" && userId ? "blur-md" : ""}`}
               />
               <div className="profile-hero-gradient"></div>
 
@@ -444,11 +453,11 @@ export default function ProfileModal({
               </div>
               {!userId && (
                 <button
-                  className="absolute bottom-6 right-8 premium-btn flex items-center gap-2"
+                  className="absolute bottom-6 right-8 px-6 py-3 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 rounded-2xl font-black uppercase tracking-wider hover:scale-[1.02] active:scale-95 transition-all shadow-xl flex items-center justify-center space-x-2 text-xs"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <Camera size={18} />
-                  Add Photo
+                  <Camera size={16} className="text-slate-900" />
+                  <span>Add Photo</span>
                 </button>
               )}
               <input
@@ -504,7 +513,15 @@ export default function ProfileModal({
                           );
                           return (
                             <div key={idx} className="gallery-item">
-                              <img src={photoUrl} alt={`Gallery ${idx}`} />
+                              <img
+                                src={photoUrl}
+                                alt={`Gallery ${idx}`}
+                                className={
+                                  tier === "Basic Member" && userId
+                                    ? "blur-md"
+                                    : ""
+                                }
+                              />
                               <div className="gallery-item-overlay">
                                 <button
                                   className="action-btn action-btn-preview"
@@ -664,6 +681,74 @@ export default function ProfileModal({
                       </div>
                     </div>
                   </div>
+
+                  {/* Contact Information - Only for other profiles */}
+                  {userId && (
+                    <div className="mt-8 pt-8 border-t border-white/5">
+                      <div className="section-title">
+                        <Phone size={20} className="text-[#D4AF37]" /> Contact
+                        Information
+                      </div>
+
+                      <div className="p-6 bg-slate-900/60 rounded-3xl border border-[#D4AF37]/20 relative overflow-hidden group">
+                        {profile.user?.mobile || profile.user?.email ? (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-full bg-[#D4AF37]/10 flex items-center justify-center text-[#D4AF37]">
+                                <Phone size={18} />
+                              </div>
+                              <div>
+                                <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">
+                                  Mobile Number
+                                </p>
+                                <p className="text-white font-medium">
+                                  {profile.user.mobile || "N/A"}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-full bg-[#D4AF37]/10 flex items-center justify-center text-[#D4AF37]">
+                                <Mail size={18} />
+                              </div>
+                              <div>
+                                <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">
+                                  Email Address
+                                </p>
+                                <p className="text-white font-medium">
+                                  {profile.user.email || "N/A"}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-center py-4 relative z-10">
+                            <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 mx-auto mb-4">
+                              <Lock size={24} />
+                            </div>
+                            <h4 className="text-white font-bold mb-2">
+                              Contact Details Locked
+                            </h4>
+                            <p className="text-slate-400 text-sm max-w-sm mx-auto mb-6">
+                              {tier === "Basic Member"
+                                ? "Basic members cannot view contact details. Upgrade to Silver or Gold to unlock contact access."
+                                : tier === "Silver"
+                                  ? "You have reached your limit of 10 contact views per month. Upgrade to Gold for unlimited access!"
+                                  : "Contact details are hidden by the user or requires a higher tier."}
+                            </p>
+                            <button
+                              onClick={() => setShowUpgrade(true)}
+                              className="px-8 py-3 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 font-black uppercase tracking-wider rounded-2xl hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2 mx-auto mt-4 text-xs"
+                            >
+                              Upgrade Now to Unlock
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Decorative background element */}
+                        <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-[#D4AF37]/5 rounded-full blur-3xl group-hover:bg-[#D4AF37]/10 transition-colors" />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1056,11 +1141,87 @@ export default function ProfileModal({
 
               {activeTab === "manage" && (
                 <div className="space-y-8 animate-in fade-in duration-300">
+                  {/* Interface Theme Selection */}
+                  <div>
+                    <div className="section-title">
+                      <Sparkles
+                        size={20}
+                        className="text-[var(--accent-color)]"
+                      />{" "}
+                      Interface Theme
+                    </div>
+                    <div className="p-6 bg-slate-900/40 rounded-2xl border border-white/5">
+                      <p className="text-sm text-slate-400 mb-6 font-medium">
+                        Personalize your AuraWeds experience with a premium
+                        interface theme.
+                      </p>
+                      <div className="grid grid-cols-2 gap-4">
+                        <button
+                          onClick={() => setTheme("theme-violet")}
+                          className={`flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all group ${
+                            theme === "theme-violet"
+                              ? "bg-purple-600/10 border-purple-500 shadow-[0_0_20px_rgba(124,58,237,0.2)]"
+                              : "bg-slate-800/40 border-white/5 hover:border-white/20"
+                          }`}
+                        >
+                          <div
+                            className={`w-12 h-12 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 ${
+                              theme === "theme-violet"
+                                ? "bg-purple-500 text-white"
+                                : "bg-slate-700 text-slate-400"
+                            }`}
+                          >
+                            <Sparkles size={24} />
+                          </div>
+                          <div className="text-center">
+                            <h4
+                              className={`text-sm font-bold ${theme === "theme-violet" ? "text-white" : "text-slate-400"}`}
+                            >
+                              Violet Tech
+                            </h4>
+                            <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1 font-black">
+                              Default
+                            </p>
+                          </div>
+                        </button>
+
+                        <button
+                          onClick={() => setTheme("theme-gold")}
+                          className={`flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all group ${
+                            theme === "theme-gold"
+                              ? "bg-amber-600/10 border-amber-500 shadow-[0_0_20px_rgba(212,175,55,0.2)]"
+                              : "bg-slate-800/40 border-white/5 hover:border-white/20"
+                          }`}
+                        >
+                          <div
+                            className={`w-12 h-12 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 ${
+                              theme === "theme-gold"
+                                ? "bg-amber-500 text-black"
+                                : "bg-slate-700 text-slate-400"
+                            }`}
+                          >
+                            <Sparkles size={24} />
+                          </div>
+                          <div className="text-center">
+                            <h4
+                              className={`text-sm font-bold ${theme === "theme-gold" ? "text-white" : "text-slate-400"}`}
+                            >
+                              Royal Gold
+                            </h4>
+                            <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1 font-black">
+                              Elite
+                            </p>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Privacy & Visibility */}
                   <div>
                     <div className="section-title">
-                      <Eye size={20} className="text-[#D4AF37]" /> Profile
-                      Visibility & Privacy
+                      <Eye size={20} className="text-[var(--accent-color)]" />{" "}
+                      Profile Visibility & Privacy
                     </div>
 
                     <div className="p-6 bg-slate-900/40 rounded-2xl border border-white/5 space-y-6">
@@ -1238,14 +1399,16 @@ export default function ProfileModal({
                 </div>
               )}
 
-              <div className="mt-8 flex justify-center pt-8 border-t border-white/5">
-                <button
-                  className="premium-btn px-12 py-4 text-lg"
-                  onClick={() => setIsEditing(true)}
-                >
-                  Edit My Profile
-                </button>
-              </div>
+              {!userId && (
+                <div className="mt-8 flex justify-center pt-8 border-t border-white/5">
+                  <button
+                    className="premium-btn px-12 py-4 text-lg"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    Edit My Profile
+                  </button>
+                </div>
+              )}
             </div>
           </>
         ) : (
@@ -1289,6 +1452,15 @@ export default function ProfileModal({
             onCropComplete={handleCropComplete}
           />
         )}
+        {/* Upgrade Modal */}
+        <UpgradeModal
+          isOpen={showUpgrade}
+          onClose={() => setShowUpgrade(false)}
+          onSuccess={() => {
+            setShowUpgrade(false);
+            fetchProfile();
+          }}
+        />
       </div>
     </div>
   );

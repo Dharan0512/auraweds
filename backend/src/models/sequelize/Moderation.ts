@@ -88,3 +88,9 @@ Report.init(
     timestamps: true,
   },
 );
+
+User.hasMany(Report, { foreignKey: "reporterId", as: "SubmittedReports" });
+Report.belongsTo(User, { foreignKey: "reporterId", as: "Reporter" });
+
+User.hasMany(Report, { foreignKey: "reportedId", as: "ReceivedReports" });
+Report.belongsTo(User, { foreignKey: "reportedId", as: "Reported" });

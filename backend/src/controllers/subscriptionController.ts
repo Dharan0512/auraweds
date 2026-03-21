@@ -109,7 +109,7 @@ export const getSubscriptionStatus = async (
 
     if (lastSub && lastSub.endDate < now) {
       res.status(200).json({
-        tier: "Free",
+        tier: "Basic Member",
         state: "EXPIRED",
         lastTier: (lastSub as any).Plan?.name,
         endDate: lastSub.endDate,
@@ -117,8 +117,10 @@ export const getSubscriptionStatus = async (
       return;
     }
 
-    // 3. Default to Free
-    res.status(200).json({ tier: "Free", state: "FREE", endDate: null });
+    // 3. Default to Basic Member
+    res
+      .status(200)
+      .json({ tier: "Basic Member", state: "FREE", endDate: null });
   } catch (error) {
     console.error("Subscription status error:", error);
     res.status(500).json({ message: "Internal server error" });

@@ -133,6 +133,12 @@ export const login = async (
       },
     );
 
+    // Update login tracking
+    await user.update({
+      lastLoginAt: new Date(),
+      ipAddress: req.ip || req.headers["x-forwarded-for"]?.toString() || null,
+    });
+
     res.json({
       user: {
         id: user.id,

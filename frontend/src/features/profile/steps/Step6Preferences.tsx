@@ -1,6 +1,7 @@
 "use client";
 
 import { useForm, Controller } from "react-hook-form";
+import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 
@@ -56,6 +57,7 @@ export default function Step6Preferences({
     control,
     watch,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<PreferencesData>({
     resolver: zodResolver(preferencesSchema),
@@ -74,6 +76,19 @@ export default function Step6Preferences({
             : [],
         },
   });
+
+  useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 0) {
+      reset({
+        partnerAgeMin: 22,
+        partnerAgeMax: 30,
+        partnerHeightMin: 150,
+        partnerHeightMax: 190,
+        partnerMaritalStatus: "Never Married",
+        ...initialData,
+      });
+    }
+  }, [initialData, reset]);
 
   const selectedReligion = watch("partnerReligion") || null;
   const selectedCastes = watch("partnerCastes") || [];

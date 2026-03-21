@@ -118,9 +118,7 @@ const registerSchema = z
     // Step 3A: Horoscope
     showHoroscope: z.boolean().default(true),
     starId: z.union([z.number(), z.string()]).optional(),
-    rasiId: z
-      .union([z.number(), z.string()])
-      .refine((val) => val !== "", "Rasi is required"),
+    rasiId: z.union([z.number(), z.string()]).optional(),
     laknamId: z.union([z.number(), z.string()]).optional(),
     gothramId: z.union([z.number(), z.string()]).optional(),
     sevvaiDhosham: z.enum(["Yes", "No", "Don't Know"]).optional(),
@@ -192,13 +190,11 @@ const registerSchema = z
   .superRefine((data, ctx) => {
     if (data.showHoroscope) {
       if (!data.rasiId || String(data.rasiId).trim() === "") {
-        // Optional: Removed mandatory check
-      }
-      if (!data.birthTime || data.birthTime.trim() === "") {
-        // Optional: Removed mandatory check
-      }
-      if (!data.horoscopeImage) {
-        // Optional: Removed mandatory check
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Rasi is required when Horoscope is enabled",
+          path: ["rasiId"],
+        });
       }
     }
   });
@@ -226,6 +222,7 @@ export default function RegisterPage() {
   const [laknams, setLaknams] = useState<Laknam[]>([]);
   const [gothrams, setGothrams] = useState<Gothram[]>([]);
   const [birthCitiesList, setBirthCitiesList] = useState<City[]>([]);
+  const [partnerCastesList, setPartnerCastesList] = useState<Caste[]>([]);
 
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
   const [otpInput, setOtpInput] = useState("");
@@ -449,7 +446,9 @@ export default function RegisterPage() {
   const watchedCurrencyId = useWatch({ control, name: "incomeCurrencyId" });
   const watchedGender = useWatch({ control, name: "gender" });
   const watchedShowHoroscope = useWatch({ control, name: "showHoroscope" });
+  const watchedPartnerReligion = useWatch({ control, name: "partnerReligion" });
 
+  // Load step 1 data immediately (only countries needed for code picker)
   useEffect(() => {
     masterService
       .getCountries()
@@ -459,25 +458,62 @@ export default function RegisterPage() {
         if (india) (setValue as any)("countryCodeId", india.id);
       })
       .catch(console.error);
-
-    masterService
-      .getMotherTongues()
-      .then(setMotherTongues)
-      .catch(console.error);
-    masterService.getHeights().then(setHeights).catch(console.error);
-    masterService.getReligions().then(setReligions).catch(console.error);
-    masterService.getEducations().then(setEducations).catch(console.error);
-    masterService
-      .getEmploymentTypes()
-      .then(setEmploymentTypes)
-      .catch(console.error);
-    masterService.getCurrencies().then(setCurrencies).catch(console.error);
-    masterService.getStars().then(setStars).catch(console.error);
-    masterService.getRasis().then(setRasis).catch(console.error);
-    masterService.getLaknams().then(setLaknams).catch(console.error);
-    masterService.getGothrams().then(setGothrams).catch(console.error);
-    masterService.getAllCities().then(setBirthCitiesList).catch(console.error);
   }, [setValue]);
+
+  // Load step 2 data when user reaches step 2
+  useEffect(() => {
+    if (step === 2) {
+      Promise.all([
+        masterService.getMotherTongues(),
+        masterService.getHeights(),
+        masterService.getReligions(),
+      ])
+        .then(([mt, h, rel]) => {
+          setMotherTongues(mt);
+          setHeights(h);
+          setReligions(rel);
+        })
+        .catch(console.error);
+    }
+  }, [step]);
+
+  // Load step 3 data (horoscope + cities) when user reaches step 3
+  useEffect(() => {
+    if (step === 3) {
+      Promise.all([
+        masterService.getStars(),
+        masterService.getRasis(),
+        masterService.getLaknams(),
+        masterService.getGothrams(),
+        masterService.getAllCities(),
+      ])
+        .then(([st, ra, la, go, cities]) => {
+          setStars(st);
+          setRasis(ra);
+          setLaknams(la);
+          setGothrams(go);
+          setBirthCitiesList(cities);
+        })
+        .catch(console.error);
+    }
+  }, [step]);
+
+  // Load step 5 data when user reaches step 5
+  useEffect(() => {
+    if (step === 5) {
+      Promise.all([
+        masterService.getEducations(),
+        masterService.getEmploymentTypes(),
+        masterService.getCurrencies(),
+      ])
+        .then(([edu, emp, cur]) => {
+          setEducations(edu);
+          setEmploymentTypes(emp);
+          setCurrencies(cur);
+        })
+        .catch(console.error);
+    }
+  }, [step]);
 
   useEffect(() => {
     if (watchedReligionId) {
@@ -534,6 +570,26 @@ export default function RegisterPage() {
       (setValue as any)("occupationId", "");
     }
   }, [watchedEmploymentTypeId, setValue]);
+
+  // Load partner castes when partner religion selection changes
+  useEffect(() => {
+    if (watchedPartnerReligion) {
+      masterService
+        .getCastesByReligion(watchedPartnerReligion)
+        .then((data) => {
+          setPartnerCastesList([
+            {
+              id: "any",
+              name: "Any Caste",
+              religionId: String(watchedPartnerReligion),
+            },
+            ...data,
+          ]);
+        })
+        .catch(console.error);
+      (setValue as any)("partnerCastes", []);
+    }
+  }, [watchedPartnerReligion, setValue]);
 
   useEffect(() => {
     if (watchedCurrencyId) {
@@ -1375,8 +1431,9 @@ export default function RegisterPage() {
                         <SearchableDropdown
                           options={castes}
                           value={
-                            castes.find((c) => c.id === String(field.value)) ||
-                            null
+                            castes.find(
+                              (c) => String(c.id) === String(field.value),
+                            ) || null
                           }
                           onChange={(val) => field.onChange(val?.id || "")}
                           placeholder="Search caste..."
@@ -1516,8 +1573,9 @@ export default function RegisterPage() {
                           <SearchableDropdown
                             options={stars}
                             value={
-                              stars.find((s) => s.id === Number(field.value)) ||
-                              null
+                              stars.find(
+                                (s) => String(s.id) === String(field.value),
+                              ) || null
                             }
                             onChange={(val) => field.onChange(val?.id || "")}
                             placeholder="Select star"
@@ -1580,7 +1638,7 @@ export default function RegisterPage() {
                             options={gothrams}
                             value={
                               gothrams.find(
-                                (g) => g.id === Number(field.value),
+                                (g) => String(g.id) === String(field.value),
                               ) || null
                             }
                             onChange={(val) => field.onChange(val?.id || "")}
@@ -1591,7 +1649,7 @@ export default function RegisterPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-slate-300 mb-2">
-                        Birth Time <span className="text-rose-500">*</span>
+                        Birth Time
                       </label>
                       <input
                         type="time"
@@ -1616,7 +1674,7 @@ export default function RegisterPage() {
                             options={birthCitiesList}
                             value={
                               birthCitiesList.find(
-                                (c) => c.id === Number(field.value),
+                                (c) => String(c.id) === String(field.value),
                               ) || null
                             }
                             onChange={(val) => field.onChange(val?.id || "")}
@@ -1666,7 +1724,7 @@ export default function RegisterPage() {
                     <div className="col-span-full">
                       <label className="block text-sm font-bold text-slate-300 mb-4 flex items-center gap-2">
                         <DocumentArrowUpIcon className="w-5 h-5 text-amber-400" />
-                        Horoscope Image <span className="text-rose-500">*</span>
+                        Horoscope Image
                       </label>
                       {horoscopeImage ? (
                         <div className="relative w-48 h-64 rounded-2xl overflow-hidden border border-amber-500/20 group">
@@ -1745,7 +1803,6 @@ export default function RegisterPage() {
                         "birthPlace",
                         "sevvaiDhosham",
                         "rahuKetuDhosham",
-                        "horoscopeImage",
                       ])
                     }
                     className="group px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl font-black shadow-[0_10px_20px_rgba(168,85,247,0.3)] hover:scale-[1.05] active:scale-95 transition-all flex items-center space-x-2"
@@ -1914,12 +1971,26 @@ export default function RegisterPage() {
                     <label className="block text-sm font-bold text-slate-300 mb-2">
                       Highest Education
                     </label>
-                    <input
-                      type="text"
-                      {...register("highestEducation")}
-                      placeholder="e.g. B.Tech Computer Science"
-                      className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none"
+                    <Controller
+                      control={control}
+                      name="highestEducation"
+                      render={({ field }) => (
+                        <SearchableDropdown
+                          options={educations}
+                          value={
+                            educations.find((e) => e.name === field.value) ||
+                            null
+                          }
+                          onChange={(val) => field.onChange(val?.name || "")}
+                          placeholder="Search education level..."
+                        />
+                      )}
                     />
+                    {errors.highestEducation && (
+                      <p className="text-rose-500 text-xs mt-1">
+                        {errors.highestEducation.message}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-slate-300 mb-2">
@@ -1930,15 +2001,13 @@ export default function RegisterPage() {
                       name="employmentType"
                       render={({ field }) => (
                         <PremiumSelect
-                          options={[
-                            "Government",
-                            "Private",
-                            "Business",
-                            "Self Employed",
-                            "Not Working",
-                          ].map((opt) => ({ id: opt, name: opt }))}
+                          options={employmentTypes.map((et) => ({
+                            id: et.name,
+                            name: et.name,
+                          }))}
                           value={field.value ?? ""}
                           onChange={field.onChange}
+                          placeholder="Select employment type"
                         />
                       )}
                     />
@@ -2088,14 +2157,21 @@ export default function RegisterPage() {
                         control={control}
                         name="partnerReligion"
                         render={({ field }) => (
-                          <PremiumSelect
-                            options={religions.map((r) => ({
-                              id: String(r.id),
-                              name: r.name,
-                            }))}
-                            value={String(field.value)}
+                          <SearchableDropdown
+                            options={[
+                              { id: "", name: "Any Religion" },
+                              ...religions.map((r) => ({
+                                id: String(r.id),
+                                name: r.name,
+                              })),
+                            ]}
+                            value={
+                              religions.find(
+                                (r) => String(r.id) === String(field.value),
+                              ) || null
+                            }
                             onChange={(val) => {
-                              field.onChange(val);
+                              field.onChange(val?.id || "");
                               setValue("partnerCastes", []);
                             }}
                             placeholder="Any Religion"
@@ -2105,24 +2181,23 @@ export default function RegisterPage() {
                     </div>
                     <div className="col-span-full">
                       <label className="block text-sm font-bold text-slate-300 mb-2">
-                        Preferred Caste(s)
+                        Preferred Caste(s){" "}
+                        {!watchedPartnerReligion && (
+                          <span className="text-slate-500 font-normal text-xs">
+                            (select religion first)
+                          </span>
+                        )}
                       </label>
                       <Controller
                         control={control}
                         name="partnerCastes"
                         render={({ field }) => (
                           <MultiSearchableDropdown
-                            options={
-                              field.value
-                                ? [{ id: "any", name: "Any Caste" }, ...castes]
-                                : castes
-                            }
+                            options={partnerCastesList}
                             value={field.value}
                             onChange={field.onChange}
                             placeholder="Any Caste"
-                            disabled={
-                              !useWatch({ control, name: "partnerReligion" })
-                            }
+                            disabled={!watchedPartnerReligion}
                           />
                         )}
                       />

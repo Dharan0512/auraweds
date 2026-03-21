@@ -1,6 +1,7 @@
 "use client";
 
 import { useForm } from "react-hook-form";
+import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useCountries, useStates, useCities } from "@/hooks/useMasterData";
@@ -27,11 +28,18 @@ export default function Step5Location({ initialData, onNext, onBack }: Props) {
     watch,
     handleSubmit,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<LocationData>({
     resolver: zodResolver(locationSchema),
     defaultValues: initialData || {},
   });
+
+  useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 0) {
+      reset(initialData);
+    }
+  }, [initialData, reset]);
 
   const selectedCountry = watch("countryId");
   const selectedState = watch("stateId");

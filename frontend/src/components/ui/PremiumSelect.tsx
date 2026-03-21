@@ -36,7 +36,7 @@ export default function PremiumSelect({
             className={`relative w-full cursor-default rounded-2xl border bg-slate-900/50 py-4 pl-4 pr-10 text-left transition-all sm:text-sm focus:outline-none ${
               disabled
                 ? "border-white/5 opacity-60 cursor-not-allowed"
-                : "border-white/10 hover:border-[#D4AF37]/50 focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20"
+                : "border-white/10 hover:border-[var(--accent-border)]/50 focus:border-[var(--accent-color)] focus:ring-2 focus:ring-[var(--accent-shadow)]"
             }`}
           >
             <span
@@ -63,7 +63,9 @@ export default function PremiumSelect({
                   key={option.id}
                   className={({ active }) =>
                     `relative cursor-default select-none py-3 pl-10 pr-4 transition-colors ${
-                      active ? "bg-[#D4AF37]/10 text-white" : "text-slate-300"
+                      active
+                        ? "bg-[var(--accent-soft-bg)] text-white"
+                        : "text-slate-300"
                     }`
                   }
                   value={option.id}
@@ -77,7 +79,7 @@ export default function PremiumSelect({
                       </span>
                       {selected ? (
                         <span
-                          className={`absolute inset-y-0 left-0 flex items-center pl-3 ${active ? "text-[#D4AF37]" : "text-[#D4AF37]"}`}
+                          className={`absolute inset-y-0 left-0 flex items-center pl-3 text-[var(--accent-color)]`}
                         >
                           <CheckIcon className="h-5 w-5" aria-hidden="true" />
                         </span>

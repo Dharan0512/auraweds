@@ -23,6 +23,8 @@ interface UserAttributes {
   passwordHash: string;
   role: "admin" | "user";
   isActive: boolean;
+  lastLoginAt: Date | null;
+  ipAddress: string | null;
   deletedAt: Date | null;
   createdAt?: Date;
   updatedAt?: Date;
@@ -37,6 +39,8 @@ interface UserCreationAttributes extends Optional<
   | "mobile"
   | "role"
   | "isActive"
+  | "lastLoginAt"
+  | "ipAddress"
   | "deletedAt"
 > {}
 
@@ -65,6 +69,8 @@ export class User
   public passwordHash!: string;
   public role!: "admin" | "user";
   public isActive!: boolean;
+  public lastLoginAt!: Date | null;
+  public ipAddress!: string | null;
   public deletedAt!: Date | null;
 
   public readonly createdAt!: Date;
@@ -135,6 +141,14 @@ User.init(
       type: DataTypes.DATE,
       allowNull: true,
       defaultValue: null,
+    },
+    lastLoginAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    ipAddress: {
+      type: DataTypes.STRING(45), // Supports IPv6
+      allowNull: true,
     },
   },
   {

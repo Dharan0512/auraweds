@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchApi } from "@/lib/api";
+import { profileService } from "@/services/profileService";
 import { MasterDataProvider } from "@/context/MasterDataContext";
 import ProfileModal from "@/components/ui/ProfileModal";
 import {
@@ -54,9 +54,9 @@ export default function PlatformLayout({
     }
     document.addEventListener("mousedown", handleClickOutside);
 
-    const getProfile = async () => {
+    const getProfileData = async () => {
       try {
-        const data = await fetchApi("/profile/me");
+        const data = await profileService.getMyProfile();
         setProfile(data);
       } catch (err) {
         // Silent fail
@@ -72,14 +72,14 @@ export default function PlatformLayout({
       }
     };
 
-    getProfile();
+    getProfileData();
     fetchSubStatus();
 
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const userNameInitial = profile?.basicDetails?.name
-    ? profile.basicDetails.name[0].toUpperCase()
+  const userNameInitial = profile?.user?.firstName
+    ? profile.user.firstName[0].toUpperCase()
     : "D";
   return (
     <MasterDataProvider>
@@ -93,7 +93,7 @@ export default function PlatformLayout({
         {/* Navigation */}
         <nav className="bg-slate-900/50 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50 shadow-2xl">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between h-20">
+            <div className="flex justify-between h-16">
               <div className="flex">
                 <div className="flex-shrink-0 flex items-center">
                   <Link
@@ -103,11 +103,11 @@ export default function PlatformLayout({
                     <img
                       src="/auraWedsLogo.png"
                       alt="AuraWeds"
-                      className="h-16 w-auto object-contain"
+                      className="h-12 w-auto object-contain"
                     />
                   </Link>
                 </div>
-                <div className="hidden sm:ml-10 sm:flex sm:space-x-10">
+                <div className="hidden sm:ml-8 sm:flex sm:space-x-6">
                   <Link
                     href="/dashboard"
                     className={`${
@@ -162,15 +162,15 @@ export default function PlatformLayout({
                   </Link>
                 </div>
               </div>
-              <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-6">
-                {(subStatus?.tier === "Free" ||
+              <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-4">
+                {(subStatus?.tier === "Basic Member" ||
                   subStatus?.tier === "Silver") && (
                   <button
                     onClick={() => setIsUpgradeModalOpen(true)}
                     className="relative group overflow-hidden bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300 hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:scale-105 active:scale-95"
                   >
                     <span className="relative z-10">
-                      {subStatus?.tier === "Free"
+                      {subStatus?.tier === "Basic Member"
                         ? "Upgrade to Silver"
                         : "Upgrade to Gold"}
                     </span>
@@ -188,12 +188,14 @@ export default function PlatformLayout({
                       onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                       className="group relative p-0.5 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] focus:ring-offset-2 focus:ring-offset-slate-900"
                     >
-                      <div className="h-10 w-10 rounded-full bg-slate-900 flex items-center justify-center text-white font-black overflow-hidden relative">
+                      <div className="h-9 w-9 rounded-full bg-slate-900 flex items-center justify-center text-white font-black overflow-hidden relative">
                         {profile?.photos?.[0] ? (
                           <img
                             src={getImageUrl(
-                              profile.photos[0]?.url || profile.photos[0],
-                              profile.basicDetails?.name,
+                              profile.photoUrl ||
+                                profile.photos?.[0]?.url ||
+                                profile.photos?.[0],
+                              profile.user?.firstName,
                             )}
                             alt="Profile"
                             className="h-full w-full object-cover"

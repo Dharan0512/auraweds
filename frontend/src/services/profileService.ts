@@ -1,9 +1,88 @@
 import apiClient from "../lib/apiClient";
 
+export const CACHE_KEY = "aura_user_summary";
+export const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+export const CACHE_VERSION = 1;
+
+export const extractUserSummary = (profileData: any) => {
+  if (!profileData) return null;
+  const { user, profile, photos } = profileData;
+  return {
+    user: {
+      id: user?.id,
+      firstName: user?.firstName,
+      gender: user?.gender,
+    },
+    profile: {
+      id: profile?.id,
+      profileStrength: profile?.profileStrength,
+      approvalStatus: profile?.approvalStatus,
+      Badge: {
+        mobileVerified: profile?.Badge?.mobileVerified,
+        emailVerified: profile?.Badge?.emailVerified,
+        premiumMember: profile?.Badge?.premiumMember,
+      },
+    },
+    photoUrl: photos && photos.length > 0 ? photos[0].url : null,
+  };
+};
+
+let myProfilePromise: Promise<any> | null = null;
+
 export const profileService = {
-  getMyProfile: async () => {
-    const response = await apiClient.get("/profile/me");
-    return response.data;
+  getMyProfile: async (forceRefresh = false) => {
+    try {
+      if (!forceRefresh) {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          const isExpired = Date.now() - parsed.timestamp > CACHE_DURATION;
+          const isSameVersion = parsed.version === CACHE_VERSION;
+
+          if (!isExpired && isSameVersion) {
+            return parsed.data;
+          }
+        }
+
+        // Return existing promise if one is already in flight
+        if (myProfilePromise) {
+          return myProfilePromise;
+        }
+      }
+
+      const fetchPromise = apiClient
+        .get("/profile/me")
+        .then((response) => {
+          const summary = extractUserSummary(response.data);
+
+          if (summary) {
+            localStorage.setItem(
+              CACHE_KEY,
+              JSON.stringify({
+                data: summary,
+                timestamp: Date.now(),
+                version: CACHE_VERSION,
+              }),
+            );
+          }
+
+          return response.data;
+        })
+        .finally(() => {
+          if (!forceRefresh) {
+            myProfilePromise = null;
+          }
+        });
+
+      if (!forceRefresh) {
+        myProfilePromise = fetchPromise;
+      }
+
+      return fetchPromise;
+    } catch (error) {
+      console.error("Fetch profile error", error);
+      throw error;
+    }
   },
 
   updateProfile: async (profileData: any) => {

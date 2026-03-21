@@ -35,6 +35,8 @@ import {
 } from "../models/sequelize";
 import { sequelize } from "../config/db.postgres";
 import { profileSerializer } from "../serializers/profileSerializer";
+import { getUserTier } from "../middlewares/tierMiddleware";
+import { PhoneViewLog } from "../models/sequelize/PhoneViewLog";
 
 export const saveDraft = async (
   req: AuthRequest,
@@ -322,7 +324,12 @@ export const getMyProfile = async (
         FamilyDetails,
         {
           model: HoroscopeDetails,
-          include: [Star, Rasi, Laknam, Gothram],
+          include: [
+            { model: Star, as: "Star" },
+            { model: Rasi, as: "Rasi" },
+            { model: Laknam, as: "Laknam" },
+            { model: Gothram, as: "Gothram" },
+          ],
         },
         LocationLifestyle,
         EducationCareer,
@@ -539,27 +546,43 @@ export const getOtherProfile = async (
       return;
     }
 
-    // 0. Check for mutual accepted interest and tier for contact disclosure
+    // 0. Check for tier and contact disclosure entitlement
+    const { tier } = req.user
+      ? await getUserTier(req.user.id)
+      : { tier: "Basic Member" };
     let includeContact = false;
-    if (req.user) {
-      const mutualInterest = await Interest.findOne({
-        where: {
-          status: "ACCEPTED",
-          [Op.or]: [
-            { senderId: req.user.id, receiverId: parsedId },
-            { senderId: parsedId, receiverId: req.user.id },
-          ],
-        },
+
+    if (req.user && parsedId !== req.user.id) {
+      const viewerId = req.user.id;
+
+      // Check if already viewed this specific user
+      const alreadyViewed = await PhoneViewLog.findOne({
+        where: { viewerId, viewedUserId: parsedId },
       });
 
-      if (mutualInterest) {
-        const sub = await Subscription.findOne({
-          where: { userId: req.user.id, status: "active" },
-          include: [Plan],
-        });
-        const tier = sub?.Plan?.name || "Free";
-        if (tier === "Gold" || tier === "Elite Gold") {
+      if (alreadyViewed) {
+        // Once viewed, it's always accessible to that viewer
+        includeContact = true;
+      } else {
+        if (tier === "Gold") {
           includeContact = true;
+          await PhoneViewLog.create({ viewerId, viewedUserId: parsedId });
+        } else if (tier === "Silver") {
+          const startOfMonth = new Date();
+          startOfMonth.setDate(1);
+          startOfMonth.setHours(0, 0, 0, 0);
+
+          const viewsThisMonth = await PhoneViewLog.count({
+            where: {
+              viewerId,
+              viewedAt: { [Op.gte]: startOfMonth },
+            },
+          });
+
+          if (viewsThisMonth < 10) {
+            includeContact = true;
+            await PhoneViewLog.create({ viewerId, viewedUserId: parsedId });
+          }
         }
       }
     }
@@ -589,7 +612,12 @@ export const getOtherProfile = async (
         FamilyDetails,
         {
           model: HoroscopeDetails,
-          include: [Star, Rasi, Laknam, Gothram],
+          include: [
+            { model: Star, as: "Star" },
+            { model: Rasi, as: "Rasi" },
+            { model: Laknam, as: "Laknam" },
+            { model: Gothram, as: "Gothram" },
+          ],
         },
         LocationLifestyle,
         EducationCareer,
@@ -791,7 +819,13 @@ export const searchProfiles = async (
       isVerified,
       profileStrength,
       sort,
+      // Horoscope filters (Gold only)
+      starId,
+      rasiId,
+      dosham,
     } = req.query;
+
+    const { tier } = await getUserTier(req.user.id);
 
     const myUser = await User.findByPk(req.user.id);
     let oppositeGender = "Female"; // Default fallback
@@ -832,28 +866,50 @@ export const searchProfiles = async (
       if (maxDate) where.dob[Op.lte] = maxDate;
     }
 
-    if (cityId) where.cityId = cityId;
     if (stateId) where.stateId = stateId;
     if (religionId) where.religionId = religionId;
-    if (maritalStatus) where.maritalStatus = maritalStatus;
-    if (educationId) where.educationId = educationId;
-    if (occupationId) where.occupationId = occupationId;
-    if (motherTongueId) where.motherTongueId = motherTongueId;
-    if (incomeRangeId) where.incomeRangeId = incomeRangeId;
-    if (casteId) where.casteId = casteId;
+
+    // Advanced Filters (Silver/Gold only)
+    if (tier !== "Basic Member") {
+      if (cityId) where.cityId = cityId;
+      if (maritalStatus) where.maritalStatus = maritalStatus;
+      if (educationId) where.educationId = educationId;
+      if (occupationId) where.occupationId = occupationId;
+      if (motherTongueId) where.motherTongueId = motherTongueId;
+      if (incomeRangeId) where.incomeRangeId = incomeRangeId;
+      if (casteId) where.casteId = casteId;
+
+      if (heightMin || heightMax) {
+        where.heightCm = {};
+        if (heightMin) where.heightCm[Op.gte] = Number(heightMin);
+        if (heightMax) where.heightCm[Op.lte] = Number(heightMax);
+      }
+    }
+
+    // Horoscope Filters (Gold only)
+    if (tier === "Gold") {
+      const horoscopeWhere: any = {};
+      if (starId) horoscopeWhere.starId = starId;
+      if (rasiId) horoscopeWhere.rasiId = rasiId;
+      if (dosham) {
+        if (dosham === "sevvai") horoscopeWhere.sevvaiDhosham = "Yes";
+        if (dosham === "rahu") horoscopeWhere.rahuKetuDhosham = "Yes";
+      }
+
+      if (Object.keys(horoscopeWhere).length > 0) {
+        where["$HoroscopeDetails.id$"] = { [Op.ne]: null }; // Ensure they have horoscope details
+        // We'll add HoroscopeDetails to includes below
+      }
+    }
     if (profileStrength)
       where.profileStrength = { [Op.gte]: Number(profileStrength) };
 
-    if (heightMin || heightMax) {
-      where.heightCm = {};
-      if (heightMin) where.heightCm[Op.gte] = Number(heightMin);
-      if (heightMax) where.heightCm[Op.lte] = Number(heightMax);
-    }
-
     const lifestyleWhere: any = {};
-    if (diet) lifestyleWhere.diet = diet;
-    if (smoking) lifestyleWhere.smoke = smoking;
-    if (drinking) lifestyleWhere.drink = drinking;
+    if (tier !== "Basic Member") {
+      if (diet) lifestyleWhere.diet = diet;
+      if (smoking) lifestyleWhere.smoke = smoking;
+      if (drinking) lifestyleWhere.drink = drinking;
+    }
 
     const familyWhere: any = {};
     if (familyStatus) familyWhere.familyStatus = familyStatus;
@@ -887,6 +943,21 @@ export const searchProfiles = async (
       MotherTongue,
       Caste,
       IncomeRange,
+      {
+        model: HoroscopeDetails,
+        required: tier === "Gold" && (!!starId || !!rasiId || !!dosham),
+        where:
+          tier === "Gold"
+            ? (() => {
+                const h: any = {};
+                if (starId) h.starId = starId;
+                if (rasiId) h.rasiId = rasiId;
+                if (dosham === "sevvai") h.sevvaiDhosham = "Yes";
+                if (dosham === "rahu") h.rahuKetuDhosham = "Yes";
+                return h;
+              })()
+            : undefined,
+      },
     ];
 
     if (Object.keys(lifestyleWhere).length > 0) {
@@ -960,12 +1031,8 @@ export const getViewers = async (
     const userId = req.user.id;
 
     // Gate by Silver+ tier
-    const sub = await Subscription.findOne({
-      where: { userId, status: "active" },
-      include: [Plan],
-    });
-    const tier = sub?.Plan?.name || "Free";
-    if (tier === "Free") {
+    const { tier } = await getUserTier(userId);
+    if (tier === "Basic Member") {
       res.status(403).json({
         message:
           "Viewing who viewed your profile is a Premium feature. Upgrade to Silver or higher to see!",

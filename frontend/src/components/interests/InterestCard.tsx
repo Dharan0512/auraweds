@@ -45,7 +45,6 @@ interface InterestCardProps {
   onRemove?: (id: string | number) => void;
   onSendReminder?: (id: string | number) => void;
   onBlock?: (id: string | number) => void;
-  onUnblock?: (id: string | number) => void;
 }
 
 export default function InterestCard({
@@ -60,10 +59,9 @@ export default function InterestCard({
   onRemove,
   onSendReminder,
   onBlock,
-  onUnblock,
 }: InterestCardProps) {
   const profile: MatchProfile = interest.profile;
-  const isFree = userTier === "Free";
+  const isFree = userTier === "Basic Member";
   const isGold = userTier === "Gold" || userTier === "Elite Gold";
   const isSilver = userTier === "Silver";
 
@@ -123,13 +121,13 @@ export default function InterestCard({
 
   return (
     <div
-      className={`relative group p-6 rounded-[2.5rem] bg-slate-900/40 backdrop-blur-xl border transition-all duration-700 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] ${type === "accepted" ? "border-[#D4AF37]/40 shadow-[#D4AF37]/5 bg-gradient-to-br from-slate-900/60 to-[#D4AF37]/5" : "border-white/10 hover:border-[#D4AF37]/30"}`}
+      className={`relative group p-5 rounded-[2rem] bg-slate-900/40 backdrop-blur-xl border transition-all duration-700 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] ${type === "accepted" ? "border-[#D4AF37]/40 shadow-[#D4AF37]/5 bg-gradient-to-br from-slate-900/60 to-[#D4AF37]/5" : "border-white/10 hover:border-[#D4AF37]/30"}`}
     >
       {/* Decorative Gradient Background */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-      <div className="flex gap-6">
+      <div className="flex gap-5">
         {/* Photo Container */}
-        <div className="relative shrink-0 w-36 h-36 rounded-3xl overflow-hidden border-2 border-white/10 group-hover:border-[#D4AF37]/30 transition-colors duration-500">
+        <div className="relative shrink-0 w-28 h-28 rounded-2xl overflow-hidden border-2 border-white/10 group-hover:border-[#D4AF37]/30 transition-colors duration-500">
           <img
             src={getImageUrl(profile.photos[0], profile.basicDetails.firstName)}
             alt={profile.basicDetails.firstName}
@@ -155,10 +153,10 @@ export default function InterestCard({
         {/* Info Content */}
         <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
           <div>
-            <div className="flex items-start justify-between mb-3 gap-4">
+            <div className="flex items-start justify-between mb-2 gap-3">
               <div className="flex flex-col flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-2xl font-bold text-white truncate hover:text-[#D4AF37] transition-colors cursor-pointer">
+                  <h3 className="text-xl font-bold text-white truncate hover:text-[#D4AF37] transition-colors cursor-pointer">
                     {name}, {age}
                   </h3>
                   {profile.badge?.mobileVerified && (
@@ -216,7 +214,7 @@ export default function InterestCard({
             </div>
           </div>
 
-          <div className="flex items-center justify-between mt-4">
+          <div className="flex items-center justify-between gap-4 mt-4 flex-wrap">
             <div className="flex items-center gap-2">
               {(type === "sent" || type === "rejected") && (
                 <div className="flex items-center gap-3">
@@ -232,7 +230,7 @@ export default function InterestCard({
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               {type === "received" && interest.status === "PENDING" && (
                 <div className="flex items-center gap-3">
                   <button
@@ -323,15 +321,6 @@ export default function InterestCard({
                 </button>
               )}
 
-              {type === "blocked" && onUnblock && (
-                <button
-                  onClick={() => onUnblock(interest.id)}
-                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#D4AF37] text-slate-950 hover:bg-[#B8860B] transition-all shadow-[0_4px_12px_rgba(212,175,55,0.3)] text-[10px] font-black uppercase tracking-widest active:scale-95"
-                >
-                  <ShieldCheck size={14} /> Unblock
-                </button>
-              )}
-
               <button
                 onClick={() => onViewProfile(profile.userId)}
                 className="p-2.5 rounded-xl bg-white/5 text-slate-300 hover:bg-white/10 transition-all border border-white/5"
@@ -345,7 +334,7 @@ export default function InterestCard({
       </div>
 
       {isFree && type === "received" && (
-        <div className="mt-6 pt-5 border-t border-white/10 flex items-center justify-between bg-white/[0.02] -mx-6 -mb-6 px-6 pb-6 rounded-b-[2.5rem]">
+        <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-between bg-white/[0.02] -mx-5 -mb-5 px-5 pb-5 rounded-b-[2rem]">
           <div className="flex items-center gap-4">
             <div className="p-2.5 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#B8860B] text-slate-950 shadow-[0_0_15px_rgba(212,175,55,0.3)]">
               <Lock size={16} />
@@ -363,11 +352,8 @@ export default function InterestCard({
               </p>
             </div>
           </div>
-          <button className="relative group px-5 py-2.5 rounded-full overflow-hidden border border-[#D4AF37]/50 transition-all hover:border-[#D4AF37] active:scale-95">
-            <span className="relative z-10 text-[10px] font-black text-[#D4AF37] uppercase tracking-widest">
-              Upgrade Now
-            </span>
-            <div className="absolute inset-0 bg-[#D4AF37]/10 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-500" />
+          <button className="px-6 py-2.5 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 rounded-2xl font-black uppercase tracking-wider text-[10px] shadow-lg hover:scale-[1.02] active:scale-95 transition-all">
+            Upgrade Now
           </button>
         </div>
       )}

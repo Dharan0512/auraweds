@@ -4,6 +4,7 @@ import "./globals.css";
 import QueryProvider from "@/contexts/QueryProvider";
 
 import { Toaster } from "react-hot-toast";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -28,23 +29,25 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} antialiased`}>
-        <Toaster
-          position="top-right"
-          containerStyle={{ zIndex: 999999 }}
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: "#0f172a",
-              color: "#fff",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              borderRadius: "1rem",
-              fontSize: "13px",
-              fontWeight: "600",
-              boxShadow: "0 20px 50px -12px rgba(0, 0, 0, 0.5)",
-            },
-          }}
-        />
-        <QueryProvider>{children}</QueryProvider>
+        <ThemeProvider>
+          <Toaster
+            position="top-right"
+            containerStyle={{ zIndex: 999999 }}
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: "#0f172a",
+                color: "#fff",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                borderRadius: "1rem",
+                fontSize: "13px",
+                fontWeight: "600",
+                boxShadow: "0 20px 50px -12px rgba(0, 0, 0, 0.5)",
+              },
+            }}
+          />
+          <QueryProvider>{children}</QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -9,7 +9,7 @@ export type SubscriptionState =
   | "CANCELLED_PENDING";
 
 export interface SubscriptionStatusResponse {
-  tier: "Free" | "Silver" | "Gold" | "Elite Gold";
+  tier: "Basic Member" | "Silver" | "Gold" | "Elite Gold";
   state: SubscriptionState;
   endDate: string | null;
   remainingValue?: number;
@@ -30,13 +30,59 @@ export interface RazorpayOrderResponse {
   keyId: string;
 }
 
+const SUBSCRIPTION_CACHE_KEY = "aura_subscription_status";
+const SUBSCRIPTION_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+let subscriptionPromise: Promise<SubscriptionStatusResponse> | null = null;
+
 export const subscriptionService = {
   /**
    * Fetch the current user's active subscription tier, state and proration data
    */
-  getStatus: async (): Promise<SubscriptionStatusResponse> => {
-    const response = await apiClient.get("/subscription/status");
-    return response.data;
+  getStatus: async (
+    forceRefresh = false,
+  ): Promise<SubscriptionStatusResponse> => {
+    if (!forceRefresh) {
+      const cached = localStorage.getItem(SUBSCRIPTION_CACHE_KEY);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (Date.now() - parsed.timestamp < SUBSCRIPTION_CACHE_DURATION) {
+            return parsed.data;
+          }
+        } catch (e) {
+          // ignore cache error
+        }
+      }
+
+      if (subscriptionPromise) {
+        return subscriptionPromise;
+      }
+    }
+
+    const fetchPromise = apiClient
+      .get("/subscription/status")
+      .then((response) => {
+        localStorage.setItem(
+          SUBSCRIPTION_CACHE_KEY,
+          JSON.stringify({
+            data: response.data,
+            timestamp: Date.now(),
+          }),
+        );
+        return response.data;
+      })
+      .finally(() => {
+        if (!forceRefresh) {
+          subscriptionPromise = null;
+        }
+      });
+
+    if (!forceRefresh) {
+      subscriptionPromise = fetchPromise;
+    }
+
+    return fetchPromise;
   },
 
   /**

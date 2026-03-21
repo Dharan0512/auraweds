@@ -4,7 +4,7 @@ import { MessageSquare, Sparkles } from "lucide-react";
 
 export default function ChatComingSoon() {
   return (
-    <div className="min-h-[70vh] flex items-center justify-center p-4">
+    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 min-h-[70vh] flex items-center justify-center">
       <div className="relative w-full max-w-2xl">
         {/* Animated Background Glows */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-purple-500/20 rounded-full blur-[100px] animate-pulse" />

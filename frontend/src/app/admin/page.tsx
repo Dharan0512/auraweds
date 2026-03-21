@@ -1,125 +1,178 @@
-import Link from "next/link";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
+// Define shape of our API response for typescript checking
+interface DashboardStats {
+  totalUsers: number;
+  activeUsers7Days: number;
+  newSignupsToday: number;
+  paidUsers: number;
+  revenueToday: string | number;
+  tierDistribution: Array<{ tier: string; count: string }>;
+}
 
 export default function AdminDashboardPage() {
+  const router = useRouter();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [pendingApprovals, setPendingApprovals] = useState<number>(0);
+  const [recentReports, setRecentReports] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          router.push("/login"); // or admin login if separate
+          return;
+        }
+
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        };
+
+        const [statsRes, modRes, reportsRes] = await Promise.all([
+          fetch(
+            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/stats`,
+            { headers },
+          ),
+          fetch(
+            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/moderation/pending`,
+            { headers },
+          ),
+          fetch(
+            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/reports?page=1&limit=5`,
+            { headers },
+          ),
+        ]);
+
+        if (statsRes.status === 401 || statsRes.status === 403) {
+          router.push("/");
+          return;
+        }
+
+        if (!statsRes.ok) throw new Error("Failed to fetch stats");
+        if (!modRes.ok) throw new Error("Failed to fetch moderation data");
+        if (!reportsRes.ok) throw new Error("Failed to fetch reports");
+
+        const statsData = await statsRes.json();
+        const modData = await modRes.json();
+        const reportsData = await reportsRes.json();
+
+        setStats(statsData.stats);
+        setRecentReports(reportsData.reports || []);
+
+        const totalProfiles = modData.profiles?.length || 0;
+        const totalPhotos = modData.photos?.length || 0;
+        setPendingApprovals(totalProfiles + totalPhotos);
+      } catch (error) {
+        console.error("Dashboard error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [router]);
+
+  if (loading) {
+    return (
+      <div className="h-full flex items-center justify-center p-10 text-[#6A0DAD]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6A0DAD]"></div>
+      </div>
+    );
+  }
+
+  // Format the revenue into INR
+  const formattedRevenue = Number(stats?.revenueToday || 0).toLocaleString(
+    "en-IN",
+    {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    },
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200">
-        <div className="h-16 flex items-center px-6 border-b border-gray-200">
-          <Link
-            href="/admin"
-            className="text-xl font-serif font-bold text-[#6A0DAD]"
-          >
-            AuraWeds{" "}
-            <span className="text-gray-500 text-sm font-sans">Admin</span>
-          </Link>
+    <div className="p-10">
+      <h1 className="text-2xl font-bold text-[#1f2937] mb-8">Overview</h1>
+
+      <div className="grid grid-cols-1 gap-6 mb-10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+          <h3 className="text-sm font-medium text-gray-500 mb-2">
+            Total Premium Users
+          </h3>
+          <p className="text-3xl font-bold text-[#6A0DAD]">
+            {stats?.paidUsers?.toLocaleString() || "0"}
+          </p>
         </div>
-        <nav className="p-4 space-y-1">
-          <Link
-            href="/admin"
-            className="bg-purple-50 text-[#6A0DAD] group flex items-center px-2 py-2 text-sm font-medium rounded-md"
-          >
-            Dashboard Overview
-          </Link>
-          <Link
-            href="/admin/users"
-            className="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md"
-          >
-            User Management
-          </Link>
-          <Link
-            href="/admin/verifications"
-            className="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md"
-          >
-            ID Verifications
-            <span className="bg-red-100 text-red-600 ml-auto inline-block py-0.5 px-2 text-xs rounded-full">
-              12
-            </span>
-          </Link>
-          <Link
-            href="/admin/reports"
-            className="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md"
-          >
-            Reported Profiles
-          </Link>
-          <Link
-            href="/admin/success"
-            className="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md"
-          >
-            Success Stories
-          </Link>
-        </nav>
-      </aside>
-
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto p-8">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-6">Overview</h1>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="bg-white overflow-hidden shadow rounded-lg border border-gray-200 p-5">
-            <dt className="text-sm font-medium text-gray-500 truncate">
-              Total Premium Users
-            </dt>
-            <dd className="mt-1 text-3xl font-semibold text-[#6A0DAD]">
-              1,248
-            </dd>
-          </div>
-          <div className="bg-white overflow-hidden shadow rounded-lg border border-gray-200 p-5">
-            <dt className="text-sm font-medium text-gray-500 truncate">
-              Matches Made This Month
-            </dt>
-            <dd className="mt-1 text-3xl font-semibold text-[#6A0DAD]">843</dd>
-          </div>
-          <div className="bg-white overflow-hidden shadow rounded-lg border border-gray-200 p-5">
-            <dt className="text-sm font-medium text-gray-500 truncate">
-              Pending Approvals
-            </dt>
-            <dd className="mt-1 text-3xl font-semibold text-red-600">42</dd>
-          </div>
-          <div className="bg-white overflow-hidden shadow rounded-lg border border-gray-200 p-5">
-            <dt className="text-sm font-medium text-gray-500 truncate">
-              Monthly Revenue
-            </dt>
-            <dd className="mt-1 text-3xl font-semibold text-[#D4AF37]">$32k</dd>
-          </div>
+        <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+          <h3 className="text-sm font-medium text-gray-500 mb-2">
+            Total Registered Users
+          </h3>
+          <p className="text-3xl font-bold text-[#6A0DAD]">
+            {stats?.totalUsers?.toLocaleString() || "0"}
+          </p>
         </div>
+        <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+          <h3 className="text-sm font-medium text-gray-500 mb-2">
+            Pending Approvals
+          </h3>
+          <p className="text-3xl font-bold text-[#ef4444]">
+            {pendingApprovals}
+          </p>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+          <h3 className="text-sm font-medium text-gray-500 mb-2">
+            Monthly Revenue
+          </h3>
+          <p className="text-3xl font-bold text-[#d97706]">
+            {formattedRevenue}
+          </p>
+        </div>
+      </div>
 
-        {/* Recent Reports Area */}
-        <h2 className="text-lg font-semibold text-gray-900 mt-8 mb-4">
-          Recent Reports requiring attention
-        </h2>
-        <div className="bg-white shadow rounded-lg border border-gray-200">
-          <ul className="divide-y divide-gray-200">
-            <li className="p-4 hover:bg-gray-50 flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-gray-900">
-                  Fake Profile suspected (User #10432)
-                </p>
-                <p className="text-sm text-gray-500">
-                  Reported by 3 different users today.
-                </p>
-              </div>
-              <button className="text-sm font-medium text-red-600 border border-red-200 bg-red-50 px-3 py-1 rounded">
-                Review
-              </button>
+      <h2 className="text-lg font-bold text-[#1f2937] mb-4">
+        Recent Reports requiring attention
+      </h2>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+        <ul className="divide-y divide-gray-100">
+          {recentReports.length > 0 ? (
+            recentReports.map((report) => (
+              <li
+                key={report.id}
+                className="p-5 hover:bg-gray-50 flex justify-between items-center transition-colors"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 mb-1">
+                    {report.Reported?.firstName}{" "}
+                    {report.Reported?.lastName || ""} reported for:{" "}
+                    {report.reason}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Reported by {report.Reporter?.firstName}{" "}
+                    {report.Reporter?.lastName || ""} (ID: #{report.reporterId}
+                    ).
+                  </p>
+                </div>
+                <button
+                  onClick={() => router.push(`/admin/reports`)}
+                  className="text-sm font-medium text-[#ef4444] border border-[#fca5a5] bg-[#fef2f2] hover:bg-[#fee2e2] px-4 py-1.5 rounded-lg transition-colors"
+                >
+                  Review
+                </button>
+              </li>
+            ))
+          ) : (
+            <li className="p-5 text-center text-sm text-gray-500">
+              No recent reports requiring attention.
             </li>
-            <li className="p-4 hover:bg-gray-50 flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-gray-900">
-                  Inappropriate behavior (User #9201)
-                </p>
-                <p className="text-sm text-gray-500">
-                  Reported in chat by User #5122.
-                </p>
-              </div>
-              <button className="text-sm font-medium text-red-600 border border-red-200 bg-red-50 px-3 py-1 rounded">
-                Review
-              </button>
-            </li>
-          </ul>
-        </div>
-      </main>
+          )}
+        </ul>
+      </div>
     </div>
   );
 }

@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "env": {
+        "NPM_CONFIG_PLATFORM": "linux",
+        "NPM_CONFIG_ARCH": "x64"
+      }
+    },
+    {
+      "src": "src/server.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "src/server.ts"
+    }
+  ]
+}

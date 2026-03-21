@@ -26,9 +26,9 @@ export default function MatchCard({
 
   return (
     <div className="group relative flex flex-col bg-slate-900/30 backdrop-blur-sm border border-white/5 rounded-[2.5rem] overflow-hidden hover:border-white/10 transition-all duration-500">
-      <div className="absolute inset-x-0 h-40 bg-gradient-to-b from-purple-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+      <div className="absolute inset-x-0 h-32 bg-gradient-to-b from-purple-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
 
-      <div className="relative h-[28rem] m-3 overflow-hidden rounded-[2rem]">
+      <div className="relative h-[20rem] m-2.5 overflow-hidden rounded-[2rem]">
         <img
           src={getImageUrl(match.photos?.[0], match.basicDetails.firstName)}
           alt={match.basicDetails.firstName}
@@ -61,8 +61,8 @@ export default function MatchCard({
         </div>
 
         {/* Name & Location */}
-        <div className="absolute bottom-6 left-6 right-6 z-10">
-          <h3 className="text-3xl font-serif font-bold text-white mb-1">
+        <div className="absolute bottom-4 left-5 right-5 z-10">
+          <h3 className="text-2xl font-serif font-bold text-white mb-1">
             {match.basicDetails.firstName || "Profile"}, {age}
           </h3>
           <div className="flex items-center text-slate-300 text-sm font-medium gap-2">
@@ -84,7 +84,7 @@ export default function MatchCard({
       </div>
 
       {/* Card Footer */}
-      <div className="px-7 pb-7 pt-2 space-y-4">
+      <div className="px-5 pb-5 pt-2 space-y-3">
         {/* Tag chips */}
         <div className="flex flex-wrap gap-2">
           <span className="text-[10px] font-black uppercase tracking-widest bg-white/5 text-slate-400 px-3 py-1.5 rounded-lg border border-white/5">

@@ -56,7 +56,7 @@ export default function ConnectButton({
 
   let buttonText = "Connect";
   let buttonStyles =
-    "bg-gradient-to-r from-purple-600 to-indigo-600 hover:shadow-[0_0_30px_rgba(168,85,247,0.4)]";
+    "[background:var(--accent-gradient)] hover:shadow-[0_0_30px_var(--accent-shadow)]";
   let icon = <Sparkles className="w-4 h-4 mr-2" />;
 
   if (isLocked) {
@@ -108,9 +108,9 @@ export default function ConnectButton({
 
       {/* Tooltip */}
       {!isDisabled && !isLocked && !isSuccess && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-max max-w-[200px] px-3 py-2 bg-slate-900 border border-white/10 text-white text-[10px] font-bold rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none shadow-2xl z-[100] text-center leading-relaxed">
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 w-max max-w-[240px] px-5 py-3.5 bg-slate-900 border border-white/10 text-slate-100 text-xs font-medium rounded-2xl opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none shadow-[0_10px_40px_rgba(0,0,0,0.6)] z-[100] text-center leading-relaxed tracking-wide">
           Express interest to start your matchmaking journey.
-          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-900"></div>
+          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-[6px] border-transparent border-t-slate-900"></div>
         </div>
       )}
 
@@ -151,11 +151,11 @@ export default function ConnectButton({
           0%,
           100% {
             transform: scale(1);
-            box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+            box-shadow: 0 0 20px var(--accent-shadow);
           }
           50% {
             transform: scale(1.02);
-            box-shadow: 0 0 35px rgba(168, 85, 247, 0.4);
+            box-shadow: 0 0 35px var(--accent-shadow);
           }
         }
         .animate-pulse-subtle {

@@ -45,22 +45,16 @@ export default function UpgradeModal({
   if (!isOpen) return null;
 
   const PRICING = {
-    Free: { "3M": 0, "6M": 0, "12M": 0 },
+    "Basic Member": { "3M": 0, "6M": 0, "12M": 0 },
     Silver: { "3M": 3499, "6M": 5000, "12M": 9999 },
     Gold: { "3M": 8000, "6M": 14000, "12M": 24000 },
-    EliteGold: { "3M": 50000, "6M": 90000, "12M": 150000 },
   };
 
-  const TIER_ORDER = ["Free", "Silver", "Gold", "Elite Gold"];
+  const TIER_ORDER = ["Basic Member", "Silver", "Gold"];
 
   const getButtonProps = (tier: string) => {
-    const currentTier = status?.tier || "Free";
+    const currentTier = status?.tier || "Basic Member";
     const state = status?.state || "FREE";
-
-    // Elite Coming Soon
-    if (tier === "Elite Gold") {
-      return { label: "Elite Gold", type: "waitlist" };
-    }
 
     // Current Plan
     if (tier === currentTier) {
@@ -243,50 +237,43 @@ export default function UpgradeModal({
             </div>
 
             {/* Pricing Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-16 text-left">
-              {/* Free Plan */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16 text-left">
+              {/* Basic Member Plan */}
               <PlanCard
-                name="Free"
+                name="Basic Member"
                 icon={<Zap size={20} className="text-slate-500" />}
                 price="0"
                 period="Lifetime"
                 features={[
-                  "10 Interests per month",
-                  "Basic Search Filters",
+                  "5 Interests per month",
+                  "Basic Search (Age, Location, Religion)",
                   "Blurred Photos",
-                  "Limited Chat",
+                  "No Contact Access",
+                  "Limited Chat (Only if accepted)",
                 ]}
-                status={getButtonProps("Free")}
+                status={getButtonProps("Basic Member")}
                 isPremium={false}
               />
 
-              {/* Silver / Early Bird Plan */}
+              {/* Silver Plan */}
               <PlanCard
-                name={duration === "6M" ? "Early Bird Access" : "Silver"}
-                icon={
-                  <Shield
-                    size={20}
-                    className={
-                      duration === "6M" ? "text-[#D4AF37]" : "text-slate-400"
-                    }
-                  />
-                }
+                name="Silver"
+                icon={<Shield size={20} className="text-slate-400" />}
                 price={PRICING.Silver[duration].toLocaleString()}
                 period={duration}
                 features={[
                   "Unlimited Interests",
                   "View Full Profiles",
-                  "Contact Access",
-                  "Advanced Filters",
+                  "Contact Access (10/month)",
+                  "Advanced Filters (Caste, Education, Income)",
                   "View Who Viewed You",
+                  "Basic Match Percentage",
                 ]}
                 status={getButtonProps("Silver")}
                 isPremium={true}
                 onSelect={() => handleUpgrade("Silver")}
                 loading={loadingTier === "Silver"}
                 highlight={duration === "6M"}
-                badge={duration === "6M" ? "Limited Period Only" : undefined}
-                eliteTheme={duration === "6M"}
               />
 
               {/* Gold Plan */}
@@ -299,9 +286,15 @@ export default function UpgradeModal({
                 period={duration}
                 features={[
                   "Everything in Silver+",
+                  "Unlimited Phone Views",
+                  "Horoscope Matching (Star/Rasi/Dosham)",
+                  "Profiles Matching Your Horoscope",
                   "Priority Search Ranking",
-                  "Profile Highlight",
-                  "Direct Messenger (Coming Soon)",
+                  "Profile Highlight Badge",
+                  "Advanced Compatibility Score",
+                  "Unlimited Messaging",
+                  "See Who Shortlisted You",
+                  "Recently Active Filter",
                 ]}
                 status={getButtonProps("Gold")}
                 isPremium={true}
@@ -309,66 +302,6 @@ export default function UpgradeModal({
                 onSelect={() => handleUpgrade("Gold")}
                 loading={loadingTier === "Gold"}
               />
-
-              {/* Elite Gold Plan */}
-              <div className="relative p-8 rounded-[2.5rem] bg-slate-950 border border-purple-500/20 flex flex-col group overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 blur-[50px] rounded-full group-hover:bg-purple-500/10 transition-all duration-700"></div>
-
-                <div className="mb-6">
-                  <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400 flex items-center gap-3">
-                    <Crown size={24} className="text-purple-400" /> Elite Gold
-                  </h3>
-                  <div className="mt-3 inline-block px-3 py-1 bg-purple-500/10 border border-purple-500/20 rounded-full text-purple-400 text-[10px] font-black uppercase tracking-widest">
-                    Coming Soon
-                  </div>
-                </div>
-
-                <div className="mb-8">
-                  <span className="text-4xl font-black text-white/40 italic tracking-tighter">
-                    VIP Service
-                  </span>
-                  <p className="mt-3 text-slate-500 text-sm leading-relaxed">
-                    Personal relationship manager, handpicked matches, and
-                    assisted outreach.
-                  </p>
-                </div>
-
-                {waitlistSent ? (
-                  <div className="flex-1 flex flex-col items-center justify-center text-center animate-in fade-in duration-500">
-                    <Check className="text-purple-400 mb-4" size={40} />
-                    <h4 className="text-white font-bold mb-2">
-                      You're on the list!
-                    </h4>
-                    <p className="text-slate-500 text-xs text-balance">
-                      We'll notify you as soon as Elite Gold launches.
-                    </p>
-                  </div>
-                ) : (
-                  <form
-                    onSubmit={handleWaitlist}
-                    className="flex-1 flex flex-col justify-end"
-                  >
-                    <div className="space-y-4">
-                      <input
-                        type="email"
-                        placeholder="Enter email for early access"
-                        value={waitlistEmail}
-                        onChange={(e) => setWaitlistEmail(e.target.value)}
-                        className="w-full bg-slate-900 border border-white/5 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-purple-500/50 transition-all"
-                      />
-                      <button
-                        type="submit"
-                        disabled={!!loadingTier || !waitlistEmail}
-                        className="w-full py-4 rounded-2xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-purple-900/20"
-                      >
-                        {loadingTier === "Elite Gold"
-                          ? "..."
-                          : "Join VIP Waitlist"}
-                      </button>
-                    </div>
-                  </form>
-                )}
-              </div>
             </div>
           </div>
         </div>

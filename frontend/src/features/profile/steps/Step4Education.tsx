@@ -1,6 +1,7 @@
 "use client";
 
 import { useForm } from "react-hook-form";
+import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
@@ -33,11 +34,18 @@ export default function Step4Education({ initialData, onNext, onBack }: Props) {
     handleSubmit,
     watch,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<EducationData>({
     resolver: zodResolver(educationSchema),
     defaultValues: initialData || { employmentTypeId: "1" },
   });
+
+  useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 0) {
+      reset(initialData);
+    }
+  }, [initialData, reset]);
 
   const selectedEmploymentType = watch("employmentTypeId");
   const selectedEducation = watch("educationId");

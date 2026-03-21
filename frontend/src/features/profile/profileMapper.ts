@@ -17,20 +17,42 @@ export const mapProfileToFormData = (profile: any) => {
     facebookUrl: profile.profile?.facebookUrl || "",
 
     // Personal Details (Profile Model)
-    dob: profile.profile?.dob || "",
-    height: profile.profile?.heightCm?.toString() || "170",
+    dob: profile.profile?.dob
+      ? new Date(profile.profile.dob).toISOString().split("T")[0]
+      : "",
+    // Register form uses "heightCm"
+    heightCm: profile.profile?.heightCm?.toString() || "",
+    height: profile.profile?.heightCm?.toString() || "",
     maritalStatus: profile.profile?.maritalStatus || "Never Married",
     childrenCount: profile.profile?.childrenCount?.toString() || "0",
     childrenLivingWith: profile.profile?.childrenLivingWith || false,
     physicalStatus: profile.profile?.physicalStatus || "Normal",
+    shortBio: profile.profile?.shortBio || profile.profile?.aboutMe || "",
+    aboutMe: profile.profile?.shortBio || profile.profile?.aboutMe || "",
+    complexion: profile.profile?.complexion || "",
+
+    // DOB parts for register form
+    dobDay: profile.profile?.dob
+      ? String(new Date(profile.profile.dob).getDate())
+      : "",
+    dobMonth: profile.profile?.dob
+      ? String(new Date(profile.profile.dob).getMonth() + 1)
+      : "",
+    dobYear: profile.profile?.dob
+      ? String(new Date(profile.profile.dob).getFullYear())
+      : "",
 
     // Religion/Community
     religionId: profile.profile?.religionId?.toString() || "",
     casteId: profile.profile?.casteId?.toString() || "",
+    subcaste: profile.profile?.subcaste || "",
     subCaste: profile.profile?.subcaste || "",
+    // Register form uses "motherTongueId"
+    motherTongueId: profile.profile?.motherTongueId?.toString() || "",
     motherTongue: profile.profile?.motherTongueId?.toString() || "",
 
     // Horoscope
+    showHoroscope: profile.profile?.HoroscopeDetail?.showHoroscope ?? true,
     star: profile.profile?.HoroscopeDetail?.star || "",
     starId: profile.profile?.HoroscopeDetail?.starId?.toString() || "",
     rasi: profile.profile?.HoroscopeDetail?.rasi || "",
@@ -47,31 +69,7 @@ export const mapProfileToFormData = (profile: any) => {
       profile.profile?.HoroscopeDetail?.birthCityId?.toString() || "",
     horoscopeImageUrl:
       profile.profile?.HoroscopeDetail?.horoscopeImageUrl || "",
-
-    // Education/Career
-    educationId: profile.profile?.educationId?.toString() || "",
-    educationDetail: profile.profile?.educationDetail || "",
-    employmentTypeId: profile.profile?.employmentTypeId?.toString() || "1",
-    occupationId: profile.profile?.occupationId?.toString() || "",
-    incomeRangeId: profile.profile?.incomeRangeId?.toString() || "",
-
-    // Location
-    countryId: profile.profile?.countryId?.toString() || "",
-    stateId: profile.profile?.stateId?.toString() || "",
-    cityId: profile.profile?.cityId?.toString() || "",
-    citizenship: profile.profile?.countryId?.toString() || "",
-
-    // Lifestyle
-    diet: profile.profile?.diet || "Veg",
-    spirituality: profile.profile?.spirituality || "Not Spiritual",
-    drink: profile.profile?.drink || "No",
-    smoke: profile.profile?.smoke || "No",
-    ambition: profile.profile?.ambition || "Moderate",
-    careerAfterMarriage: profile.profile?.careerAfterMarriage || "Yes",
-    relocation: profile.profile?.relocation || "No",
-    fitness: profile.profile?.fitness || "Regular",
-    familyStatus: profile.profile?.familyStatus || "Middle Class",
-    aboutMe: profile.profile?.aboutMe || "",
+    horoscopeImage: profile.profile?.HoroscopeDetail?.horoscopeImageUrl || "",
 
     // Family Details
     fatherName: profile.profile?.FamilyDetail?.fatherName || "",
@@ -79,10 +77,59 @@ export const mapProfileToFormData = (profile: any) => {
     motherName: profile.profile?.FamilyDetail?.motherName || "",
     motherOccupation: profile.profile?.FamilyDetail?.motherOccupation || "",
     familyType: profile.profile?.FamilyDetail?.familyType || "Nuclear",
+    familyStatus: profile.profile?.FamilyDetail?.familyStatus || "Middle Class",
     siblingsCount:
       profile.profile?.FamilyDetail?.siblingsCount?.toString() || "0",
     ownHouse: profile.profile?.FamilyDetail?.ownHouse ?? false,
     nativeDistrict: profile.profile?.FamilyDetail?.nativeDistrict || "",
+
+    // Education/Career — register form uses name-based fields
+    educationId: profile.profile?.educationId?.toString() || "",
+    // Register form "highestEducation" stores the education name string
+    highestEducation:
+      profile.profile?.Education?.name ||
+      profile.profile?.educationDetail ||
+      "",
+    educationDetail: profile.profile?.educationDetail || "",
+    employmentTypeId: profile.profile?.employmentTypeId?.toString() || "",
+    // Register form "employmentType" stores the type name string
+    employmentType:
+      profile.profile?.EmploymentType?.name ||
+      profile.profile?.employmentType ||
+      "",
+    occupationId: profile.profile?.occupationId?.toString() || "",
+    incomeRangeId: profile.profile?.incomeRangeId?.toString() || "",
+    incomeRange: profile.profile?.IncomeRange?.name || "",
+    designation: profile.profile?.designation || "",
+    companyName: profile.profile?.companyName || "",
+
+    // Location
+    countryId: profile.profile?.countryId?.toString() || "",
+    stateId: profile.profile?.stateId?.toString() || "",
+    cityId: profile.profile?.cityId?.toString() || "",
+    country: profile.profile?.country || "India",
+    state: profile.profile?.state || "",
+    city: profile.profile?.city || "",
+    citizenship: profile.profile?.countryId?.toString() || "",
+    relocatePreference: profile.profile?.relocatePreference || "Flexible",
+
+    // Lifestyle
+    diet: profile.profile?.diet || "Veg",
+    spirituality: profile.profile?.spirituality || "Not Spiritual",
+    drink: profile.profile?.drink || "No",
+    smoke: profile.profile?.smoke || "No",
+    fitnessLevel:
+      profile.profile?.fitnessLevel || profile.profile?.fitness || "Occasional",
+    fitness: profile.profile?.fitness || "Occasional",
+    ambition: profile.profile?.ambition || 3,
+    familyOrientation: profile.profile?.familyOrientation || 3,
+    emotionalStability: profile.profile?.emotionalStability || 3,
+    communicationStyle: profile.profile?.communicationStyle || 3,
+    spiritualInclination: profile.profile?.spiritualInclination || 3,
+    careerPlanAfterMarriage: profile.profile?.careerPlanAfterMarriage || "",
+    languages: profile.profile?.languages || [],
+    hobbies: profile.profile?.hobbies || [],
+    profileVisibility: profile.profile?.profileVisibility || "Members Only",
 
     // Preferences
     partnerAgeMin: profile.preferences?.minAge || 22,
@@ -97,6 +144,9 @@ export const mapProfileToFormData = (profile: any) => {
     partnerCountry: profile.preferences?.countryId?.toString() || "",
     partnerState: profile.preferences?.stateId?.toString() || "",
     partnerLocationPreference: profile.preferences?.preferredLocation || "",
+    preferredLocation: profile.preferences?.preferredLocation || "",
+    preferredEducation: profile.preferences?.preferredEducation || "",
+    preferredIncomeRange: profile.preferences?.preferredIncomeRange || "",
   };
 };
 

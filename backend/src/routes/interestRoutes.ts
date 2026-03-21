@@ -10,7 +10,6 @@ import {
   markViewed,
   blockInterest,
   notifyCall,
-  unblockInterest,
 } from "../controllers/interestController";
 import { protect } from "../middlewares/authMiddleware";
 
@@ -31,7 +30,6 @@ router.delete("/:id", protect, removeInterest);
 // Tracking
 router.post("/:id/view", protect, markViewed);
 router.patch("/:id/block", protect, blockInterest);
-router.patch("/:id/unblock", protect, unblockInterest);
 router.post("/notify-call", protect, notifyCall);
 
 export default router;

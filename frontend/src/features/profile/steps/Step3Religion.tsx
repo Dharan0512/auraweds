@@ -1,9 +1,9 @@
 "use client";
 
 import { useForm, Controller } from "react-hook-form";
+import React, { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useState } from "react";
 import toast from "react-hot-toast";
 import {
   useReligions,
@@ -81,11 +81,21 @@ export default function Step3Religion({ initialData, onNext, onBack }: Props) {
     watch,
     handleSubmit,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<ReligionData>({
     resolver: zodResolver(religionSchema),
-    defaultValues: initialData || {},
+    defaultValues: {
+      showHoroscope: true,
+      ...initialData,
+    },
   });
+
+  useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 0) {
+      reset(initialData);
+    }
+  }, [initialData, reset]);
 
   const selectedReligion = watch("religionId");
   const selectedMotherTongue = watch("motherTongue");

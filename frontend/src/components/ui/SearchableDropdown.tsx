@@ -54,7 +54,7 @@ export default function SearchableDropdown({
             className={`searchable-dropdown-container relative w-full cursor-default overflow-hidden rounded-2xl text-left flex items-center border transition-all sm:text-sm ${
               disabled
                 ? "border-white/5 bg-slate-900/50 opacity-60"
-                : "bg-slate-900/50 border-white/10 hover:border-purple-500/50 focus-within:border-purple-500 focus-within:ring-2 focus-within:ring-purple-500/20"
+                : "bg-slate-900/50 border-white/10 hover:border-[var(--accent-border)]/50 focus-within:border-[var(--accent-color)] focus-within:ring-1 focus-within:ring-[var(--accent-shadow)]"
             }`}
           >
             <Combobox.Input
@@ -100,7 +100,7 @@ export default function SearchableDropdown({
                     className={({ active }) =>
                       `relative cursor-default select-none py-3 pl-10 pr-4 transition-colors ${
                         active
-                          ? "bg-purple-600/20 text-white"
+                          ? "bg-[var(--accent-soft-bg)] text-white"
                           : "text-slate-300"
                       }`
                     }
@@ -117,9 +117,7 @@ export default function SearchableDropdown({
                         </span>
                         {selected ? (
                           <span
-                            className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
-                              active ? "text-purple-400" : "text-amber-400"
-                            }`}
+                            className={`absolute inset-y-0 left-0 flex items-center pl-3 text-[var(--accent-color)]`}
                           >
                             <CheckIcon className="h-5 w-5" aria-hidden="true" />
                           </span>

@@ -61,51 +61,42 @@ app.use("/api/moderation", moderationRoutes);
 import notificationRoutes from "./routes/notificationRoutes";
 app.use("/api/notifications", notificationRoutes);
 
+// Admin Routes
+import adminRoutes from "./routes/adminRoutes";
+app.use("/api/admin", adminRoutes);
+
 import { seedMasterData } from "./config/masterSeeder";
 
 const startServer = async () => {
-  await connectPostgres();
+  try {
+    // Only connect if not already connected
+    // In serverless, we do this on the first request, but for serverless we won't use startServer like this.
+    await connectPostgres();
 
-  // Sync PostgreSQL schemas
-  await sequelize.sync({ alter: true });
+    // Sync PostgreSQL schemas
+    await sequelize.sync({ alter: true });
 
-  // Seed initial master tables if empty
-  await seedMasterData();
+    // Seed initial master tables if empty
+    await seedMasterData();
+    console.log("Database connected and schema synced successfully.");
+  } catch (error) {
+    console.error("Failed to connect to the database:", error);
+  }
+};
 
-  io.on("connection", (socket) => {
-    console.log("A user connected:", socket.id);
+// Start the database connection process
+// For Vercel Serverless, we invoke startServer() so the DB connects asynchronously.
+// The first API request might experience a slight delay, but subsequent requests will reuse the instance.
+startServer();
 
-    // Listen for chat messages
-    socket.on("send_message", (data) => {
-      // Broadcast or send to specific user using receiverId
-      io.emit("receive_message", data);
-    });
+// Socket.io removed for Vercel compatibility, as Serverless functions are stateless
+// and do not natively support WebSockets effectively.
 
-    // WebRTC Signaling
-    socket.on("video_invite", (data) => {
-      socket.broadcast.emit("video_invite", data);
-    });
-
-    socket.on("webrtc_offer", (data) => {
-      socket.broadcast.emit("webrtc_offer", data);
-    });
-
-    socket.on("webrtc_answer", (data) => {
-      socket.broadcast.emit("webrtc_answer", data);
-    });
-
-    socket.on("ice_candidate", (data) => {
-      socket.broadcast.emit("ice_candidate", data);
-    });
-
-    socket.on("disconnect", () => {
-      console.log("User disconnected:", socket.id);
-    });
-  });
-
+// Only listen locally, Vercel will export the app instead
+if (require.main === module) {
   server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
   });
-};
+}
 
-startServer();
+export default app;

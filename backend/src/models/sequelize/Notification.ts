@@ -69,6 +69,8 @@ Notification.init(
         "INTEREST_RECEIVED",
         "INTEREST_ACCEPTED",
         "PROFILE_VIEW",
+        "ADMIN_BROADCAST",
+        "MARKETING_OFFER",
       ),
       allowNull: false,
     },

@@ -40,6 +40,8 @@ import { Payment } from "./Payment";
 import { Waitlist } from "./Waitlist";
 import { Notification } from "./Notification";
 import { ProfileView } from "./ProfileView";
+import { PhoneViewLog } from "./PhoneViewLog";
+import { Coupon } from "./Coupon";
 
 // Moderation
 import { Block, Report } from "./Moderation";
@@ -101,4 +103,6 @@ export {
   Waitlist,
   Notification,
   ProfileView,
+  PhoneViewLog,
+  Coupon,
 };

@@ -178,12 +178,12 @@
 }
 
 .profile-content::-webkit-scrollbar-thumb {
-  background: rgba(106, 13, 173, 0.1);
+  background: var(--accent-soft-bg);
   border-radius: 10px;
 }
 
 .profile-content::-webkit-scrollbar-thumb:hover {
-  background: rgba(106, 13, 173, 0.3);
+  background: var(--accent-border);
 }
 
 .section-title {
@@ -199,14 +199,14 @@
 }
 
 .section-title svg {
-  color: #d4af37;
+  color: var(--accent-color);
 }
 
 .section-title::after {
   content: "";
   flex: 1;
   height: 1px;
-  background: linear-gradient(to right, rgba(106, 13, 173, 0.2), transparent);
+  background: linear-gradient(to right, var(--accent-border), transparent);
 }
 
 .premium-section-title {
@@ -276,7 +276,7 @@
 }
 
 .gallery-item:hover {
-  border-color: #d4af37;
+  border-color: var(--accent-color);
   transform: translateY(-4px);
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
 }
@@ -326,13 +326,14 @@
 }
 
 .action-btn-edit {
-  background: rgba(212, 175, 55, 0.2);
-  color: #d4af37;
-  border-color: rgba(212, 175, 55, 0.3);
+  background: var(--accent-soft-bg);
+  color: var(--accent-color);
+  border-color: var(--accent-border);
 }
 
 .action-btn-edit:hover {
-  background: rgba(212, 175, 55, 0.3);
+  background: var(--accent-border);
+  color: white;
 }
 
 .action-btn-delete {
@@ -393,26 +394,26 @@
   flex: 0 0 150px;
   height: 150px;
   border-radius: 16px;
-  border: 2px dashed rgba(106, 13, 173, 0.3);
+  border: 2px dashed var(--accent-border);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   gap: 8px;
-  color: #6a0dad;
+  color: var(--accent-color);
   cursor: pointer;
   transition: all 0.2s ease;
-  background: rgba(106, 13, 173, 0.02);
+  background: var(--accent-soft-bg);
 }
 
 .add-photo-btn:hover {
-  background: rgba(106, 13, 173, 0.05);
-  border-color: #6a0dad;
+  background: var(--accent-border);
+  color: white;
 }
 
 /* Premium Button */
 .premium-btn {
-  background: linear-gradient(45deg, #6a0dad, #9b30ff);
+  background: var(--accent-gradient);
   color: white;
   padding: 12px 32px;
   border: none;
@@ -420,7 +421,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(106, 13, 173, 0.3);
+  box-shadow: 0 4px 15px var(--accent-shadow);
 }
 
 .premium-btn:hover {
@@ -469,177 +470,201 @@
     font-size: 1.75rem;
   }
 }
-/* Premium Editor Layout */
+/* Premium Editor Layout - Luxury Concierge Edition */
 .edit-profile-container {
   display: flex;
   height: 100%;
-  background: #0f172a;
+  background: #04060b; /* Neutral Deep Dark */
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 
 .edit-sidebar {
   width: 250px;
-  background: rgba(30, 41, 59, 0.5);
+  background: #080a14;
   border-right: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   flex-direction: column;
-  padding: 30px 0;
+  padding: 40px 0;
 }
 
 .edit-sidebar-item {
-  padding: 16px 28px;
+  padding: 16px 32px;
   display: flex;
   align-items: center;
   gap: 16px;
   cursor: pointer;
   transition: all 0.3s ease;
-  color: #94a3b8;
-  font-size: 0.95rem;
-  font-weight: 600;
+  color: #64748b; /* Muted Slate */
+  font-size: 0.9rem;
+  font-weight: 500;
   position: relative;
+  letter-spacing: 0.02em;
 }
 
 .edit-sidebar-item:hover {
-  background: rgba(255, 255, 255, 0.03);
-  color: white;
+  color: #cbd5e1;
+  background: rgba(212, 175, 55, 0.03);
 }
 
 .edit-sidebar-item.active {
-  background: rgba(106, 13, 173, 0.15);
-  color: white;
+  color: var(--accent-color);
+  background: var(--accent-soft-bg);
+  font-weight: 700;
 }
 
 .edit-sidebar-item.active::after {
   content: "";
   position: absolute;
   right: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: #d4af37;
+  top: 20%;
+  bottom: 20%;
+  width: 3px;
+  background: var(--accent-color);
   border-radius: 4px 0 0 4px;
-  box-shadow: -2px 0 10px rgba(212, 175, 55, 0.4);
+  box-shadow: -2px 0 10px var(--accent-shadow);
 }
 
 .edit-main-content {
   flex: 1;
-  padding: 50px;
+  padding: 60px 80px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  background: #0f172a;
+  background: #04060b;
 }
 
 .edit-step-card {
-  max-width: 800px;
+  max-width: 750px;
   width: 100%;
   margin: 0 auto;
+  animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Mobile Responsive */
-@media (max-width: 900px) {
-  .edit-profile-container {
-    flex-direction: column;
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
-  .edit-sidebar {
-    width: 100%;
-    flex-direction: row;
-    overflow-x: auto;
-    padding: 10px;
-    border-right: none;
-    border-bottom: 1px solid rgba(106, 13, 173, 0.1);
-  }
-  .edit-sidebar-item {
-    padding: 10px 20px;
-    white-space: nowrap;
-  }
-  .edit-sidebar-item.active::after {
-    right: 0;
-    left: 0;
-    top: auto;
-    bottom: 0;
-    width: 100%;
-    height: 3px;
-    border-radius: 0;
-  }
-  .edit-main-content {
-    padding: 24px 16px;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* Premium Form Elements */
+/* Luxury Form Elements */
+.edit-step-card label {
+  color: #94a3b8 !important; /* Muted Grey Label */
+  font-weight: 600 !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.12em !important;
+  margin-bottom: 12px !important;
+  display: block !important;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
 .edit-step-card input,
 .edit-step-card select,
 .edit-step-card textarea {
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
-  border-radius: 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
   background-color: rgba(255, 255, 255, 0.02) !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: all 0.3s ease !important;
   font-size: 15px !important;
-  font-weight: 600 !important;
-  color: white !important;
-  box-shadow: none !important;
+  font-weight: 500 !important;
+  color: #e2e8f0 !important;
   width: 100% !important;
-  padding: 16px 20px !important;
+  padding: 14px 20px !important;
+  box-shadow: none !important;
 }
 
 .edit-step-card input:hover,
 .edit-step-card select:hover,
 .edit-step-card textarea:hover {
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  background-color: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(212, 175, 55, 0.3) !important;
 }
 
 .edit-step-card input:focus,
 .edit-step-card select:focus,
-.edit-step-card textarea:focus {
+.edit-step-card textarea:focus,
+.edit-step-card button[aria-haspopup="listbox"]:focus,
+.edit-step-card .searchable-dropdown-container:focus-within {
   outline: none !important;
-  border-color: #d4af37 !important;
-  background-color: rgba(255, 255, 255, 0.05) !important;
-  box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1) !important;
-}
-
-.edit-step-card label {
-  color: #94a3b8 !important;
-  font-weight: 800 !important;
-  font-size: 0.75rem !important;
-  letter-spacing: 0.15em !important;
-  margin-bottom: 12px !important;
-  display: block !important;
-  text-transform: uppercase;
-}
-
-.edit-step-card .premium-btn {
-  background: white !important;
-  border: none !important;
-  padding: 16px 48px !important;
-  border-radius: 20px !important;
-  font-weight: 800 !important;
-  color: #0f172a !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
-  transition: all 0.3s ease !important;
-  cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
-
-.edit-step-card .premium-btn:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
-}
-
-.edit-step-card .premium-btn:active {
-  transform: translateY(0) scale(1);
+  border-color: var(--accent-color) !important;
+  background-color: var(--accent-soft-bg) !important;
+  box-shadow: 0 0 0 1px var(--accent-shadow) !important;
 }
 
 .edit-step-card .searchable-dropdown-container {
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
-  border-radius: 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
   background-color: rgba(255, 255, 255, 0.02) !important;
   transition: all 0.3s ease !important;
 }
 
-.edit-step-card .searchable-dropdown-container:focus-within {
-  border-color: #d4af37 !important;
-  box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1) !important;
-  background-color: rgba(255, 255, 255, 0.05) !important;
+/* Premium Primary Button */
+.edit-step-card .premium-btn {
+  background: var(--accent-gradient) !important;
+  border: none !important;
+  padding: 16px 48px !important;
+  border-radius: 14px !important;
+  font-weight: 700 !important;
+  color: white !important;
+  box-shadow: 0 8px 24px var(--accent-shadow) !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 40px;
+  width: auto;
+}
+
+.edit-step-card .premium-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(184, 134, 11, 0.3) !important;
+  filter: brightness(1.1);
+}
+
+.edit-step-card .premium-btn:active {
+  transform: translateY(0);
+}
+
+/* Custom Checkbox Redesign */
+.edit-step-card input[type="checkbox"] {
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 6px !important;
+  accent-color: #d4af37;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .edit-sidebar {
+    width: 100%;
+    flex-direction: row;
+    padding: 0 10px;
+    height: 60px;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .edit-sidebar-item {
+    padding: 0 20px;
+    white-space: nowrap;
+    font-size: 0.8rem;
+  }
+  .edit-sidebar-item.active::after {
+    top: auto;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+  }
+  .edit-main-content {
+    padding: 30px 20px;
+  }
 }

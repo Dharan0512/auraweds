@@ -1,6 +1,7 @@
 "use client";
 
 import { Controller, useForm } from "react-hook-form";
+import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import PremiumSelect from "@/components/ui/PremiumSelect";
@@ -42,6 +43,7 @@ export default function Step2PersonalDetails({
     watch,
     handleSubmit,
     control,
+    reset,
     formState: { errors },
   } = useForm<PersonalDetailsData>({
     resolver: zodResolver(personalDetailsSchema),
@@ -51,6 +53,12 @@ export default function Step2PersonalDetails({
       childrenLivingWith: false,
     },
   });
+
+  useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 0) {
+      reset(initialData);
+    }
+  }, [initialData, reset]);
 
   const maritalStatus = watch("maritalStatus");
 

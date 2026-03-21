@@ -38,12 +38,11 @@ export default function InterestsPage() {
     sent: 0,
     accepted: 0,
     declined: 0,
-    blocked: 0,
   });
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [userTier, setUserTier] = useState("Free");
+  const [userTier, setUserTier] = useState("Basic Member");
   const [sortBy, setSortBy] = useState("newest");
 
   // Profile Modal State
@@ -180,21 +179,6 @@ export default function InterestsPage() {
     );
   };
 
-  const handleUnblock = async (id: string | number) => {
-    try {
-      const promise = interestService.unblockInterest(id);
-      toast.promise(promise, {
-        loading: "Unblocking...",
-        success: "User unblocked and moved to Accepted",
-        error: "Failed to unblock user",
-      });
-      await promise;
-      fetchData();
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   const handleRemove = async (id: string | number) => {
     toast(
       (t) => (
@@ -266,7 +250,7 @@ export default function InterestsPage() {
       id: "blocked",
       label: "Blocked",
       icon: XCircle, // Fallback icon
-      count: counts.blocked,
+      count: 0, // Simplified for now
     },
   ];
 
@@ -279,7 +263,7 @@ export default function InterestsPage() {
         <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-indigo-900/10 blur-[100px] rounded-full animate-pulse delay-1000" />
       </div>
 
-      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 pb-32 relative z-10">
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 pb-32 relative z-10">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 mb-16 animate-in fade-in slide-in-from-top-4 duration-700">
           <div className="space-y-4">
@@ -402,7 +386,6 @@ export default function InterestsPage() {
                       onWithdraw={handleWithdraw}
                       onRemove={handleRemove}
                       onBlock={handleBlock}
-                      onUnblock={handleUnblock}
                       onViewProfile={(uid) =>
                         handleViewProfile(uid, interest.id)
                       }

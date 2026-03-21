@@ -74,14 +74,14 @@ export default function MultiSearchableDropdown({
             className={`searchable-dropdown-container relative w-full cursor-default overflow-hidden rounded-2xl text-left flex flex-wrap items-center border transition-all sm:text-sm p-1 min-h-[56px] ${
               disabled
                 ? "border-white/5 bg-slate-900/50 opacity-60"
-                : "bg-slate-900/50 border-white/10 hover:border-purple-500/50 focus-within:border-purple-500 focus-within:ring-2 focus-within:ring-purple-500/20"
+                : "bg-slate-900/50 border-white/10 hover:border-[var(--accent-border)]/50 focus-within:border-[var(--accent-color)] focus-within:ring-1 focus-within:ring-[var(--accent-shadow)]"
             }`}
           >
             <div className="flex flex-wrap gap-2 p-1">
               {selectedOptions.map((opt) => (
                 <span
                   key={opt.id}
-                  className="inline-flex items-center gap-1 px-3 py-1 bg-purple-600/30 text-purple-200 rounded-full text-xs font-semibold border border-purple-500/30"
+                  className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--accent-soft-bg)] text-white rounded-full text-xs font-semibold border border-[var(--accent-border)]/30"
                 >
                   {opt[displayKey]}
                   <button
@@ -139,7 +139,7 @@ export default function MultiSearchableDropdown({
                     className={({ active }) =>
                       `relative cursor-default select-none py-3 pl-10 pr-4 transition-colors ${
                         active
-                          ? "bg-purple-600/20 text-white"
+                          ? "bg-[var(--accent-soft-bg)] text-white"
                           : "text-slate-300"
                       }`
                     }
@@ -156,9 +156,7 @@ export default function MultiSearchableDropdown({
                         </span>
                         {selected ? (
                           <span
-                            className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
-                              active ? "text-purple-400" : "text-amber-400"
-                            }`}
+                            className={`absolute inset-y-0 left-0 flex items-center pl-3 text-[var(--accent-color)]`}
                           >
                             <CheckIcon className="h-5 w-5" aria-hidden="true" />
                           </span>

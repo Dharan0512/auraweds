@@ -15,6 +15,7 @@ import {
 import { Op } from "sequelize";
 import { profileSerializer } from "../serializers/profileSerializer";
 import { Notification } from "../models/sequelize/Notification";
+import { getUserTier } from "../middlewares/tierMiddleware";
 
 /**
  * GET /api/interests?type=received|sent|accepted|declined
@@ -67,14 +68,6 @@ export const getInterests = async (
           [Op.or]: [
             { senderId: req.user.id, status: "DECLINED" },
             { receiverId: req.user.id, status: "DECLINED" },
-          ],
-        };
-        break;
-      case "blocked":
-        whereClause = {
-          [Op.or]: [
-            { senderId: req.user.id, status: "BLOCKED" },
-            { receiverId: req.user.id, status: "BLOCKED" },
           ],
         };
         break;
@@ -146,12 +139,8 @@ export const getInterests = async (
     });
 
     // 2. Fetch requester's subscription tier
-    const mySub = await Subscription.findOne({
-      where: { userId: req.user.id, status: "active" },
-      include: [Plan],
-    });
-    const myTier = mySub?.Plan?.name || "Free";
-    const isGoldRequester = myTier === "Gold" || myTier === "Elite Gold";
+    const { tier: myTier } = await getUserTier(req.user.id);
+    const isGoldRequester = myTier === "Gold";
 
     const formattedInterests = (interests as any[]).map((interest: any) => {
       const otherUser =
@@ -254,15 +243,9 @@ export const expressInterest = async (
       // If WITHDRAWN, DECLINED, or EXPIRED, we allow "re-sending"
     }
 
-    // 2. Check monetization limits
-    const sub = await Subscription.findOne({
-      where: { userId: senderId, status: "active" },
-      include: [Plan],
-    });
+    const { tier } = await getUserTier(senderId);
 
-    const tier = sub?.Plan?.name || "Free";
-
-    if (tier === "Free") {
+    if (tier === "Basic Member") {
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
@@ -274,10 +257,10 @@ export const expressInterest = async (
         },
       });
 
-      if (count >= 10) {
+      if (count >= 5) {
         res.status(403).json({
           message:
-            "Monthly limit reached for Free plan. Upgrade to Silver or Gold for unlimited interests!",
+            "Monthly limit reached for Basic Member plan. Upgrade to Silver or Gold for unlimited interests!",
           limitReached: true,
         });
         return;
@@ -505,14 +488,8 @@ export const getInterestCounts = async (
         [Op.or]: [{ senderId: userId }, { receiverId: userId }],
       },
     });
-    const blocked = await Interest.count({
-      where: {
-        status: "BLOCKED",
-        [Op.or]: [{ senderId: userId }, { receiverId: userId }],
-      },
-    });
 
-    res.status(200).json({ received, sent, accepted, declined, blocked });
+    res.status(200).json({ received, sent, accepted, declined });
   } catch (error) {
     console.error("Get interest counts error:", error);
     res.status(500).json({ message: "Server error" });
@@ -644,44 +621,5 @@ export const notifyCall = async (
   } catch (error) {
     console.error("Notify call error:", error);
     res.status(500).json({ message: "Server error sending notification" });
-  }
-};
-
-/**
- * PATCH /api/interests/:id/unblock
- */
-export const unblockInterest = async (
-  req: AuthRequest,
-  res: Response,
-): Promise<void> => {
-  try {
-    if (!req.user) {
-      res.status(401).json({ message: "Not authorized" });
-      return;
-    }
-
-    const { id } = req.params;
-    const userId = req.user.id;
-
-    const interest = await Interest.findOne({
-      where: {
-        id,
-        [Op.or]: [{ senderId: userId }, { receiverId: userId }],
-        status: "BLOCKED",
-      },
-    });
-
-    if (!interest) {
-      res.status(404).json({ message: "Blocked interest not found" });
-      return;
-    }
-
-    interest.status = "ACCEPTED";
-    await interest.save();
-
-    res.status(200).json({ message: "User unblocked successfully", interest });
-  } catch (error) {
-    console.error("Unblock interest error:", error);
-    res.status(500).json({ message: "Server error unblocking user" });
   }
 };

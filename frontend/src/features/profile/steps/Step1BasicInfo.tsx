@@ -1,6 +1,7 @@
 "use client";
 
 import { Controller, useForm } from "react-hook-form";
+import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import PremiumSelect from "@/components/ui/PremiumSelect";
@@ -46,6 +47,7 @@ export default function Step1BasicInfo({
     register,
     handleSubmit,
     control,
+    reset,
     formState: { errors },
   } = useForm<BasicInfoData>({
     resolver: zodResolver(basicInfoSchema),
@@ -55,6 +57,12 @@ export default function Step1BasicInfo({
       convenientTimeToCall: "Anytime",
     },
   });
+
+  useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 0) {
+      reset(initialData);
+    }
+  }, [initialData, reset]);
 
   return (
     <form onSubmit={handleSubmit(onNext)} className="space-y-10">
