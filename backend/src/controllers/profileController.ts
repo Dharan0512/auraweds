@@ -591,8 +591,8 @@ export const getOtherProfile = async (
       attributes: {
         exclude: includeContact
           ? ["password", "countryCodeId"]
-          : ["password", "email", "mobile", "countryCodeId"],
-      }, // Protect PII conditionally
+          : ["password", "email", "countryCodeId"],
+      }, // Protect PII conditionally (mobile fetched to be masked in serializer)
     });
 
     if (!user) {
@@ -927,7 +927,7 @@ export const searchProfiles = async (
       {
         model: User,
         where: userWhere,
-        attributes: ["id", "firstName", "lastName", "gender"],
+        attributes: ["id", "firstName", "lastName", "gender", "mobile"],
         include: [
           {
             model: UserPhoto,

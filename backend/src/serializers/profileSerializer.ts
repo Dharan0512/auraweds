@@ -5,6 +5,7 @@ import {
   City,
   Education,
 } from "../models/sequelize";
+import { maskPhoneNumber } from "../utils/phoneUtils";
 
 /**
  * Serializes a full profile into the 'legacyFormat' (wizard-compatible) shape.
@@ -36,8 +37,8 @@ export const profileSerializer = {
         dob: profile.dob || "",
         religion: religionName,
         location: cityName,
-        // Disclose contact info only if explicitly requested (Gold users with accepted interest)
-        mobile: includeContact ? user?.mobile : undefined,
+        // Disclose contact info only if explicitly requested, otherwise mask phone number
+        mobile: maskPhoneNumber(user?.mobile, includeContact),
         email: includeContact ? user?.email : undefined,
       },
       professionalInfo: {
