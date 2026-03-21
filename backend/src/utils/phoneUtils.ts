@@ -1,11 +1,16 @@
 export const maskPhoneNumber = (
-  phoneNumber: string | null | undefined,
-  isSubscribed: boolean
+  phone: string | null | undefined,
+  isSubscribed: boolean,
+  isOwnProfile: boolean = false
 ): string | undefined | null => {
-  if (!phoneNumber) return phoneNumber;
-  if (isSubscribed) return phoneNumber;
+  if (!phone) return phone;
+  if (isSubscribed || isOwnProfile) return phone;
 
-  // Mask last 4 digits
-  if (phoneNumber.length <= 4) return "XXXX";
-  return phoneNumber.slice(0, -4) + "XXXX";
+  // Masking logic: 5 digits visible, remaining replaced with 'X'
+  if (phone.length <= 5) return "X".repeat(phone.length);
+  
+  const visiblePart = phone.slice(0, 5);
+  const hiddenPart = "X".repeat(phone.length - 5);
+  
+  return visiblePart + hiddenPart;
 };

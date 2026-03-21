@@ -28,7 +28,7 @@ import {
   SubscriptionStatusResponse,
 } from "@/services/subscriptionService";
 import UpgradeModal from "./UpgradeModal";
-import { getImageUrl, calculateAge } from "@/lib/utils";
+import { getImageUrl, calculateAge, maskPhoneNumber } from "@/lib/utils";
 
 interface OtherProfileModalProps {
   isOpen: boolean;
@@ -171,9 +171,11 @@ export default function OtherProfileModal({
                 {/* Subscription Action or Social Links */}
                 {!subscription || subscription.tier === "Basic Member" ? (
                   <div className="mt-6 flex flex-col items-start gap-2">
-                    <p className="text-white/60 text-sm flex items-center gap-1.5 font-medium bg-black/40 px-3 py-1.5 rounded-lg border border-white/5">
-                      <Lock size={14} className="text-[#D4AF37]" /> Upgrade to
-                      view contact info
+                    <p className="text-white/60 text-sm flex items-center gap-2 font-medium bg-black/40 px-3 py-2 rounded-lg border border-white/5">
+                      <Lock size={14} className="text-[#D4AF37]" />{" "}
+                      <span className="font-mono tracking-[0.15em] text-white">
+                        {maskPhoneNumber(profile?.basicDetails?.mobile, false, false) || "Restricted Contact"}
+                      </span>
                     </p>
                     <button
                       onClick={() => setIsUpgradeModalOpen(true)}

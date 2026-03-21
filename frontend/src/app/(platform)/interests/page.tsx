@@ -398,7 +398,7 @@ export default function InterestsPage() {
                           currentInterest?.profile?.basicDetails?.mobile;
                         const firstName =
                           currentInterest?.profile?.basicDetails?.firstName ||
-                          "U***";
+                          "User";
 
                         if (mobile) {
                           // Success case: notify user as well

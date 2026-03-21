@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Interest } from "@/services/interestService";
 import { MatchProfile } from "@/services/matchService";
-import { getImageUrl } from "@/lib/utils";
+import { getImageUrl, maskPhoneNumber } from "@/lib/utils";
 import ConnectButton from "../ui/ConnectButton";
 
 function timeAgo(date: Date) {
@@ -110,10 +110,7 @@ export default function InterestCard({
   const firstName = profile.basicDetails.firstName || "";
   const lastName = profile.basicDetails.lastName || "";
 
-  const name =
-    isFree && type === "received"
-      ? `${firstName[0] || ""}*** ${lastName ? lastName[0] + "***" : ""}`
-      : `${firstName} ${lastName}`.trim();
+  const name = `${firstName} ${lastName}`.trim();
 
   const isExpired =
     new Date().getTime() - new Date(interest.createdAt).getTime() >
@@ -131,13 +128,8 @@ export default function InterestCard({
           <img
             src={getImageUrl(profile.photos[0], profile.basicDetails.firstName)}
             alt={profile.basicDetails.firstName}
-            className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-110 ${isFree && type === "received" ? "blur-2xl scale-125 saturate-[0.8]" : ""}`}
+            className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
           />
-          {isFree && type === "received" && (
-            <div className="absolute inset-0 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm">
-              <Lock size={24} className="text-[#D4AF37]" />
-            </div>
-          )}
           {type === "received" && !interest.viewedAt && (
             <div className="absolute top-3 right-3 w-3 h-3 bg-[#D4AF37] rounded-full ring-4 ring-slate-950 shadow-[0_0_15px_rgba(212,175,55,0.8)] animate-pulse"></div>
           )}
@@ -286,16 +278,28 @@ export default function InterestCard({
                   <button
                     onClick={() => onContact?.(profile.userId)}
                     disabled={!isGold}
-                    className={`flex items-center gap-2 px-5 py-3 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest border-2 ${isGold ? "bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/30 hover:bg-[#D4AF37]/20" : "bg-slate-900/60 text-slate-500 border-white/5 cursor-not-allowed opacity-60"}`}
+                    className={`flex items-center gap-2 px-5 py-3 rounded-xl transition-all font-black uppercase tracking-widest border-2 ${isGold ? "bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/30 hover:bg-[#D4AF37]/20 text-[10px]" : "bg-slate-900/40 text-slate-400 border-white/10 hover:border-[#D4AF37]/30 hover:text-[#D4AF37]"}`}
                   >
                     {isGold ? (
                       <>
                         <Phone size={14} /> Call Now
                       </>
                     ) : (
-                      <>
-                        <Lock size={14} /> Get Contact
-                      </>
+                      <div className="flex flex-col items-center gap-0.5">
+                        <div className="flex items-center gap-1.5 leading-none">
+                          <Lock size={12} className="text-[#D4AF37]" />{" "}
+                          <span className="font-mono tracking-wider text-[11px]">
+                            {maskPhoneNumber(
+                              profile.basicDetails.mobile,
+                              isGold,
+                              false
+                            ) || "Hidden Profile"}
+                          </span>
+                        </div>
+                        <span className="text-[7.5px] text-[#D4AF37] font-bold">
+                          Upgrade to View Full
+                        </span>
+                      </div>
                     )}
                   </button>
                 </div>

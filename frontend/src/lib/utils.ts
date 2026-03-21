@@ -42,3 +42,26 @@ export function calculateAge(dob?: string): number | string {
   }
   return age;
 }
+
+/**
+ * Reusable utility to mask phone numbers securely
+ * Kept consistent with backend logic
+ */
+export function maskPhoneNumber(
+  phone: string | null | undefined, 
+  isSubscribed: boolean, 
+  isOwnProfile: boolean = false
+): string {
+  if (!phone) return "";
+  if (isSubscribed || isOwnProfile) return phone;
+
+  // If already masked by backend, just return it
+  if (phone.includes("X")) return phone;
+
+  if (phone.length <= 5) return "X".repeat(phone.length);
+  
+  const visiblePart = phone.slice(0, 5);
+  const hiddenPart = "X".repeat(phone.length - 5);
+  
+  return visiblePart + hiddenPart;
+}
