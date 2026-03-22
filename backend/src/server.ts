@@ -25,6 +25,31 @@ app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
+// --- Diagnostics Routes ---
+const availableRoutes = [
+  "/",
+  "/api",
+  "/api/health",
+  "/api/auth",
+  "/api/profile",
+  "/api/matches",
+  "/api/interests",
+  "/api/subscription",
+  "/api/master",
+  "/api/moderation",
+  "/api/notifications",
+  "/api/admin",
+];
+
+// Root Route
+app.get("/", (req: Request, res: Response) => {
+  res.json({
+    message: "AuraWeds Backend API is live on Vercel!",
+    routes: availableRoutes,
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Basic Route
 app.get("/api/health", (req: Request, res: Response) => {
   res.json({ status: "ok", message: "AuraWeds API is running" });
@@ -100,3 +125,4 @@ if (require.main === module) {
 }
 
 export default app;
+module.exports = app;

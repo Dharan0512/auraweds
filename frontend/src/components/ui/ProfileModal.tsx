@@ -350,7 +350,7 @@ export default function ProfileModal({
                   profile.user?.firstName,
                 )}
                 alt={profile.user?.firstName}
-                className={`profile-hero-image ${tier === "Basic Member" && userId ? "blur-md" : ""}`}
+                className="profile-hero-image"
               />
               <div className="profile-hero-gradient"></div>
 
@@ -516,11 +516,7 @@ export default function ProfileModal({
                               <img
                                 src={photoUrl}
                                 alt={`Gallery ${idx}`}
-                                className={
-                                  tier === "Basic Member" && userId
-                                    ? "blur-md"
-                                    : ""
-                                }
+                                className=""
                               />
                               <div className="gallery-item-overlay">
                                 <button
@@ -701,8 +697,9 @@ export default function ProfileModal({
                                 <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">
                                   Mobile Number
                                 </p>
-                                <p className="text-white font-medium">
-                                  {profile.user.mobile || "N/A"}
+                                <p className="text-white font-medium flex items-center gap-2">
+                                  {profile.user?.mobile?.includes('X') && <Lock size={14} className="text-[#D4AF37]" />}
+                                  {profile.user?.mobile || "N/A"}
                                 </p>
                               </div>
                             </div>

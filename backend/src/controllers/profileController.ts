@@ -37,6 +37,7 @@ import { sequelize } from "../config/db.postgres";
 import { profileSerializer } from "../serializers/profileSerializer";
 import { getUserTier } from "../middlewares/tierMiddleware";
 import { PhoneViewLog } from "../models/sequelize/PhoneViewLog";
+import { maskPhoneNumber } from "../utils/phoneUtils";
 
 export const saveDraft = async (
   req: AuthRequest,
@@ -711,8 +712,11 @@ export const getOtherProfile = async (
       delete safeProfile.HoroscopeDetail;
     }
 
+    const userResponse = user.toJSON() as any;
+    userResponse.mobile = maskPhoneNumber(userResponse.mobile, includeContact, false);
+
     res.status(200).json({
-      user,
+      user: userResponse,
       profile: profileSerializer.toPublicProfile(
         { ...safeProfile, User: user },
         false,
