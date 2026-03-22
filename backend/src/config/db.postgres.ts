@@ -1,5 +1,6 @@
 import { Sequelize } from "sequelize";
 import dotenv from "dotenv";
+import * as pg from "pg";
 dotenv.config();
 
 const postgresUri =
@@ -9,6 +10,7 @@ const postgresUri =
 export const sequelize = new Sequelize(postgresUri, {
   dialect: "postgres",
   logging: false,
+  dialectModule: pg,
   dialectOptions: {
     // For many cloud providers, you might need SSL
     // ssl: {
