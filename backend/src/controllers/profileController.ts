@@ -713,7 +713,11 @@ export const getOtherProfile = async (
     }
 
     const userResponse = user.toJSON() as any;
-    userResponse.mobile = maskPhoneNumber(userResponse.mobile, includeContact, false);
+    userResponse.mobile = maskPhoneNumber(
+      userResponse.mobile,
+      includeContact,
+      false,
+    );
 
     res.status(200).json({
       user: userResponse,

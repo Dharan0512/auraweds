@@ -6,6 +6,7 @@ import { Server } from "socket.io";
 import { connectPostgres } from "./config/db.postgres";
 import authRoutes from "./routes/authRoutes";
 import { sequelize } from "./models/sequelize"; // Ensures models are loaded for sync
+import path from "path";
 
 dotenv.config();
 
@@ -19,11 +20,14 @@ const io = new Server(server, {
 });
 
 const PORT = process.env.PORT || 5000;
-
+const isServerless = process.env.VERCEL === "1";
+export const uploadDir = isServerless
+  ? "/tmp/uploads"
+  : path.join(process.cwd(), "uploads");
 // Middlewares
 app.use(cors());
 app.use(express.json());
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static(uploadDir));
 
 // ✅ 👉 ADD HERE (important position)
 let isInitialized = false;
