@@ -77,12 +77,12 @@ export class LocationLifestyle
 LocationLifestyle.init(
   {
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
     userProfileId: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       allowNull: false,
       unique: true,
       references: { model: UserProfile, key: "id" },
