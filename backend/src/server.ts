@@ -136,6 +136,15 @@ const startServer = async () => {
 // and do not natively support WebSockets effectively.
 
 // Only listen locally, Vercel will export the app instead
+
+app.get("/debug-pg", (req, res) => {
+  try {
+    const pg = require("pg");
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ ok: false });
+  }
+});
 if (require.main === module) {
   server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
