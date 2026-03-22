@@ -1,0 +1,18 @@
+[
+  {
+    "id": 22,
+    "userId": 128,
+    "url": "/uploads/photo-1772537523761-541886171.jpg",
+    "isMain": false,
+    "order": 0,
+    "approvalStatus": "rejected"
+  },
+  {
+    "id": 24,
+    "userId": 132,
+    "url": "/uploads/photo-1772553546617-914867393.png",
+    "isMain": false,
+    "order": 0,
+    "approvalStatus": "pending"
+  }
+]

@@ -1,0 +1,122 @@
+[
+  {
+    "id": 1,
+    "name": "Tamil",
+    "code": "TA",
+    "isActive": true
+  },
+  {
+    "id": 2,
+    "name": "Telugu",
+    "code": "TE",
+    "isActive": true
+  },
+  {
+    "id": 3,
+    "name": "Kannada",
+    "code": "KN",
+    "isActive": true
+  },
+  {
+    "id": 4,
+    "name": "Malayalam",
+    "code": "ML",
+    "isActive": true
+  },
+  {
+    "id": 5,
+    "name": "Hindi",
+    "code": "HI",
+    "isActive": true
+  },
+  {
+    "id": 6,
+    "name": "Urdu",
+    "code": "UR",
+    "isActive": true
+  },
+  {
+    "id": 7,
+    "name": "English",
+    "code": "EN",
+    "isActive": true
+  },
+  {
+    "id": 8,
+    "name": "Marathi",
+    "code": "MR",
+    "isActive": true
+  },
+  {
+    "id": 9,
+    "name": "Gujarati",
+    "code": "GU",
+    "isActive": true
+  },
+  {
+    "id": 10,
+    "name": "Punjabi",
+    "code": "PA",
+    "isActive": true
+  },
+  {
+    "id": 11,
+    "name": "Bengali",
+    "code": "BN",
+    "isActive": true
+  },
+  {
+    "id": 12,
+    "name": "Odia",
+    "code": "OR",
+    "isActive": true
+  },
+  {
+    "id": 13,
+    "name": "Assamese",
+    "code": "AS",
+    "isActive": true
+  },
+  {
+    "id": 14,
+    "name": "Konkani",
+    "code": "KO",
+    "isActive": true
+  },
+  {
+    "id": 15,
+    "name": "Tulu",
+    "code": "TU",
+    "isActive": true
+  },
+  {
+    "id": 16,
+    "name": "Sourashtra",
+    "code": "SAU",
+    "isActive": true
+  },
+  {
+    "id": 17,
+    "name": "Sindhi",
+    "code": "SD",
+    "isActive": true
+  },
+  {
+    "id": 18,
+    "name": "Arabic",
+    "code": "AR",
+    "isActive": true
+  },
+  {
+    "id": 19,
+    "name": "French",
+    "code": "FR",
+    "isActive": true
+  },
+  {
+    "id": 20,
+    "name": "Other",
+    "code": "OTH",
+    "isActive": true
+  }
+]

@@ -1,0 +1,656 @@
+[
+  {
+    "id": 1,
+    "stateId": 1,
+    "name": "Visakhapatnam",
+    "isActive": true
+  },
+  {
+    "id": 2,
+    "stateId": 1,
+    "name": "Vijayawada",
+    "isActive": true
+  },
+  {
+    "id": 3,
+    "stateId": 1,
+    "name": "Guntur",
+    "isActive": true
+  },
+  {
+    "id": 4,
+    "stateId": 2,
+    "name": "Itanagar",
+    "isActive": true
+  },
+  {
+    "id": 5,
+    "stateId": 3,
+    "name": "Guwahati",
+    "isActive": true
+  },
+  {
+    "id": 6,
+    "stateId": 3,
+    "name": "Silchar",
+    "isActive": true
+  },
+  {
+    "id": 7,
+    "stateId": 4,
+    "name": "Patna",
+    "isActive": true
+  },
+  {
+    "id": 8,
+    "stateId": 4,
+    "name": "Gaya",
+    "isActive": true
+  },
+  {
+    "id": 9,
+    "stateId": 4,
+    "name": "Muzaffarpur",
+    "isActive": true
+  },
+  {
+    "id": 10,
+    "stateId": 5,
+    "name": "Raipur",
+    "isActive": true
+  },
+  {
+    "id": 11,
+    "stateId": 5,
+    "name": "Bhilai",
+    "isActive": true
+  },
+  {
+    "id": 12,
+    "stateId": 6,
+    "name": "Panaji",
+    "isActive": true
+  },
+  {
+    "id": 13,
+    "stateId": 6,
+    "name": "Margao",
+    "isActive": true
+  },
+  {
+    "id": 14,
+    "stateId": 7,
+    "name": "Ahmedabad",
+    "isActive": true
+  },
+  {
+    "id": 15,
+    "stateId": 7,
+    "name": "Surat",
+    "isActive": true
+  },
+  {
+    "id": 16,
+    "stateId": 7,
+    "name": "Vadodara",
+    "isActive": true
+  },
+  {
+    "id": 17,
+    "stateId": 7,
+    "name": "Rajkot",
+    "isActive": true
+  },
+  {
+    "id": 18,
+    "stateId": 8,
+    "name": "Gurugram",
+    "isActive": true
+  },
+  {
+    "id": 19,
+    "stateId": 8,
+    "name": "Faridabad",
+    "isActive": true
+  },
+  {
+    "id": 20,
+    "stateId": 8,
+    "name": "Panipat",
+    "isActive": true
+  },
+  {
+    "id": 21,
+    "stateId": 9,
+    "name": "Shimla",
+    "isActive": true
+  },
+  {
+    "id": 22,
+    "stateId": 9,
+    "name": "Dharamshala",
+    "isActive": true
+  },
+  {
+    "id": 23,
+    "stateId": 10,
+    "name": "Ranchi",
+    "isActive": true
+  },
+  {
+    "id": 24,
+    "stateId": 10,
+    "name": "Jamshedpur",
+    "isActive": true
+  },
+  {
+    "id": 25,
+    "stateId": 11,
+    "name": "Bengaluru",
+    "isActive": true
+  },
+  {
+    "id": 26,
+    "stateId": 11,
+    "name": "Mysuru",
+    "isActive": true
+  },
+  {
+    "id": 27,
+    "stateId": 11,
+    "name": "Mangaluru",
+    "isActive": true
+  },
+  {
+    "id": 28,
+    "stateId": 11,
+    "name": "Hubballi",
+    "isActive": true
+  },
+  {
+    "id": 29,
+    "stateId": 12,
+    "name": "Kochi",
+    "isActive": true
+  },
+  {
+    "id": 30,
+    "stateId": 12,
+    "name": "Thiruvananthapuram",
+    "isActive": true
+  },
+  {
+    "id": 31,
+    "stateId": 12,
+    "name": "Kozhikode",
+    "isActive": true
+  },
+  {
+    "id": 32,
+    "stateId": 13,
+    "name": "Indore",
+    "isActive": true
+  },
+  {
+    "id": 33,
+    "stateId": 13,
+    "name": "Bhopal",
+    "isActive": true
+  },
+  {
+    "id": 34,
+    "stateId": 13,
+    "name": "Gwalior",
+    "isActive": true
+  },
+  {
+    "id": 35,
+    "stateId": 14,
+    "name": "Mumbai",
+    "isActive": true
+  },
+  {
+    "id": 36,
+    "stateId": 14,
+    "name": "Pune",
+    "isActive": true
+  },
+  {
+    "id": 37,
+    "stateId": 14,
+    "name": "Nagpur",
+    "isActive": true
+  },
+  {
+    "id": 38,
+    "stateId": 14,
+    "name": "Nashik",
+    "isActive": true
+  },
+  {
+    "id": 39,
+    "stateId": 14,
+    "name": "Thane",
+    "isActive": true
+  },
+  {
+    "id": 40,
+    "stateId": 15,
+    "name": "Imphal",
+    "isActive": true
+  },
+  {
+    "id": 41,
+    "stateId": 16,
+    "name": "Shillong",
+    "isActive": true
+  },
+  {
+    "id": 42,
+    "stateId": 17,
+    "name": "Aizawl",
+    "isActive": true
+  },
+  {
+    "id": 43,
+    "stateId": 18,
+    "name": "Kohima",
+    "isActive": true
+  },
+  {
+    "id": 44,
+    "stateId": 18,
+    "name": "Dimapur",
+    "isActive": true
+  },
+  {
+    "id": 45,
+    "stateId": 19,
+    "name": "Bhubaneswar",
+    "isActive": true
+  },
+  {
+    "id": 46,
+    "stateId": 19,
+    "name": "Cuttack",
+    "isActive": true
+  },
+  {
+    "id": 47,
+    "stateId": 20,
+    "name": "Ludhiana",
+    "isActive": true
+  },
+  {
+    "id": 48,
+    "stateId": 20,
+    "name": "Amritsar",
+    "isActive": true
+  },
+  {
+    "id": 49,
+    "stateId": 20,
+    "name": "Jalandhar",
+    "isActive": true
+  },
+  {
+    "id": 50,
+    "stateId": 20,
+    "name": "Patiala",
+    "isActive": true
+  },
+  {
+    "id": 51,
+    "stateId": 21,
+    "name": "Jaipur",
+    "isActive": true
+  },
+  {
+    "id": 52,
+    "stateId": 21,
+    "name": "Udaipur",
+    "isActive": true
+  },
+  {
+    "id": 53,
+    "stateId": 21,
+    "name": "Jodhpur",
+    "isActive": true
+  },
+  {
+    "id": 54,
+    "stateId": 21,
+    "name": "Kota",
+    "isActive": true
+  },
+  {
+    "id": 55,
+    "stateId": 22,
+    "name": "Gangtok",
+    "isActive": true
+  },
+  {
+    "id": 56,
+    "stateId": 23,
+    "name": "Chennai",
+    "isActive": true
+  },
+  {
+    "id": 57,
+    "stateId": 23,
+    "name": "Coimbatore",
+    "isActive": true
+  },
+  {
+    "id": 58,
+    "stateId": 23,
+    "name": "Madurai",
+    "isActive": true
+  },
+  {
+    "id": 59,
+    "stateId": 23,
+    "name": "Salem",
+    "isActive": true
+  },
+  {
+    "id": 60,
+    "stateId": 24,
+    "name": "Hyderabad",
+    "isActive": true
+  },
+  {
+    "id": 61,
+    "stateId": 24,
+    "name": "Warangal",
+    "isActive": true
+  },
+  {
+    "id": 62,
+    "stateId": 25,
+    "name": "Agartala",
+    "isActive": true
+  },
+  {
+    "id": 63,
+    "stateId": 26,
+    "name": "Lucknow",
+    "isActive": true
+  },
+  {
+    "id": 64,
+    "stateId": 26,
+    "name": "Kanpur",
+    "isActive": true
+  },
+  {
+    "id": 65,
+    "stateId": 26,
+    "name": "Noida",
+    "isActive": true
+  },
+  {
+    "id": 66,
+    "stateId": 26,
+    "name": "Ghaziabad",
+    "isActive": true
+  },
+  {
+    "id": 67,
+    "stateId": 26,
+    "name": "Varanasi",
+    "isActive": true
+  },
+  {
+    "id": 68,
+    "stateId": 26,
+    "name": "Agra",
+    "isActive": true
+  },
+  {
+    "id": 69,
+    "stateId": 27,
+    "name": "Dehradun",
+    "isActive": true
+  },
+  {
+    "id": 70,
+    "stateId": 27,
+    "name": "Haridwar",
+    "isActive": true
+  },
+  {
+    "id": 71,
+    "stateId": 28,
+    "name": "Kolkata",
+    "isActive": true
+  },
+  {
+    "id": 72,
+    "stateId": 28,
+    "name": "Siliguri",
+    "isActive": true
+  },
+  {
+    "id": 73,
+    "stateId": 28,
+    "name": "Durgapur",
+    "isActive": true
+  },
+  {
+    "id": 74,
+    "stateId": 23,
+    "name": "Tiruchirappalli",
+    "isActive": true
+  },
+  {
+    "id": 75,
+    "stateId": 23,
+    "name": "Tirunelveli",
+    "isActive": true
+  },
+  {
+    "id": 76,
+    "stateId": 23,
+    "name": "Erode",
+    "isActive": true
+  },
+  {
+    "id": 77,
+    "stateId": 23,
+    "name": "Vellore",
+    "isActive": true
+  },
+  {
+    "id": 78,
+    "stateId": 23,
+    "name": "Thoothukudi",
+    "isActive": true
+  },
+  {
+    "id": 79,
+    "stateId": 23,
+    "name": "Dindigul",
+    "isActive": true
+  },
+  {
+    "id": 80,
+    "stateId": 23,
+    "name": "Thanjavur",
+    "isActive": true
+  },
+  {
+    "id": 81,
+    "stateId": 23,
+    "name": "Nagercoil",
+    "isActive": true
+  },
+  {
+    "id": 82,
+    "stateId": 23,
+    "name": "Hosur",
+    "isActive": true
+  },
+  {
+    "id": 83,
+    "stateId": 23,
+    "name": "Kanchipuram",
+    "isActive": true
+  },
+  {
+    "id": 84,
+    "stateId": 23,
+    "name": "Karur",
+    "isActive": true
+  },
+  {
+    "id": 85,
+    "stateId": 23,
+    "name": "Namakkal",
+    "isActive": true
+  },
+  {
+    "id": 86,
+    "stateId": 23,
+    "name": "Cuddalore",
+    "isActive": true
+  },
+  {
+    "id": 87,
+    "stateId": 23,
+    "name": "Sivakasi",
+    "isActive": true
+  },
+  {
+    "id": 88,
+    "stateId": 23,
+    "name": "Tiruppur",
+    "isActive": true
+  },
+  {
+    "id": 89,
+    "stateId": 23,
+    "name": "Kumbakonam",
+    "isActive": true
+  },
+  {
+    "id": 90,
+    "stateId": 12,
+    "name": "Thrissur",
+    "isActive": true
+  },
+  {
+    "id": 91,
+    "stateId": 12,
+    "name": "Kollam",
+    "isActive": true
+  },
+  {
+    "id": 92,
+    "stateId": 12,
+    "name": "Alappuzha",
+    "isActive": true
+  },
+  {
+    "id": 93,
+    "stateId": 12,
+    "name": "Palakkad",
+    "isActive": true
+  },
+  {
+    "id": 94,
+    "stateId": 12,
+    "name": "Kannur",
+    "isActive": true
+  },
+  {
+    "id": 95,
+    "stateId": 12,
+    "name": "Kottayam",
+    "isActive": true
+  },
+  {
+    "id": 96,
+    "stateId": 12,
+    "name": "Malappuram",
+    "isActive": true
+  },
+  {
+    "id": 97,
+    "stateId": 12,
+    "name": "Pathanamthitta",
+    "isActive": true
+  },
+  {
+    "id": 98,
+    "stateId": 12,
+    "name": "Idukki",
+    "isActive": true
+  },
+  {
+    "id": 99,
+    "stateId": 12,
+    "name": "Kasargod",
+    "isActive": true
+  },
+  {
+    "id": 100,
+    "stateId": 11,
+    "name": "Belagavi",
+    "isActive": true
+  },
+  {
+    "id": 101,
+    "stateId": 11,
+    "name": "Davangere",
+    "isActive": true
+  },
+  {
+    "id": 102,
+    "stateId": 11,
+    "name": "Ballari",
+    "isActive": true
+  },
+  {
+    "id": 103,
+    "stateId": 11,
+    "name": "Vijayapura",
+    "isActive": true
+  },
+  {
+    "id": 104,
+    "stateId": 11,
+    "name": "Shivamogga",
+    "isActive": true
+  },
+  {
+    "id": 105,
+    "stateId": 11,
+    "name": "Tumakuru",
+    "isActive": true
+  },
+  {
+    "id": 106,
+    "stateId": 11,
+    "name": "Udupi",
+    "isActive": true
+  },
+  {
+    "id": 107,
+    "stateId": 11,
+    "name": "Kolar",
+    "isActive": true
+  },
+  {
+    "id": 108,
+    "stateId": 11,
+    "name": "Hassan",
+    "isActive": true
+  },
+  {
+    "id": 109,
+    "stateId": 11,
+    "name": "Raichur",
+    "isActive": true
+  }
+]

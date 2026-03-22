@@ -1,0 +1,44 @@
+[
+  {
+    "id": 110,
+    "userProfileId": 139,
+    "fatherName": null,
+    "fatherOccupation": null,
+    "motherName": null,
+    "motherOccupation": null,
+    "familyType": null,
+    "familyStatus": null,
+    "siblingsCount": 0,
+    "ownHouse": false,
+    "nativeDistrict": null,
+    "familyLocation": null
+  },
+  {
+    "id": 105,
+    "userProfileId": 131,
+    "fatherName": "Dillibabu",
+    "fatherOccupation": "BSNL - Retried",
+    "motherName": "Nagabooshanam",
+    "motherOccupation": "Homemaker",
+    "familyType": "Nuclear",
+    "familyStatus": "Middle Class",
+    "siblingsCount": 2,
+    "ownHouse": true,
+    "nativeDistrict": "Pondicherry",
+    "familyLocation": null
+  },
+  {
+    "id": 113,
+    "userProfileId": 143,
+    "fatherName": "Dillibabu",
+    "fatherOccupation": "BSNL - Retried",
+    "motherName": "Nagabooshanam",
+    "motherOccupation": "Homemaker",
+    "familyType": "Nuclear",
+    "familyStatus": "Middle Class",
+    "siblingsCount": 0,
+    "ownHouse": true,
+    "nativeDistrict": "Pondicherry",
+    "familyLocation": null
+  }
+]

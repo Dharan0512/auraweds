@@ -1,0 +1,23 @@
+[
+  {
+    "id": 9,
+    "senderId": 131,
+    "receiverId": 132,
+    "status": "WITHDRAWN",
+    "viewedAt": null
+  },
+  {
+    "id": 8,
+    "senderId": 131,
+    "receiverId": 128,
+    "status": "PENDING",
+    "viewedAt": null
+  },
+  {
+    "id": 7,
+    "senderId": 132,
+    "receiverId": 131,
+    "status": "BLOCKED",
+    "viewedAt": "2026-03-03T16:09:50.174Z"
+  }
+]

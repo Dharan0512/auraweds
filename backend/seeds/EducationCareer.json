@@ -1,0 +1,44 @@
+[
+  {
+    "id": 110,
+    "userProfileId": 139,
+    "highestEducation": null,
+    "fieldOfStudy": null,
+    "college": null,
+    "employmentType": null,
+    "companyName": null,
+    "designation": null,
+    "incomeRange": null,
+    "exactIncome": null,
+    "assets": null,
+    "careerPlanAfterMarriage": null
+  },
+  {
+    "id": 105,
+    "userProfileId": 131,
+    "highestEducation": "MCA",
+    "fieldOfStudy": null,
+    "college": null,
+    "employmentType": "Private",
+    "companyName": null,
+    "designation": "Dev",
+    "incomeRange": "3L - 6L",
+    "exactIncome": null,
+    "assets": null,
+    "careerPlanAfterMarriage": null
+  },
+  {
+    "id": 113,
+    "userProfileId": 143,
+    "highestEducation": "VVV",
+    "fieldOfStudy": null,
+    "college": null,
+    "employmentType": "Government",
+    "companyName": null,
+    "designation": "Dev",
+    "incomeRange": "3L - 6L",
+    "exactIncome": null,
+    "assets": null,
+    "careerPlanAfterMarriage": null
+  }
+]

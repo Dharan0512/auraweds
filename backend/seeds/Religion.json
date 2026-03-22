@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "name": "Hindu",
+    "isActive": true
+  },
+  {
+    "id": 2,
+    "name": "Muslim",
+    "isActive": true
+  },
+  {
+    "id": 3,
+    "name": "Christian",
+    "isActive": true
+  },
+  {
+    "id": 4,
+    "name": "Sikh",
+    "isActive": true
+  },
+  {
+    "id": 5,
+    "name": "Buddhist",
+    "isActive": true
+  },
+  {
+    "id": 6,
+    "name": "Jain",
+    "isActive": true
+  },
+  {
+    "id": 7,
+    "name": "Parsi",
+    "isActive": true
+  },
+  {
+    "id": 8,
+    "name": "Jewish",
+    "isActive": true
+  },
+  {
+    "id": 9,
+    "name": "Bahai",
+    "isActive": true
+  },
+  {
+    "id": 10,
+    "name": "Spiritual",
+    "isActive": true
+  },
+  {
+    "id": 11,
+    "name": "No Religion",
+    "isActive": true
+  },
+  {
+    "id": 99,
+    "name": "Other",
+    "isActive": true
+  }
+]
