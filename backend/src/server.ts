@@ -25,6 +25,24 @@ app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
+// ✅ 👉 ADD HERE (important position)
+let isInitialized = false;
+
+const init = async () => {
+  if (!isInitialized) {
+    await connectPostgres();
+    await sequelize.sync({ alter: true });
+    await seedMasterData();
+    console.log("DB initialized");
+    isInitialized = true;
+  }
+};
+
+app.use(async (req, res, next) => {
+  await init();
+  next();
+});
+
 // --- Diagnostics Routes ---
 const availableRoutes = [
   "/",
@@ -112,7 +130,7 @@ const startServer = async () => {
 // Start the database connection process
 // For Vercel Serverless, we invoke startServer() so the DB connects asynchronously.
 // The first API request might experience a slight delay, but subsequent requests will reuse the instance.
-startServer();
+// startServer();
 
 // Socket.io removed for Vercel compatibility, as Serverless functions are stateless
 // and do not natively support WebSockets effectively.
@@ -124,5 +142,4 @@ if (require.main === module) {
   });
 }
 
-export default app;
 module.exports = app;
