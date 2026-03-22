@@ -35,7 +35,7 @@ let isInitialized = false;
 const init = async () => {
   if (!isInitialized) {
     await connectPostgres();
-    await sequelize.sync({ alter: true });
+    await sequelize.authenticate();
     await seedMasterData();
     console.log("DB initialized");
     isInitialized = true;
