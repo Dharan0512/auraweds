@@ -65,8 +65,9 @@ export const getMotherTongues = async (
   try {
     const data = await MotherTongue.findAll({ where: { isActive: true } });
     res.json(data);
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching mother tongues" });
+  } catch (error: any) {
+    console.error("MotherTongue API Error:", error);
+    res.status(500).json({ message: "Error fetching mother tongues", errorMsg: error?.message, stack: error?.stack });
   }
 };
 
@@ -77,8 +78,8 @@ export const getReligions = async (
   try {
     const data = await Religion.findAll({ where: { isActive: true } });
     res.json(data);
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching religions" });
+  } catch (error: any) {
+    res.status(500).json({ message: "Error fetching religions", errorMsg: error?.message, stack: error?.stack });
   }
 };
 
@@ -103,8 +104,8 @@ export const getHeights = async (
   try {
     const data = await Height.findAll({ order: [["cmValue", "ASC"]] });
     res.json(data);
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching heights" });
+  } catch (error: any) {
+    res.status(500).json({ message: "Error fetching heights", errorMsg: error?.message, stack: error?.stack });
   }
 };
 

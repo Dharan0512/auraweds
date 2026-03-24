@@ -124,3 +124,10 @@ input:-webkit-autofill:active {
   border: 1px solid var(--accent-color) !important;
   transition: background-color 5000s ease-in-out 0s;
 }
+
+/* Maintain border color when input has a value (via placeholder check) */
+input:not(:placeholder-shown):not([type="radio"]):not([type="checkbox"]):not([type="range"]):not([type="file"]),
+textarea:not(:placeholder-shown) {
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 0 10px var(--accent-soft-bg);
+}

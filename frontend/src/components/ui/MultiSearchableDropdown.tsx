@@ -69,12 +69,15 @@ export default function MultiSearchableDropdown({
   return (
     <div className={`w-full ${className}`}>
       <Combobox value={value} onChange={onChange} disabled={disabled} multiple>
-        <div className="relative mt-1">
+        {({ open }) => (
+          <div className="relative mt-1">
           <div
             className={`searchable-dropdown-container relative w-full cursor-default overflow-hidden rounded-2xl text-left flex flex-wrap items-center border transition-all sm:text-sm p-1 min-h-[56px] ${
               disabled
                 ? "border-white/5 bg-slate-900/50 opacity-60"
-                : "bg-slate-900/50 border-white/10 hover:border-[var(--accent-border)]/50 focus-within:border-[var(--accent-color)] focus-within:ring-1 focus-within:ring-[var(--accent-shadow)]"
+                : value.length > 0
+                  ? "border-[var(--accent-color)] shadow-[0_0_10px_var(--accent-soft-bg)]"
+                  : "bg-slate-900/50 border-white/10 hover:border-[var(--accent-border)]/50 focus-within:border-[var(--accent-color)] focus-within:ring-1 focus-within:ring-[var(--accent-shadow)]"
             }`}
           >
             <div className="flex flex-wrap gap-2 p-1">
@@ -105,15 +108,16 @@ export default function MultiSearchableDropdown({
                 placeholder={value.length === 0 ? placeholder : ""}
                 onChange={(event) => setQuery(event.target.value)}
                 onClick={(e) => {
-                  if (!disabled) {
+                  if (!disabled && !open) {
                     const button = e.currentTarget
-                      .nextElementSibling as HTMLButtonElement | null;
+                      .closest('.searchable-dropdown-container')
+                      ?.querySelector('.dropdown-trigger-btn') as HTMLButtonElement | null;
                     if (button) button.click();
                   }
                 }}
               />
             </div>
-            <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-4 cursor-pointer  justify-end">
+            <Combobox.Button className="dropdown-trigger-btn absolute inset-y-0 right-0 flex items-center pr-4 cursor-pointer  justify-end">
               <ChevronUpDownIcon
                 className="h-5 w-5 text-slate-400"
                 aria-hidden="true"
@@ -169,6 +173,7 @@ export default function MultiSearchableDropdown({
             </Combobox.Options>
           </Transition>
         </div>
+        )}
       </Combobox>
     </div>
   );

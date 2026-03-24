@@ -335,7 +335,7 @@ export default function RegisterPage() {
     control,
     trigger,
     setValue,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -447,6 +447,25 @@ export default function RegisterPage() {
   const watchedGender = useWatch({ control, name: "gender" });
   const watchedShowHoroscope = useWatch({ control, name: "showHoroscope" });
   const watchedPartnerReligion = useWatch({ control, name: "partnerReligion" });
+  const watchedCasteId = useWatch({ control, name: "casteId" });
+
+  // Auto-sync Partner Religion to User's Religion
+  useEffect(() => {
+    if (watchedReligionId) {
+      setValue("partnerReligion", String(watchedReligionId));
+    }
+  }, [watchedReligionId, setValue]);
+
+  // Auto-sync Partner Caste(s) to User's Caste
+  useEffect(() => {
+    if (watchedCasteId && watchedPartnerReligion === watchedReligionId) {
+      let preferred = String(watchedCasteId);
+      if (preferred === "0") {
+        preferred = "any";
+      }
+      setValue("partnerCastes", [preferred]);
+    }
+  }, [watchedCasteId, watchedPartnerReligion, watchedReligionId, setValue]);
 
   // Load step 1 data immediately (only countries needed for code picker)
   useEffect(() => {
@@ -718,8 +737,7 @@ export default function RegisterPage() {
     { id: 3, name: "Heritage", icon: StarIcon },
     { id: 4, name: "Lifestyle", icon: MapPinIcon },
     { id: 5, name: "Career", icon: AcademicCapIcon },
-    { id: 6, name: "Values", icon: HeartIcon },
-    { id: 7, name: "Finish", icon: CheckCircleIcon },
+    { id: 6, name: "Values & Finish", icon: HeartIcon },
   ];
 
   return (
@@ -865,7 +883,7 @@ export default function RegisterPage() {
         {/* Mobile Progress */}
         <div className="sm:hidden flex items-center justify-between mb-8 px-4 py-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-            Step {step} of 7
+            Step {step} of 6
           </span>
           <div className="flex space-x-1">
             {steps.map((s) => (
@@ -2216,52 +2234,21 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
-                <div className="flex justify-between pt-6">
-                  <button
-                    type="button"
-                    onClick={prevStep}
-                    className="px-8 py-4 bg-slate-800 text-slate-300 rounded-2xl font-bold hover:bg-slate-700 transition-all flex items-center space-x-2"
-                  >
-                    <ChevronLeftIcon className="w-4 h-4" />
-                    <span>Previous</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      nextStep([
-                        "ambition",
-                        "familyOrientation",
-                        "spiritualInclination",
-                        "partnerAgeMin",
-                        "partnerAgeMax",
-                      ])
-                    }
-                    className="group px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl font-black shadow-[0_10px_20px_rgba(168,85,247,0.3)] hover:scale-[1.05] active:scale-95 transition-all flex items-center space-x-2"
-                  >
-                    <span>Final Review</span>
-                    <ChevronRightIcon className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Step 7: Visibility & Finish */}
-            {step === 7 && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-right-10 duration-500">
-                <div className="bg-white/5 p-8 rounded-3xl border border-white/10 text-center space-y-4">
-                  <div className="w-20 h-20 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CheckCircleIcon className="w-12 h-12 text-purple-400" />
+                {/* Combined Step 7 Fields */}
+                <div className="pt-8 mt-8 border-t border-white/5 space-y-6">
+                  <div className="bg-white/5 p-8 rounded-3xl border border-white/10 text-center space-y-4">
+                    <div className="w-20 h-20 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <CheckCircleIcon className="w-12 h-12 text-purple-400" />
+                    </div>
+                    <h3 className="text-2xl font-black text-white">
+                      Legacy Complete!
+                    </h3>
+                    <p className="text-slate-400 max-w-md mx-auto">
+                      Your profile is ready for curation. Choose how you'd like to
+                      appear to the AuraWeds elite community.
+                    </p>
                   </div>
-                  <h3 className="text-2xl font-black text-white">
-                    Legacy Complete!
-                  </h3>
-                  <p className="text-slate-400 max-w-md mx-auto">
-                    Your profile is ready for curation. Choose how you'd like to
-                    appear to the AuraWeds elite community.
-                  </p>
-                </div>
 
-                <div className="grid grid-cols-1 gap-6">
                   <div>
                     <label className="block text-sm font-bold text-slate-300 mb-2">
                       Profile Visibility
@@ -2273,10 +2260,7 @@ export default function RegisterPage() {
                         <PremiumSelect
                           options={[
                             { id: "Public", name: "Visible to All" },
-                            {
-                              id: "Members Only",
-                              name: "Premium Members Only",
-                            },
+                            { id: "Members Only", name: "Premium Members Only" },
                             { id: "Hidden", name: "Keep it Private for now" },
                           ]}
                           value={field.value ?? ""}
@@ -2298,10 +2282,17 @@ export default function RegisterPage() {
                   </button>
                   <button
                     type="submit"
-                    disabled={loading}
-                    className="px-12 py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 rounded-2xl font-black shadow-[0_10px_30px_rgba(245,158,11,0.3)] hover:scale-[1.05] active:scale-95 transition-all outline-none"
+                    disabled={isSubmitting}
+                    className="px-12 py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 rounded-2xl font-black shadow-[0_10px_30px_rgba(245,158,11,0.3)] hover:scale-[1.05] active:scale-95 transition-all outline-none flex items-center justify-center space-x-2 disabled:opacity-70 disabled:hover:scale-100 disabled:cursor-not-allowed"
                   >
-                    {loading ? "Designing Destiny..." : "Complete My Legacy"}
+                    {isSubmitting ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
+                        <span>Registering...</span>
+                      </>
+                    ) : (
+                      <span>Complete My Legacy</span>
+                    )}
                   </button>
                 </div>
               </div>

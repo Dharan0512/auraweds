@@ -49,12 +49,15 @@ export default function SearchableDropdown({
   return (
     <div className={`w-full ${className}`}>
       <Combobox value={value} onChange={onChange} disabled={disabled}>
-        <div className="relative mt-1">
+        {({ open }) => (
+          <div className="relative mt-1">
           <div
             className={`searchable-dropdown-container relative w-full cursor-default overflow-hidden rounded-2xl text-left flex items-center border transition-all sm:text-sm ${
               disabled
                 ? "border-white/5 bg-slate-900/50 opacity-60"
-                : "bg-slate-900/50 border-white/10 hover:border-[var(--accent-border)]/50 focus-within:border-[var(--accent-color)] focus-within:ring-1 focus-within:ring-[var(--accent-shadow)]"
+                : value
+                  ? "border-[var(--accent-color)] shadow-[0_0_10px_var(--accent-soft-bg)]"
+                  : "bg-slate-900/50 border-white/10 hover:border-[var(--accent-border)]/50 focus-within:border-[var(--accent-color)] focus-within:ring-1 focus-within:ring-[var(--accent-shadow)]"
             }`}
           >
             <Combobox.Input
@@ -67,14 +70,15 @@ export default function SearchableDropdown({
               onChange={(event) => setQuery(event.target.value)}
               placeholder={placeholder}
               onClick={(e) => {
-                if (!disabled) {
+                if (!disabled && !open) {
                   const button = e.currentTarget
-                    .nextElementSibling as HTMLButtonElement | null;
+                    .closest('.searchable-dropdown-container')
+                    ?.querySelector('.dropdown-trigger-btn') as HTMLButtonElement | null;
                   if (button) button.click();
                 }
               }}
             />
-            <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-4 cursor-pointer">
+            <Combobox.Button className="dropdown-trigger-btn absolute inset-y-0 right-0 flex items-center pr-4 cursor-pointer">
               <ChevronUpDownIcon
                 className="h-5 w-5 text-slate-400"
                 aria-hidden="true"
@@ -130,6 +134,7 @@ export default function SearchableDropdown({
             </Combobox.Options>
           </Transition>
         </div>
+        )}
       </Combobox>
     </div>
   );

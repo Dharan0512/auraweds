@@ -45,35 +45,40 @@ const seedOrder = [
   "SuccessStory"
 ];
 
+// Helper to map model names to JSON keys matching extractedData.json format
+const modelToKey = (modelName: string) => {
+  return modelName.charAt(0).toLowerCase() + modelName.slice(1) + "s";
+};
+
 export const seedMasterData = async () => {
   try {
-    const seedDir = process.env.VERCEL === "1" 
-      ? path.join(process.cwd(), "seeds") 
-      : path.join(__dirname, "..", "..", "seeds");
+    const extractFile = process.env.VERCEL === "1" 
+      ? path.join(process.cwd(), "extractedData.json") 
+      : path.join(__dirname, "..", "..", "extractedData.json");
 
-    if (!fs.existsSync(seedDir)) {
-      console.log("No seeds directory found. Skipping automated seeding.");
+    if (!fs.existsSync(extractFile)) {
+      console.log("No extractedData.json found. Skipping automated seeding.");
       return;
     }
 
     const models = sequelize.models;
+    const fileContent = fs.readFileSync(extractFile, "utf-8");
+    const parsedData = JSON.parse(fileContent);
 
     for (const modelName of seedOrder) {
       if (!models[modelName]) continue;
       
-      const seedFile = path.join(seedDir, `${modelName}.json`);
-      if (fs.existsSync(seedFile)) {
-        const fileContent = fs.readFileSync(seedFile, "utf-8");
-        const data = JSON.parse(fileContent);
-        
-        if (data.length > 0) {
-          const count = await models[modelName].count();
-          if (count === 0) {
-            console.log(`[SEEDER] Restoring ${modelName} with ${data.length} records...`);
-            await models[modelName].bulkCreate(data, { ignoreDuplicates: true });
-          } else {
-            console.log(`[SEEDER] ${modelName} already has ${count} records. Skipping.`);
-          }
+      const key = modelToKey(modelName);
+      // Wait, let's just do a case-insensitive search if exact key doesn't work
+      const data = parsedData[key] || parsedData[modelName] || parsedData[modelName.toLowerCase() + "s"];
+      
+      if (data && Array.isArray(data) && data.length > 0) {
+        const count = await models[modelName].count();
+        if (count === 0) {
+          console.log(`[SEEDER] Restoring ${modelName} with ${data.length} records...`);
+          await models[modelName].bulkCreate(data, { ignoreDuplicates: true });
+        } else {
+          console.log(`[SEEDER] ${modelName} already has ${count} records. Skipping.`);
         }
       }
     }

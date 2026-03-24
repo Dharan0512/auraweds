@@ -36,7 +36,9 @@ export default function PremiumSelect({
             className={`relative w-full cursor-default rounded-2xl border bg-slate-900/50 py-4 pl-4 pr-10 text-left transition-all sm:text-sm focus:outline-none ${
               disabled
                 ? "border-white/5 opacity-60 cursor-not-allowed"
-                : "border-white/10 hover:border-[var(--accent-border)]/50 focus:border-[var(--accent-color)] focus:ring-2 focus:ring-[var(--accent-shadow)]"
+                : selectedOption
+                  ? "border-[var(--accent-color)] shadow-[0_0_10px_var(--accent-soft-bg)]"
+                  : "border-white/10 hover:border-[var(--accent-border)]/50 focus:border-[var(--accent-color)] focus:ring-2 focus:ring-[var(--accent-shadow)]"
             }`}
           >
             <span

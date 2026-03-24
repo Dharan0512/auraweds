@@ -599,6 +599,15 @@
   box-shadow: 0 0 0 1px var(--accent-shadow) !important;
 }
 
+/* Preserve Accent Border When Fields Are Populated */
+.edit-step-card input:not(:placeholder-shown):not([type="radio"]):not([type="checkbox"]):not([type="range"]):not([type="file"]),
+.edit-step-card textarea:not(:placeholder-shown),
+.edit-step-card button[aria-haspopup="listbox"].border-\[var\(--accent-color\)\],
+.edit-step-card .searchable-dropdown-container.border-\[var\(--accent-color\)\] {
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 0 10px var(--accent-soft-bg) !important;
+}
+
 .edit-step-card .searchable-dropdown-container {
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-radius: 12px !important;
