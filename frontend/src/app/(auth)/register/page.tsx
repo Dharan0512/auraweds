@@ -48,6 +48,7 @@ import {
   DocumentArrowUpIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
+import { Infinity as InfinityIcon } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SCHEMA — field names aligned with edit-form steps
@@ -822,15 +823,16 @@ export default function RegisterPage() {
       <div className="w-full max-w-4xl z-10 transition-all duration-700">
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center space-x-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-bold tracking-widest uppercase mb-4">
-            <SparklesIcon className="w-4 h-4" />
+            <InfinityIcon className="w-4 h-4" />
             <span>Premium Onboarding</span>
           </div>
           <div className="flex justify-center mb-6">
-            <img
-              src="/auraWedsLogo.png"
-              alt="AuraWeds"
-              className="h-32 w-auto object-contain"
-            />
+            <Link href="/" className="flex items-center gap-3 group hover:scale-105 transition-transform duration-300">
+               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-purple-600 flex items-center justify-center text-slate-950 shadow-2xl shadow-purple-500/20">
+                 <InfinityIcon className="w-7 h-7" />
+               </div>
+               <span className="text-3xl font-serif font-bold text-white tracking-[0.1em] uppercase">AuraWeds</span>
+            </Link>
           </div>
           <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-tight">
             Create Your{" "}
@@ -841,7 +843,7 @@ export default function RegisterPage() {
           <p className="mt-4 text-slate-400 max-w-lg mx-auto">
             Already part of AuraWeds?{" "}
             <Link
-              href="/login"
+              href="/#start-journey"
               className="text-amber-400 font-bold hover:underline"
             >
               Sign in here

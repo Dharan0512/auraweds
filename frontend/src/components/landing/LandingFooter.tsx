@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Instagram, Linkedin, Twitter, Sparkles } from "lucide-react";
+import { Instagram, Linkedin, Twitter } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
 
 export default function LandingFooter() {
   const links = {
@@ -29,12 +30,7 @@ export default function LandingFooter() {
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-24 relative z-10">
         {/* Brand Section */}
         <div className="space-y-6">
-          <Link href="/" className="inline-flex items-center gap-2 group">
-             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold to-purple-600 flex items-center justify-center text-slate-950">
-               <Sparkles className="w-6 h-6 fill-current" />
-             </div>
-             <span className="text-2xl font-serif font-bold text-white tracking-widest uppercase">AuraWeds</span>
-          </Link>
+          <Logo size="lg" />
           <p className="text-slate-500 text-sm leading-relaxed max-w-xs">
             The world's most exclusive matrimony platform for those who desire 
             a life partner beyond the swipe.

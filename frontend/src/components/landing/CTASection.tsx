@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
+import Link from "next/link";
 
 export default function CTASection() {
   return (
@@ -34,13 +35,19 @@ export default function CTASection() {
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-8">
-           <button className="w-full sm:w-auto px-12 py-5 rounded-[24px] bg-white text-slate-950 font-bold uppercase tracking-widest text-sm shadow-[0_20px_50px_rgba(255,255,255,0.15)] hover:bg-gold-50 transition-all flex items-center justify-center gap-3 active:scale-95 group">
+           <Link
+             href="#start-journey"
+             className="w-full sm:w-auto px-12 py-5 rounded-[24px] bg-white text-slate-950 font-bold uppercase tracking-widest text-sm shadow-[0_20px_50px_rgba(255,255,255,0.15)] hover:bg-gold-50 transition-all flex items-center justify-center gap-3 active:scale-95 group"
+           >
              Start Your Journey
              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-           </button>
-           <button className="w-full sm:w-auto px-12 py-5 rounded-[24px] bg-white/5 border border-white/10 text-white font-bold uppercase tracking-widest text-sm hover:bg-white/10 transition-all active:scale-95">
+           </Link>
+           <Link
+             href="#start-journey"
+             className="w-full sm:w-auto px-12 py-5 rounded-[24px] bg-white/5 border border-white/10 text-white font-bold uppercase tracking-widest text-sm hover:bg-white/10 transition-all active:scale-95"
+           >
              Explore Matches
-           </button>
+           </Link>
         </div>
 
         <div className="pt-12 flex flex-col items-center gap-4">

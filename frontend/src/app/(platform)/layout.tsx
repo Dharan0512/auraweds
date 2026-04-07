@@ -24,6 +24,7 @@ import {
   subscriptionService,
   SubscriptionStatusResponse,
 } from "@/services/subscriptionService";
+import { Logo } from "@/components/ui/Logo";
 
 export default function PlatformLayout({
   children,
@@ -96,16 +97,7 @@ export default function PlatformLayout({
             <div className="flex justify-between h-16">
               <div className="flex">
                 <div className="flex-shrink-0 flex items-center">
-                  <Link
-                    href="/dashboard"
-                    className="hover:scale-105 transition-transform duration-300"
-                  >
-                    <img
-                      src="/auraWedsLogo.png"
-                      alt="AuraWeds"
-                      className="h-12 w-auto object-contain"
-                    />
-                  </Link>
+                  <Logo size="sm" href="/dashboard" />
                 </div>
                 <div className="hidden sm:ml-8 sm:flex sm:space-x-6">
                   <Link

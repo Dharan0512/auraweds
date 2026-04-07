@@ -52,7 +52,7 @@ export function useAuth() {
 
   const logout = () => {
     localStorage.clear();
-    router.push("/login");
+    router.push("/");
   };
 
   return { login, register, logout, loading, error };

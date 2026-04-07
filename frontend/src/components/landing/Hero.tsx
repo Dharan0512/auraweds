@@ -3,88 +3,68 @@
 import { motion } from "framer-motion";
 import LoginCard from "./LoginCard";
 import { ArrowRight, ChevronDown } from "lucide-react";
+import Link from "next/link";
+import { FormContainer } from "@/components/ui/FormContainer";
 
 export default function Hero() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-slate-950 px-4 pt-24 pb-12">
-      {/* Background Orbs */}
-      <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-purple-900/20 blur-[130px] rounded-full animate-pulse-slow" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-900/10 blur-[130px] rounded-full animate-pulse-slow delay-1000" />
+    <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-slate-950 px-4 pt-48 pb-24">
+      {/* Background Animated Glows (Chat-style/Premium) */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-purple-900/10 blur-[150px] rounded-full animate-pulse-slow pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-[40%] h-[40%] bg-[#D4AF37]/5 blur-[120px] rounded-full animate-pulse-slow delay-1000 pointer-events-none" />
       
-      {/* Grain Overlay */}
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('/grain.png')] mix-blend-overlay" />
+      {/* Subtle Grain Overlay */}
+      <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('/grain.png')] mix-blend-overlay" />
 
-      <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center relative z-10">
-        {/* Left Side: Content */}
+      <div className="max-w-7xl mx-auto w-full flex flex-col items-center space-y-24 relative z-10">
+        
+        {/* Centered Headlines */}
         <motion.div
-          initial={{ opacity: 0, x: -30 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 1, ease: "easeOut" }}
-          className="text-left space-y-8"
+           initial={{ opacity: 0, y: 30 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ duration: 1.2, ease: "easeOut" }}
+           className="text-center space-y-10 max-w-4xl"
         >
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-[0.2em] text-gold-400"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
-            Elite Matrimony Collective
-          </motion.div>
+          <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-[0.4em] text-gold/80 shadow-2xl">
+            <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse shadow-[0_0_10px_rgba(212,175,55,0.8)]" />
+            The Elite Matrimony Collective
+          </div>
 
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif font-bold text-white leading-[1.05] tracking-tight">
+          <h1 className="text-6xl md:text-8xl font-serif font-bold text-white leading-[1.05] tracking-tight">
             Find Your <br />
-            <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-gold-200 via-gold-400 to-gold-600">
+            <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-gold-200 via-gold-400 to-gold-600 drop-shadow-sm">
               Perfect Partner
             </span>
-            , <br />
-            Not Just a Match
           </h1>
 
-          <p className="max-w-xl text-lg md:text-xl text-slate-400 font-medium leading-relaxed">
-            AuraWeds is an exclusive sanctuary for those who value depth over 
-            data and character over profile. Experience the future of meaningful 
-            family-led matchmaking.
+          <p className="max-w-xl mx-auto text-lg md:text-xl text-slate-400 font-medium leading-relaxed">
+            An exclusive sanctuary for those who value <span className="text-white italic">depth over data</span> and <span className="text-white font-serif">character over profile</span>. The future of family-led matchmaking.
           </p>
-
-          <div className="flex flex-wrap items-center gap-6 pt-4">
-            <button className="px-8 py-4 rounded-2xl bg-gradient-to-r from-gold-600 to-gold-500 text-slate-950 font-bold uppercase tracking-widest text-xs shadow-[0_10px_30px_rgba(212,175,55,0.3)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.5)] transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-3">
-              Start Your Journey
-              <ArrowRight className="w-4 h-4" />
-            </button>
-            <button className="px-8 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-bold uppercase tracking-widest text-xs hover:bg-white/10 transition-all flex items-center gap-3">
-              Explore Matches
-            </button>
-          </div>
-
-          <div className="flex items-center gap-4 pt-8 text-slate-500">
-             <div className="flex -space-x-3">
-                {[1,2,3,4].map(i => (
-                  <div key={i} className="w-10 h-10 rounded-full border-2 border-slate-950 bg-slate-800 flex items-center justify-center overflow-hidden">
-                    <img src={`https://i.pravatar.cc/100?u=${i+10}`} alt="Member" className="w-full h-full object-cover opacity-80" />
-                  </div>
-                ))}
-             </div>
-             <p className="text-xs font-bold uppercase tracking-widest">
-               Trusted by <span className="text-white">10,000+</span> Elite Members
-             </p>
-          </div>
         </motion.div>
 
-        {/* Right Side: Login Card */}
-        <div className="flex justify-center lg:justify-end">
-           <LoginCard />
+        {/* Centered Authentication Form */}
+        <div id="start-journey" className="w-full max-w-lg scroll-mt-32">
+           <FormContainer>
+              <LoginCard />
+           </FormContainer>
         </div>
       </div>
 
-      {/* Scroll Indicator */}
+      {/* Discovery Section Hint */}
       <motion.div
-        animate={{ y: [0, 10, 0] }}
-        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-30"
+        animate={{ y: [0, 8, 0] }}
+        transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 opacity-20 hover:opacity-100 transition-opacity cursor-pointer group"
+        onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
       >
-        <span className="text-[10px] font-bold uppercase tracking-widest text-white">Discover More</span>
-        <ChevronDown className="w-4 h-4 text-white" />
+        <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-white">The Legacy Continues</span>
+        <div className="w-6 h-10 border-2 border-white/20 rounded-full flex justify-center p-1">
+           <motion.div 
+             animate={{ y: [0, 16, 0] }}
+             transition={{ duration: 1.5, repeat: Infinity }}
+             className="w-1 h-3 bg-white/40 rounded-full" 
+           />
+        </div>
       </motion.div>
     </section>
   );

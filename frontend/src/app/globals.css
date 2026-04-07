@@ -59,6 +59,7 @@ body {
 /* Ensure Scrollbar track is always visible to prevent horizontal jitter */
 html {
   overflow-y: scroll;
+  scroll-behavior: smooth;
 }
 
 /* Custom Scrollbar Styling */

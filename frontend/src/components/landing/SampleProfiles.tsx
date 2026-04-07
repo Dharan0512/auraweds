@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Lock, Eye } from "lucide-react";
+import Link from "next/link";
 
 export default function SampleProfiles() {
   const profiles = [
@@ -73,10 +74,13 @@ export default function SampleProfiles() {
                  </p>
                  <div className="pt-4 flex justify-between items-center">
                     <div className="h-px shrink-1 flex-1 bg-white/10 mr-4" />
-                    <button className="text-gold hover:text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-colors">
+                    <Link 
+                      href="#start-journey"
+                      className="text-gold hover:text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-colors"
+                    >
                       <Eye className="w-3 h-3" />
                       View Profile
-                    </button>
+                    </Link>
                  </div>
               </div>
             </motion.div>

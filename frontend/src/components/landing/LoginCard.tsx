@@ -4,14 +4,19 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import toast from "react-hot-toast";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Card } from "@/components/ui/Card";
+import ForgotPasswordFlow from "@/components/auth/ForgotPasswordFlow";
 
 export default function LoginCard() {
   const { login, loading, error } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [lastError, setLastError] = useState("");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   useEffect(() => {
     if (error && error !== lastError) {
@@ -25,88 +30,83 @@ export default function LoginCard() {
     await login({ email, password });
   };
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, delay: 0.2 }}
-      className="w-full max-w-md bg-white/5 backdrop-blur-2xl border border-white/10 p-8 rounded-[32px] shadow-2xl relative group"
-    >
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent rounded-[32px] pointer-events-none" />
-      
-      <div className="relative z-10">
-        <h3 className="text-xl font-serif font-bold text-white mb-6 text-center">
-          Continue Your Journey
-        </h3>
+  if (showForgotPassword) {
+    return (
+      <ForgotPasswordFlow onBackToLogin={() => setShowForgotPassword(false)} />
+    );
+  }
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">
-              Email Address
-            </label>
-            <input
+  return (
+    <Card className="w-full max-w-md">
+      <div className="relative z-10 space-y-8">
+        <div className="text-center space-y-2">
+          <h3 className="text-3xl font-serif font-bold text-white tracking-tight">
+            Welcome Back
+          </h3>
+          <p className="text-slate-400 text-sm font-medium">
+            Continue your legacy journey.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-5">
+            <Input
+              label="Email Address"
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@example.com"
-              className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-5 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-gold transition-all font-medium"
             />
-          </div>
 
-          <div className="space-y-1.5">
-            <div className="flex justify-between items-center ml-1">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                Password
-              </label>
-              <Link
-                href="#"
-                className="text-[10px] font-bold uppercase tracking-widest text-purple-400 hover:text-white transition-colors"
-              >
-                Forgot?
-              </Link>
+            <div className="space-y-1">
+              <div className="flex justify-between items-center px-1">
+                <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                  Password
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(true)}
+                  className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold hover:text-white transition-colors"
+                >
+                  Forgot?
+                </button>
+              </div>
+              <Input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="pt-2"
+              />
             </div>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-5 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-gold transition-all font-medium"
-            />
           </div>
 
-          <button
+          <Button
+            variant="gold"
+            size="xl"
+            className="w-full"
+            loading={loading}
             type="submit"
-            disabled={loading}
-            className="w-full relative group overflow-hidden bg-white text-slate-950 py-4 rounded-2xl font-bold uppercase tracking-widest text-xs shadow-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            rightIcon={<ArrowRight className="w-4 h-4" />}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-100 to-white opacity-0 group-hover:opacity-100 transition-opacity" />
-            <span className="relative flex items-center gap-2">
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <>
-                  Continue Journey
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </span>
-          </button>
+            Continue Journey
+          </Button>
         </form>
 
-        <div className="mt-8 pt-6 border-t border-white/5 text-center">
-          <p className="text-sm text-slate-400">
+        <div className="pt-6 border-t border-white/5 text-center">
+          <p className="text-sm text-slate-500">
             Seeking a new connection?{" "}
             <Link
               href="/register"
-              className="text-gold hover:text-white font-bold transition-colors ml-1"
+              className="text-gold hover:text-white font-bold transition-all ml-1 underline underline-offset-4 decoration-gold/30 hover:decoration-gold/80"
             >
               Start Journey
             </Link>
           </p>
         </div>
       </div>
-    </motion.div>
+    </Card>
   );
 }
