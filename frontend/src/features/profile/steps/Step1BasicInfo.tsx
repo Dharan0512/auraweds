@@ -75,7 +75,7 @@ export default function Step1BasicInfo({
             render={({ field }) => (
               <PremiumSelect
                 options={[
-                  "Myself",
+                  "Self",
                   "Parent",
                   "Guardian",
                   "Friend",

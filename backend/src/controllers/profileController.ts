@@ -106,184 +106,190 @@ export const createOrUpdateProfile = async (
       return isNaN(parsed) ? null : parsed;
     };
 
-    // 1. Update the base User details
-    await User.update(
-      {
-        firstName:
-          profileData.firstName || profileData.basicDetails?.name || "User",
-        lastName: profileData.lastName || "",
-        gender: ["Male", "Female", "Other"].includes(
-          profileData.gender || profileData.basicDetails?.gender,
-        )
-          ? profileData.gender || profileData.basicDetails?.gender
-          : "Other",
-        createdFor: ["Self", "Parent", "Guardian"].includes(
-          profileData.createdFor || profileData.profileType,
-        )
-          ? profileData.createdFor || profileData.profileType
-          : "Self",
-        countryCodeId: parseId(profileData.countryCodeId),
-      },
-      { where: { id: userId }, transaction },
-    );
+    // 1. Update the base User details - Partial Update
+    const userUpdate: any = {};
+    if (profileData.firstName !== undefined || profileData.basicDetails?.name !== undefined) {
+      userUpdate.firstName = profileData.firstName || profileData.basicDetails?.name || "User";
+    }
+    if (profileData.lastName !== undefined) userUpdate.lastName = profileData.lastName;
+    if (profileData.gender !== undefined || profileData.basicDetails?.gender !== undefined) {
+      const g = profileData.gender || profileData.basicDetails?.gender;
+      if (["Male", "Female", "Other"].includes(g)) userUpdate.gender = g;
+    }
+    if (profileData.createdFor !== undefined || profileData.profileType !== undefined) {
+      const cf = profileData.createdFor || profileData.profileType;
+      if (["Self", "Parent", "Guardian", "Friend", "Sister", "Brother", "Daughter", "Son", "Relative"].includes(cf)) {
+        userUpdate.createdFor = cf === "Myself" ? "Self" : cf; // Map back to DB standard if needed
+      }
+    }
+    if (profileData.countryCodeId !== undefined) userUpdate.countryCodeId = parseId(profileData.countryCodeId);
 
-    // 2. Upsert UserProfile (Core Identity)
-    const dobValue =
-      profileData.dob || profileData.basicDetails?.dob
-        ? new Date(profileData.dob || profileData.basicDetails.dob)
-        : null;
-    const dob = dobValue && !isNaN(dobValue.getTime()) ? dobValue : null;
+    if (Object.keys(userUpdate).length > 0) {
+      await User.update(userUpdate, { where: { id: userId }, transaction });
+    }
 
-    const heightVal = parseInt(profileData.height || profileData.heightCm);
-    const heightCm = isNaN(heightVal) ? null : heightVal;
+    // 2. Upsert UserProfile (Core Identity) - Partial Update
+    const profileUpdate: any = { userId };
+    
+    if (profileData.dob !== undefined || profileData.basicDetails?.dob !== undefined) {
+      const d = profileData.dob || profileData.basicDetails?.dob;
+      const dobDate = d ? new Date(d) : null;
+      profileUpdate.dob = dobDate && !isNaN(dobDate.getTime()) ? dobDate : null;
+    }
+    
+    if (profileData.height !== undefined || profileData.heightCm !== undefined) {
+      const h = parseInt(profileData.height || profileData.heightCm);
+      profileUpdate.heightCm = isNaN(h) ? null : h;
+    }
+    
+    if (profileData.physicalStatus !== undefined) profileUpdate.physicalStatus = profileData.physicalStatus;
+    if (profileData.maritalStatus !== undefined) profileUpdate.maritalStatus = profileData.maritalStatus;
+    
+    if (profileData.childrenCount !== undefined) {
+      const cc = parseInt(profileData.childrenCount);
+      profileUpdate.childrenCount = isNaN(cc) ? 0 : cc;
+    }
+    if (profileData.childrenLivingWith !== undefined) profileUpdate.childrenLivingWith = profileData.childrenLivingWith === true || profileData.childrenLivingWith === "true";
+    
+    if (profileData.religionId !== undefined) profileUpdate.religionId = parseId(profileData.religionId);
+    if (profileData.casteId !== undefined) profileUpdate.casteId = parseId(profileData.casteId);
+    if (profileData.motherTongueId !== undefined || profileData.motherTongue !== undefined) {
+      profileUpdate.motherTongueId = parseId(profileData.motherTongueId || profileData.motherTongue);
+    }
+    if (profileData.subcaste !== undefined || profileData.subCaste !== undefined) {
+      profileUpdate.subcaste = profileData.subcaste || profileData.subCaste || "";
+    }
+    if (profileData.complexion !== undefined) profileUpdate.complexion = profileData.complexion;
+    if (profileData.shortBio !== undefined || profileData.aboutMe !== undefined) {
+      profileUpdate.shortBio = profileData.shortBio || profileData.aboutMe || "";
+    }
+    if (profileData.convenientTimeToCall !== undefined) profileUpdate.convenientTimeToCall = profileData.convenientTimeToCall;
+    if (profileData.linkedInUrl !== undefined) profileUpdate.linkedInUrl = profileData.linkedInUrl;
+    if (profileData.instagramUrl !== undefined) profileUpdate.instagramUrl = profileData.instagramUrl;
+    if (profileData.facebookUrl !== undefined) profileUpdate.facebookUrl = profileData.facebookUrl;
+    
+    if (profileData.countryId !== undefined) profileUpdate.countryId = parseId(profileData.countryId);
+    if (profileData.stateId !== undefined) profileUpdate.stateId = parseId(profileData.stateId);
+    if (profileData.cityId !== undefined) profileUpdate.cityId = parseId(profileData.cityId);
+    
+    if (profileData.educationId !== undefined || profileData.highestEducation !== undefined) {
+      profileUpdate.educationId = parseId(profileData.educationId);
+    }
+    if (profileData.employmentTypeId !== undefined || profileData.employmentType !== undefined) {
+      profileUpdate.employmentTypeId = parseId(profileData.employmentTypeId);
+    }
+    if (profileData.occupationId !== undefined || profileData.designation !== undefined) {
+      profileUpdate.occupationId = parseId(profileData.occupationId);
+    }
+    if (profileData.incomeRangeId !== undefined || profileData.incomeRange !== undefined) {
+      profileUpdate.incomeRangeId = parseId(profileData.incomeRangeId);
+    }
+    
+    if (profileData.familyStatus !== undefined) profileUpdate.familyStatus = profileData.familyStatus;
+    if (profileData.profileVisibility !== undefined) profileUpdate.profileVisibility = profileData.profileVisibility;
 
-    const childrenCountVal = parseInt(profileData.childrenCount);
-    const childrenCount = isNaN(childrenCountVal)
-      ? undefined
-      : childrenCountVal;
-
-    const [userProfile] = await UserProfile.upsert(
-      {
-        userId,
-        dob,
-        heightCm,
-        physicalStatus: profileData.physicalStatus || null,
-        maritalStatus: profileData.maritalStatus || null,
-        childrenCount,
-        religionId: parseId(profileData.religionId),
-        casteId: parseId(profileData.casteId),
-        motherTongueId: parseId(profileData.motherTongueId),
-        subcaste: profileData.subcaste || "",
-        complexion: profileData.complexion || "",
-        shortBio: profileData.shortBio || profileData.aboutMe || "",
-        convenientTimeToCall: profileData.convenientTimeToCall || null,
-        linkedInUrl: profileData.linkedInUrl || null,
-        instagramUrl: profileData.instagramUrl || null,
-        facebookUrl: profileData.facebookUrl || null,
-        countryId: parseId(profileData.countryId),
-        stateId: parseId(profileData.stateId),
-        cityId: parseId(profileData.cityId),
-        educationId: parseId(profileData.educationId),
-        employmentTypeId: parseId(profileData.employmentTypeId),
-        occupationId: parseId(profileData.occupationId),
-        incomeRangeId: parseId(profileData.incomeRangeId),
-        familyStatus: profileData.familyStatus || null,
-        incomeCurrencyId: parseId(profileData.incomeCurrencyId),
-        profileVisibility: profileData.profileVisibility || "Public",
-      },
-      { transaction },
-    );
-
+    const [userProfile] = await UserProfile.upsert(profileUpdate, { transaction });
     const userProfileId = userProfile.id;
 
-    // 3. Upsert FamilyDetails
-    await FamilyDetails.upsert(
-      {
-        userProfileId,
-        fatherName: profileData.fatherName || null,
-        fatherOccupation: profileData.fatherOccupation || null,
-        motherName: profileData.motherName || null,
-        motherOccupation: profileData.motherOccupation || null,
-        familyType: profileData.familyType || null,
-        familyStatus: profileData.familyStatus || null,
-        siblingsCount: isNaN(parseInt(profileData.siblingsCount))
-          ? undefined
-          : parseInt(profileData.siblingsCount),
-        ownHouse:
-          profileData.ownHouse === true || profileData.ownHouse === "true",
-        nativeDistrict: profileData.nativeDistrict || null,
-        familyLocation: profileData.familyLocation || null,
-      },
-      { transaction },
-    );
+    // 3. Upsert FamilyDetails - Partial Update
+    const familyUpdate: any = { userProfileId };
+    if (profileData.fatherName !== undefined) familyUpdate.fatherName = profileData.fatherName;
+    if (profileData.fatherOccupation !== undefined) familyUpdate.fatherOccupation = profileData.fatherOccupation;
+    if (profileData.motherName !== undefined) familyUpdate.motherName = profileData.motherName;
+    if (profileData.motherOccupation !== undefined) familyUpdate.motherOccupation = profileData.motherOccupation;
+    if (profileData.familyType !== undefined) familyUpdate.familyType = profileData.familyType;
+    if (profileData.familyStatus !== undefined) familyUpdate.familyStatus = profileData.familyStatus;
+    if (profileData.siblingsCount !== undefined) {
+      const sc = parseInt(profileData.siblingsCount);
+      familyUpdate.siblingsCount = isNaN(sc) ? 0 : sc;
+    }
+    if (profileData.ownHouse !== undefined) {
+      familyUpdate.ownHouse = profileData.ownHouse === true || profileData.ownHouse === "true";
+    }
+    if (profileData.nativeDistrict !== undefined) familyUpdate.nativeDistrict = profileData.nativeDistrict;
 
-    // 4. Upsert HoroscopeDetails
-    await HoroscopeDetails.upsert(
-      {
-        userProfileId,
-        star: profileData.star || null,
-        starId: parseId(profileData.starId),
-        rasi: profileData.rasi || null,
-        rasiId: parseId(profileData.rasiId),
-        laknam: profileData.laknam || null,
-        laknamId: parseId(profileData.laknamId),
-        gothram: profileData.gothram || null,
-        gothramId: parseId(profileData.gothramId),
-        sevvaiDhosham: profileData.sevvaiDhosham || null,
-        rahuKetuDhosham: profileData.rahuKetuDhosham || null,
-        birthTime: profileData.birthTime || null,
-        birthPlace: profileData.birthPlace || null,
-        birthCityId: parseId(profileData.birthCityId),
-      },
-      { transaction },
-    );
+    if (Object.keys(familyUpdate).length > 1) {
+      await FamilyDetails.upsert(familyUpdate, { transaction });
+    }
 
-    // 5. Upsert LocationLifestyle
-    await LocationLifestyle.upsert(
-      {
-        userProfileId,
-        country: profileData.country || null,
-        state: profileData.state || null,
-        city: profileData.city || null,
-        relocatePreference: profileData.relocatePreference || null,
-        diet: profileData.diet || null,
-        drink: profileData.drink || null,
-        smoke: profileData.smoke || null,
-        fitnessLevel: profileData.fitnessLevel || null,
-        ambition: parseId(profileData.ambition),
-        familyOrientation: parseId(profileData.familyOrientation),
-        emotionalStability: parseId(profileData.emotionalStability),
-        communicationStyle: parseId(profileData.communicationStyle),
-        spiritualInclination: parseId(profileData.spiritualInclination),
-        languages: profileData.languages || [],
-        hobbies: profileData.hobbies || [],
-      },
-      { transaction },
-    );
+    // 4. Upsert HoroscopeDetails - Partial Update
+    const horoscopeUpdate: any = { userProfileId };
+    if (profileData.starId !== undefined) horoscopeUpdate.starId = parseId(profileData.starId);
+    if (profileData.rasiId !== undefined) horoscopeUpdate.rasiId = parseId(profileData.rasiId);
+    if (profileData.laknamId !== undefined) horoscopeUpdate.laknamId = parseId(profileData.laknamId);
+    if (profileData.gothramId !== undefined) horoscopeUpdate.gothramId = parseId(profileData.gothramId);
+    if (profileData.sevvaiDhosham !== undefined) horoscopeUpdate.sevvaiDhosham = profileData.sevvaiDhosham;
+    if (profileData.rahuKetuDhosham !== undefined) horoscopeUpdate.rahuKetuDhosham = profileData.rahuKetuDhosham;
+    if (profileData.birthTime !== undefined) horoscopeUpdate.birthTime = profileData.birthTime;
+    if (profileData.birthPlace !== undefined) horoscopeUpdate.birthPlace = profileData.birthPlace;
+    if (profileData.birthCityId !== undefined) horoscopeUpdate.birthCityId = parseId(profileData.birthCityId);
+    
+    if (Object.keys(horoscopeUpdate).length > 1) {
+      await HoroscopeDetails.upsert(horoscopeUpdate, { transaction });
+    }
 
-    // 6. Upsert EducationCareer
-    await EducationCareer.upsert(
-      {
-        userProfileId,
-        highestEducation: profileData.highestEducation || null,
-        fieldOfStudy: profileData.fieldOfStudy || null,
-        college: profileData.college || null,
-        employmentType: profileData.employmentType || null,
-        companyName: profileData.companyName || null,
-        designation: profileData.designation || null,
-        incomeRange: profileData.incomeRange || null,
-        exactIncome: profileData.exactIncome
-          ? parseInt(profileData.exactIncome)
-          : null,
-        careerPlanAfterMarriage: profileData.careerPlanAfterMarriage || null,
-      },
-      { transaction },
-    );
+    // 5. Upsert LocationLifestyle - Partial Update
+    const lifestyleUpdate: any = { userProfileId };
+    if (profileData.relocatePreference !== undefined) lifestyleUpdate.relocatePreference = profileData.relocatePreference;
+    if (profileData.diet !== undefined) lifestyleUpdate.diet = profileData.diet;
+    if (profileData.drink !== undefined) lifestyleUpdate.drink = profileData.drink;
+    if (profileData.smoke !== undefined) lifestyleUpdate.smoke = profileData.smoke;
+    if (profileData.fitness !== undefined || profileData.fitnessLevel !== undefined) {
+      lifestyleUpdate.fitnessLevel = profileData.fitness || profileData.fitnessLevel;
+    }
+    
+    // personality scales
+    if (profileData.ambition !== undefined) {
+      // Map back from UI labels if necessary, but here we assume the frontend might send numbers OR we map strings to numbers if that's what the mapper did
+      const amb = profileData.ambition;
+      if (typeof amb === 'number') lifestyleUpdate.ambition = amb;
+      else if (amb === "High") lifestyleUpdate.ambition = 4;
+      else if (amb === "Moderate") lifestyleUpdate.ambition = 3;
+      else if (amb === "Low") lifestyleUpdate.ambition = 2;
+    }
+    if (profileData.spirituality !== undefined) {
+      const sp = profileData.spirituality;
+      if (typeof sp === 'number') lifestyleUpdate.spiritualInclination = sp;
+      else if (sp === "Very Spiritual") lifestyleUpdate.spiritualInclination = 4;
+      else if (sp === "Moderately Spiritual") lifestyleUpdate.spiritualInclination = 3;
+      else if (sp === "Not Spiritual") lifestyleUpdate.spiritualInclination = 2;
+    }
+    
+    if (Object.keys(lifestyleUpdate).length > 1) {
+      await LocationLifestyle.upsert(lifestyleUpdate, { transaction });
+    }
 
-    // 7. Upsert UserPreference
-    await UserPreference.upsert(
-      {
-        userId,
-        minAge: parseInt(profileData.partnerAgeMin) || 18,
-        maxAge: parseInt(profileData.partnerAgeMax) || 40,
-        minHeightCm: parseInt(profileData.partnerHeightMin) || null,
-        maxHeightCm: parseInt(profileData.partnerHeightMax) || null,
-        maritalStatus: profileData.partnerMaritalStatus || null,
-        religionId: parseId(profileData.partnerReligion),
-        casteId: parseId(profileData.partnerCaste),
-        partnerCastes: profileData.partnerCastes || [],
-        preferredLocation:
-          profileData.partnerLocationPreference ||
-          profileData.preferredLocation ||
-          null,
-        preferredEducation:
-          profileData.partnerEducation ||
-          profileData.preferredEducation ||
-          null,
-        preferredIncomeRange: profileData.preferredIncomeRange || null,
-      },
-      { transaction },
-    );
+    // 6. Upsert EducationCareer - Partial Update
+    const educationUpdate: any = { userProfileId };
+    if (profileData.highestEducation !== undefined) educationUpdate.highestEducation = profileData.highestEducation;
+    if (profileData.employmentType !== undefined) educationUpdate.employmentType = profileData.employmentType;
+    if (profileData.designation !== undefined) educationUpdate.designation = profileData.designation;
+    if (profileData.incomeRange !== undefined) educationUpdate.incomeRange = profileData.incomeRange;
+    if (profileData.careerAfterMarriage !== undefined || profileData.careerPlanAfterMarriage !== undefined) {
+      educationUpdate.careerPlanAfterMarriage = profileData.careerAfterMarriage || profileData.careerPlanAfterMarriage;
+    }
+
+    if (Object.keys(educationUpdate).length > 1) {
+      await EducationCareer.upsert(educationUpdate, { transaction });
+    }
+
+    // 7. Upsert UserPreference - Partial Update
+    const prefUpdate: any = { userId };
+    if (profileData.partnerAgeMin !== undefined) prefUpdate.minAge = parseInt(profileData.partnerAgeMin) || 18;
+    if (profileData.partnerAgeMax !== undefined) prefUpdate.maxAge = parseInt(profileData.partnerAgeMax) || 40;
+    if (profileData.partnerHeightMin !== undefined) prefUpdate.minHeightCm = parseInt(profileData.partnerHeightMin) || null;
+    if (profileData.partnerHeightMax !== undefined) prefUpdate.maxHeightCm = parseInt(profileData.partnerHeightMax) || null;
+    if (profileData.partnerMaritalStatus !== undefined) prefUpdate.maritalStatus = profileData.partnerMaritalStatus;
+    if (profileData.partnerReligion !== undefined) prefUpdate.religionId = parseId(profileData.partnerReligion);
+    if (profileData.partnerCastes !== undefined) prefUpdate.partnerCastes = profileData.partnerCastes;
+    if (profileData.partnerEducation !== undefined) prefUpdate.educationId = parseId(profileData.partnerEducation);
+    if (profileData.partnerCountry !== undefined) prefUpdate.countryId = parseId(profileData.partnerCountry);
+    if (profileData.partnerState !== undefined) prefUpdate.stateId = parseId(profileData.partnerState);
+    if (profileData.partnerLocationPreference !== undefined) prefUpdate.preferredLocation = profileData.partnerLocationPreference;
+
+    if (Object.keys(prefUpdate).length > 1) {
+      await UserPreference.upsert(prefUpdate, { transaction });
+    }
 
     await transaction.commit();
 
@@ -312,6 +318,7 @@ export const getMyProfile = async (
     }
 
     const userId = req.user.id;
+    console.log("userId", userId);
     const user = await User.findByPk(userId);
     const userProfile = await UserProfile.findOne({
       where: { userId },

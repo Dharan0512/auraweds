@@ -55,7 +55,7 @@ export default function ProfileModal({
   const [isViewingContact, setIsViewingContact] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("about");
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+  console.log("profile in profilemodal", profile);
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -407,14 +407,21 @@ export default function ProfileModal({
                 </h2>
                 <div className="profile-badges">
                   <span className="badge">
-                    {profile.user?.gender},{" "}
-                    {profile.profile?.dob
-                      ? calculateAge(profile.profile.dob)
+                    {profile.user?.gender ||
+                      profile.profile?.basicDetails?.gender}
+                    ,{" "}
+                    {profile.profile?.dob || profile.profile?.basicDetails?.dob
+                      ? calculateAge(
+                          profile.profile.dob ||
+                            profile.profile.basicDetails.dob,
+                        )
                       : "28"}{" "}
                     yrs
                   </span>
                   <span className="badge">
-                    {profile.profile?.Religion?.name}
+                    {profile.profile?.Religion?.name ||
+                      profile.profile?.basicDetails?.religion ||
+                      "Other"}
                   </span>
                 </div>
                 {/* Social Links */}
@@ -585,7 +592,7 @@ export default function ProfileModal({
                         <User size={20} /> About Me
                       </div>
                       <div className="p-4 bg-slate-900/40 rounded-2xl border border-white/5 text-slate-300 italic text-sm leading-relaxed">
-                        "{profile.profile.shortBio}"
+                        &ldquo;{profile.profile.shortBio}&rdquo;
                       </div>
                     </div>
                   )}
@@ -606,19 +613,26 @@ export default function ProfileModal({
                         <div className="detail-item justify-between border-b border-white/5 pb-2">
                           <span className="detail-label">Date of Birth</span>
                           <span className="detail-value">
-                            {profile.profile?.dob}
+                            {profile.profile?.dob ||
+                              profile.profile?.basicDetails?.dob ||
+                              "Not specified"}
                           </span>
                         </div>
                         <div className="detail-item justify-between border-b border-white/5 pb-2">
                           <span className="detail-label">Height</span>
                           <span className="detail-value">
-                            {profile.profile?.heightCm} cm
+                            {profile.profile?.heightCm ||
+                              profile.profile?.basicDetails?.heightCm ||
+                              "Not specified"}{" "}
+                            cm
                           </span>
                         </div>
                         <div className="detail-item justify-between">
                           <span className="detail-label">Marital Status</span>
                           <span className="detail-value">
-                            {profile.profile?.maritalStatus}
+                            {profile.profile?.maritalStatus ||
+                              profile.profile?.basicDetails?.maritalStatus ||
+                              "Not specified"}
                           </span>
                         </div>
                         {profile.profile?.maritalStatus !== "Never Married" && (
@@ -651,7 +665,9 @@ export default function ProfileModal({
                         <div className="detail-item justify-between border-b border-white/5 pb-2">
                           <span className="detail-label">Current City</span>
                           <span className="detail-value">
-                            {profile.profile?.LocationLifestyle?.city ||
+                            {profile.profile?.City?.name ||
+                              profile.profile?.LocationLifestyle?.city ||
+                              profile.profile?.basicDetails?.location ||
                               "Not specified"}
                           </span>
                         </div>
@@ -659,6 +675,7 @@ export default function ProfileModal({
                           <span className="detail-label">Diet</span>
                           <span className="detail-value">
                             {profile.profile?.LocationLifestyle?.diet ||
+                              profile.profile?.lifestyle?.diet ||
                               "Not specified"}
                           </span>
                         </div>
@@ -698,7 +715,12 @@ export default function ProfileModal({
                                   Mobile Number
                                 </p>
                                 <p className="text-white font-medium flex items-center gap-2">
-                                  {profile.user?.mobile?.includes('X') && <Lock size={14} className="text-[#D4AF37]" />}
+                                  {profile.user?.mobile?.includes("X") && (
+                                    <Lock
+                                      size={14}
+                                      className="text-[#D4AF37]"
+                                    />
+                                  )}
                                   {profile.user?.mobile || "N/A"}
                                 </p>
                               </div>
@@ -760,14 +782,18 @@ export default function ProfileModal({
                       <div className="detail-item">
                         <span className="detail-label">Religion</span>
                         <span className="detail-value">
-                          {profile.profile?.Religion?.name || "Not specified"}
+                          {profile.profile?.Religion?.name ||
+                            profile.profile?.basicDetails?.religion ||
+                            "Not specified"}
                         </span>
                       </div>
                       <div className="detail-item">
                         <span className="detail-label">Caste / Sub-caste</span>
                         <span className="detail-value">
                           {profile.profile?.Caste?.name || "Open"} /{" "}
-                          {profile.profile?.subcaste || "Open"}
+                          {profile.profile?.subcaste ||
+                            profile.profile?.basicDetails?.subcaste ||
+                            "Open"}
                         </span>
                       </div>
                       <div className="detail-item">
@@ -790,23 +816,17 @@ export default function ProfileModal({
                         <span className="detail-value">
                           {profile.profile?.EducationCareer?.highestEducation ||
                             profile.profile?.Education?.name ||
+                            profile?.profile?.professionalInfo
+                              ?.highestEducation ||
                             "Not specified"}
                         </span>
                       </div>
                       <div className="detail-item">
-                        <span className="detail-label">
-                          College / Institution
-                        </span>
-                        <span className="detail-value">
-                          {profile.profile?.EducationCareer?.college ||
-                            "Not specified"}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Profession</span>
+                        <span className="detail-label">Designation</span>
                         <span className="detail-value">
                           {profile.profile?.EducationCareer?.designation ||
                             profile.profile?.Occupation?.name ||
+                            profile?.profile?.professionalInfo?.designation ||
                             "Not specified"}
                         </span>
                       </div>
@@ -814,6 +834,7 @@ export default function ProfileModal({
                         <span className="detail-label">Company</span>
                         <span className="detail-value">
                           {profile.profile?.EducationCareer?.companyName ||
+                            profile?.profile?.professionalInfo?.companyName ||
                             "Not specified"}
                         </span>
                       </div>
@@ -821,6 +842,8 @@ export default function ProfileModal({
                         <span className="detail-label">Employment Type</span>
                         <span className="detail-value">
                           {profile.profile?.EducationCareer?.employmentType ||
+                            profile?.profile?.professionalInfo
+                              ?.employmentType ||
                             "Not specified"}
                         </span>
                       </div>
@@ -829,6 +852,7 @@ export default function ProfileModal({
                         <span className="detail-value">
                           {profile.profile?.EducationCareer?.incomeRange ||
                             profile.profile?.IncomeRange?.displayLabel ||
+                            profile?.profile?.professionalInfo?.incomeRange ||
                             "Confidential"}
                         </span>
                       </div>
@@ -845,6 +869,7 @@ export default function ProfileModal({
                         <span className="detail-label">Father's Name</span>
                         <span className="detail-value">
                           {profile.profile?.FamilyDetail?.fatherName ||
+                            profile.profile?.familyRoots?.fatherName ||
                             "Not specified"}
                         </span>
                       </div>
@@ -854,6 +879,7 @@ export default function ProfileModal({
                         </span>
                         <span className="detail-value">
                           {profile.profile?.FamilyDetail?.fatherOccupation ||
+                            profile.profile?.familyRoots?.fatherOccupation ||
                             "Not specified"}
                         </span>
                       </div>
@@ -861,6 +887,7 @@ export default function ProfileModal({
                         <span className="detail-label">Mother's Name</span>
                         <span className="detail-value">
                           {profile.profile?.FamilyDetail?.motherName ||
+                            profile.profile?.familyRoots?.motherName ||
                             "Not specified"}
                         </span>
                       </div>
@@ -870,6 +897,7 @@ export default function ProfileModal({
                         </span>
                         <span className="detail-value">
                           {profile.profile?.FamilyDetail?.motherOccupation ||
+                            profile.profile?.familyRoots?.motherOccupation ||
                             "Not specified"}
                         </span>
                       </div>
@@ -877,25 +905,32 @@ export default function ProfileModal({
                         <span className="detail-label">Family Type</span>
                         <span className="detail-value">
                           {profile.profile?.FamilyDetail?.familyType ||
+                            profile.profile?.familyRoots?.familyType ||
                             "Nuclear"}
                         </span>
                       </div>
                       <div className="detail-item">
                         <span className="detail-label">Family Status</span>
                         <span className="detail-value">
-                          {profile.profile?.familyStatus || "Middle Class"}
+                          {profile.profile?.FamilyDetail?.familyStatus ||
+                            profile.profile?.lifestyle?.familyStatus ||
+                            profile.profile?.familyStatus ||
+                            "Middle Class"}
                         </span>
                       </div>
                       <div className="detail-item">
                         <span className="detail-label">Siblings</span>
                         <span className="detail-value">
-                          {profile.profile?.FamilyDetail?.siblingsCount || 0}
+                          {profile.profile?.FamilyDetail?.siblingsCount ??
+                            profile.profile?.familyRoots?.siblingsCount ??
+                            0}
                         </span>
                       </div>
                       <div className="detail-item">
                         <span className="detail-label">Own House</span>
                         <span className="detail-value">
-                          {profile.profile?.FamilyDetail?.ownHouse
+                          {(profile.profile?.FamilyDetail?.ownHouse ??
+                            profile.profile?.familyRoots?.ownHouse)
                             ? "Yes"
                             : "No"}
                         </span>
@@ -904,6 +939,7 @@ export default function ProfileModal({
                         <span className="detail-label">Native District</span>
                         <span className="detail-value">
                           {profile.profile?.FamilyDetail?.nativeDistrict ||
+                            profile.profile?.familyRoots?.nativeDistrict ||
                             "Not specified"}
                         </span>
                       </div>
@@ -926,6 +962,7 @@ export default function ProfileModal({
                         <span className="detail-value">
                           {profile.profile?.HoroscopeDetail?.Star?.name ||
                             profile.profile?.HoroscopeDetail?.star ||
+                            profile.profile?.horoscope?.star ||
                             "Not specified"}
                         </span>
                       </div>
@@ -934,6 +971,7 @@ export default function ProfileModal({
                         <span className="detail-value">
                           {profile.profile?.HoroscopeDetail?.Rasi?.name ||
                             profile.profile?.HoroscopeDetail?.rasi ||
+                            profile.profile?.horoscope?.rasi ||
                             "Not specified"}
                         </span>
                       </div>
@@ -942,6 +980,7 @@ export default function ProfileModal({
                         <span className="detail-value">
                           {profile.profile?.HoroscopeDetail?.Laknam?.name ||
                             profile.profile?.HoroscopeDetail?.laknam ||
+                            profile.profile?.horoscope?.laknam ||
                             "Not specified"}
                         </span>
                       </div>
@@ -950,6 +989,7 @@ export default function ProfileModal({
                         <span className="detail-value">
                           {profile.profile?.HoroscopeDetail?.Gothram?.name ||
                             profile.profile?.HoroscopeDetail?.gothram ||
+                            profile.profile?.horoscope?.gothram ||
                             "Not specified"}
                         </span>
                       </div>
@@ -957,6 +997,7 @@ export default function ProfileModal({
                         <span className="detail-label">Sevvai Dosham</span>
                         <span className="detail-value text-amber-500 font-bold">
                           {profile.profile?.HoroscopeDetail?.sevvaiDhosham ||
+                            profile.profile?.horoscope?.sevvaiDhosham ||
                             "No"}
                         </span>
                       </div>
@@ -964,6 +1005,7 @@ export default function ProfileModal({
                         <span className="detail-label">Rahu Ketu Dosham</span>
                         <span className="detail-value text-amber-500 font-bold">
                           {profile.profile?.HoroscopeDetail?.rahuKetuDhosham ||
+                            profile.profile?.horoscope?.rahuKetuDhosham ||
                             "No"}
                         </span>
                       </div>
@@ -971,6 +1013,7 @@ export default function ProfileModal({
                         <span className="detail-label">Birth Time</span>
                         <span className="detail-value">
                           {profile.profile?.HoroscopeDetail?.birthTime ||
+                            profile.profile?.horoscope?.birthTime ||
                             "Not specified"}
                         </span>
                       </div>
@@ -979,6 +1022,7 @@ export default function ProfileModal({
                         <span className="detail-value">
                           {profile.profile?.HoroscopeDetail?.BirthCity?.name ||
                             profile.profile?.HoroscopeDetail?.birthPlace ||
+                            profile.profile?.horoscope?.birthPlace ||
                             "Not specified"}
                         </span>
                       </div>
@@ -992,7 +1036,9 @@ export default function ProfileModal({
                         <div className="horoscope-chart-container group cursor-pointer">
                           <img
                             src={getImageUrl(
-                              profile.profile.HoroscopeDetail.horoscopeImageUrl,
+                              profile.profile?.HoroscopeDetail
+                                ?.horoscopeImageUrl ||
+                                profile.profile?.horoscope?.horoscopeImageUrl,
                             )}
                             alt="Horoscope Chart"
                             className="horoscope-chart-image"
@@ -1003,8 +1049,10 @@ export default function ProfileModal({
                               onClick={() =>
                                 setPreviewImage({
                                   url: getImageUrl(
-                                    profile.profile.HoroscopeDetail
-                                      .horoscopeImageUrl,
+                                    profile.profile?.HoroscopeDetail
+                                      ?.horoscopeImageUrl ||
+                                      profile.profile?.horoscope
+                                        ?.horoscopeImageUrl,
                                   ),
                                   title: "Horoscope Chart",
                                 })
@@ -1019,8 +1067,10 @@ export default function ProfileModal({
                                   onClick={() =>
                                     setCroppingImage({
                                       url: getImageUrl(
-                                        profile.profile.HoroscopeDetail
-                                          .horoscopeImageUrl,
+                                        profile.profile?.HoroscopeDetail
+                                          ?.horoscopeImageUrl ||
+                                          profile.profile?.horoscope
+                                            ?.horoscopeImageUrl,
                                       ),
                                       type: "horoscope",
                                     })
@@ -1042,7 +1092,10 @@ export default function ProfileModal({
                     )}
 
                     {!userId &&
-                      !profile.profile?.HoroscopeDetail?.horoscopeImageUrl && (
+                      !(
+                        profile.profile?.HoroscopeDetail?.horoscopeImageUrl ||
+                        profile.profile?.horoscope?.horoscopeImageUrl
+                      ) && (
                         <div className="mt-8">
                           <label className="w-full h-40 rounded-3xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center cursor-pointer hover:border-[#D4AF37]/50 transition-all bg-slate-900/40 group">
                             <input
@@ -1105,7 +1158,7 @@ export default function ProfileModal({
                       <div className="detail-item">
                         <span className="detail-label">Preferred Location</span>
                         <span className="detail-value">
-                          {profile.preferences?.partnerLocationPreference ||
+                          {profile.preferences?.preferredLocation ||
                             profile.preferences?.City?.name ||
                             "Open to any"}
                         </span>

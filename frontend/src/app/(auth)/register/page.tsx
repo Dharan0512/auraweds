@@ -49,9 +49,12 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SCHEMA — field names aligned with edit-form steps
+// ─────────────────────────────────────────────────────────────────────────────
 const registerSchema = z
   .object({
-    // Step 1: Basic Identity
+    // Step 1: Basic Identity  (matches Step1BasicInfo)
     createdFor: z.enum([
       "Self",
       "Daughter",
@@ -63,6 +66,7 @@ const registerSchema = z
     ]),
     gender: z.enum(["Male", "Female", "Other"]),
     firstName: z.string().min(2, "First name must be at least 2 characters"),
+    lastName: z.string().optional(),
     countryCodeId: z
       .union([z.number(), z.string()])
       .refine((val) => val !== "", "Required"),
@@ -77,11 +81,12 @@ const registerSchema = z
     instagramUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
     facebookUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
 
-    // Step 2: Personal Background
+    // Step 2: Personal Background  (matches Step2PersonalDetails)
+    // dob as single string "YYYY-MM-DD" — assembled from day/month/year below
     dobDay: z.string().min(1, "Day required"),
     dobMonth: z.string().min(1, "Month required"),
     dobYear: z.string().min(4, "Year required"),
-    heightCm: z
+    height: z // ← was heightCm
       .union([z.number(), z.string()])
       .refine((val) => val !== "", "Height is required"),
     maritalStatus: z.enum([
@@ -90,32 +95,31 @@ const registerSchema = z
       "Widowed",
       "Awaiting Divorce",
     ]),
-    motherTongueId: z
+    // ADDED: children fields when not "Never Married"
+    childrenCount: z.string().optional(),
+    childrenLivingWith: z.boolean().optional(),
+
+    physicalStatus: z.enum(["Normal", "Physically Challenged"]),
+
+    // Step 3: Heritage / Religion  (matches Step3Religion)
+    motherTongue: z // ← was motherTongueId
       .union([z.number(), z.string()])
       .refine((val) => val !== "", "Required"),
     religionId: z
       .union([z.number(), z.string()])
       .refine((val) => val !== "", "Required"),
     casteId: z.union([z.number(), z.string()]).optional(),
-    subcaste: z.string().optional(),
-    complexion: z.string().optional(),
-    physicalStatus: z.enum(["Normal", "Physically Challenged"]),
-    shortBio: z.string().min(30, "Please write at least 30 characters"),
-
-    // Step 3: Family Details
+    subCaste: z.string().optional(), // ← was subcaste
+    // Family
     fatherName: z.string().optional(),
     fatherOccupation: z.string().optional(),
     motherName: z.string().optional(),
     motherOccupation: z.string().optional(),
     familyType: z.enum(["Joint", "Nuclear", "Other"]).optional(),
-    familyStatus: z
-      .enum(["Middle Class", "Upper Middle Class", "Rich", "Affluent"])
-      .optional(),
     siblingsCount: z.union([z.number(), z.string()]).optional(),
     ownHouse: z.boolean().optional(),
     nativeDistrict: z.string().optional(),
-
-    // Step 3A: Horoscope
+    // Horoscope
     showHoroscope: z.boolean().default(true),
     starId: z.union([z.number(), z.string()]).optional(),
     rasiId: z.union([z.number(), z.string()]).optional(),
@@ -126,32 +130,49 @@ const registerSchema = z
     birthTime: z.string().optional(),
     birthPlace: z.string().optional(),
     birthCityId: z.union([z.number(), z.string()]).optional(),
-    horoscopeImage: z.string().optional(),
+    horoscopeImageUrl: z.string().optional(), // ← was horoscopeImage
 
-    // Step 4: Location & Lifestyle
+    // Step 4: Location  (matches Step5Location)
+    countryId: z.union([z.number(), z.string(), z.literal("")]).optional(),
+    stateId: z.union([z.number(), z.string(), z.literal("")]).optional(),
+    cityId: z.union([z.number(), z.string(), z.literal("")]).optional(),
+    // kept as plain text fallbacks
     country: z.string().optional(),
     state: z.string().optional(),
     city: z.string().optional(),
-    relocatePreference: z.enum(["Yes", "No", "Flexible"]).optional(),
+
+    // Step 4: Lifestyle  (matches Step7Lifestyle)
     diet: z.enum(["Veg", "Non-veg", "Eggetarian", "Vegan"]),
     drink: z.enum(["Yes", "No", "Occasionally"]),
     smoke: z.enum(["Yes", "No", "Occasionally"]),
-    fitnessLevel: z.enum(["Regular", "Occasional", "Not at all"]),
-    languages: z.array(z.string()).optional(),
-    hobbies: z.array(z.string()).optional(),
+    fitness: z.string().optional(), // ← was fitnessLevel
+    relocation: z.string().optional(), // ← was relocatePreference
+    careerAfterMarriage: z.string().optional(), // ← was careerPlanAfterMarriage
+    familyStatus: z // ← was in Step 3 but lives in Lifestyle
+      .enum(["Middle Class", "Upper Middle Class", "Rich", "Affluent"])
+      .optional(),
+    spirituality: z.string().optional(),
+    aboutMe: z.string().min(30, "Please write at least 30 characters"), // ← was shortBio
 
-    // Step 5: Education & Career
+    // Step 5: Education & Career  (matches Step4Education)
     highestEducation: z.string().min(2, "Education required"),
-    fieldOfStudy: z.string().optional(),
-    college: z.string().optional(),
     employmentType: z.string().optional(),
-    companyName: z.string().optional(),
+    employmentTypeId: z
+      .union([z.number(), z.string(), z.literal("")])
+      .optional(),
     designation: z.string().optional(),
     incomeRange: z.string().optional(),
+    incomeCurrencyId: z
+      .union([z.number(), z.string(), z.literal("")])
+      .optional(),
+    incomeRangeId: z.union([z.number(), z.string(), z.literal("")]).optional(),
+    occupationId: z.union([z.number(), z.string(), z.literal("")]).optional(),
+    companyName: z.string().optional(),
+    fieldOfStudy: z.string().optional(),
+    college: z.string().optional(),
     exactIncome: z.union([z.number(), z.string()]).optional(),
-    careerPlanAfterMarriage: z.string().optional(),
 
-    // Step 6: Values & Preferences
+    // Step 6: Partner Preferences  (matches Step6Preferences)
     ambition: z.number().min(1).max(5).optional(),
     familyOrientation: z.number().min(1).max(5).optional(),
     emotionalStability: z.number().min(1).max(5).optional(),
@@ -170,24 +191,11 @@ const registerSchema = z
     preferredIncomeRange: z.string().optional(),
     partnerLocationPreference: z.string().optional(),
 
-    // Missing fields from form logic
-    childrenCount: z.string().optional(),
-    countryId: z.union([z.number(), z.string(), z.literal("")]).optional(),
-    stateId: z.union([z.number(), z.string(), z.literal("")]).optional(),
-    cityId: z.union([z.number(), z.string(), z.literal("")]).optional(),
-    employmentTypeId: z
-      .union([z.number(), z.string(), z.literal("")])
-      .optional(),
-    incomeCurrencyId: z
-      .union([z.number(), z.string(), z.literal("")])
-      .optional(),
-    incomeRangeId: z.union([z.number(), z.string(), z.literal("")]).optional(),
-    occupationId: z.union([z.number(), z.string(), z.literal("")]).optional(),
-
-    // Step 7: Visibility
+    // Visibility
     profileVisibility: z.enum(["Public", "Members Only", "Hidden"]).optional(),
   })
   .superRefine((data, ctx) => {
+    // Rasi required when horoscope is on
     if (data.showHoroscope) {
       if (!data.rasiId || String(data.rasiId).trim() === "") {
         ctx.addIssue({
@@ -196,6 +204,17 @@ const registerSchema = z
           path: ["rasiId"],
         });
       }
+    }
+    // Children count required when not Never Married
+    if (
+      data.maritalStatus !== "Never Married" &&
+      (!data.childrenCount || data.childrenCount === "")
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Please specify number of children, or 0",
+        path: ["childrenCount"],
+      });
     }
   });
 
@@ -247,10 +266,7 @@ export default function RegisterPage() {
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-
     const token = localStorage.getItem("token");
-
-    // If no token (Step 1 before register), just store locally
     if (!token) {
       const newPending = Array.from(files).map((file) => ({
         file,
@@ -259,8 +275,6 @@ export default function RegisterPage() {
       setPendingPhotos((prev) => [...prev, ...newPending].slice(0, 5));
       return;
     }
-
-    // If token exists, upload immediately
     setUploading(true);
     try {
       for (const file of Array.from(files)) {
@@ -302,16 +316,14 @@ export default function RegisterPage() {
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setUploading(true);
     const formData = new FormData();
     formData.append("horoscope", file);
-
     try {
       const result = await profileService.uploadHoroscope(formData);
       const imageUrl = result.horoscope.horoscopeImageUrl;
       setHoroscopeImage(imageUrl);
-      setValue("horoscopeImage", imageUrl, { shouldValidate: true });
+      setValue("horoscopeImageUrl", imageUrl, { shouldValidate: true });
     } catch (err) {
       console.error("Horoscope upload error:", err);
     } finally {
@@ -323,7 +335,7 @@ export default function RegisterPage() {
     try {
       await profileService.deleteHoroscope();
       setHoroscopeImage(null);
-      setValue("horoscopeImage", "", { shouldValidate: true });
+      setValue("horoscopeImageUrl", "", { shouldValidate: true });
     } catch (err) {
       console.error("Horoscope delete error:", err);
     }
@@ -342,6 +354,7 @@ export default function RegisterPage() {
       createdFor: "Self",
       gender: "Male",
       firstName: "",
+      lastName: "",
       countryCodeId: "+91",
       mobile: "",
       email: "",
@@ -353,16 +366,15 @@ export default function RegisterPage() {
       dobDay: "",
       dobMonth: "",
       dobYear: "",
-      heightCm: "",
+      height: "", // ← aligned
       maritalStatus: "Never Married",
-      motherTongueId: "",
+      childrenCount: "",
+      childrenLivingWith: false,
+      physicalStatus: "Normal",
+      motherTongue: "", // ← aligned
       religionId: "",
       casteId: "",
-      subcaste: "",
-      complexion: "",
-      physicalStatus: "Normal",
-      shortBio: "",
-      // Family
+      subCaste: "", // ← aligned
       fatherName: "",
       fatherOccupation: "",
       motherName: "",
@@ -372,7 +384,6 @@ export default function RegisterPage() {
       siblingsCount: "0",
       ownHouse: false,
       nativeDistrict: "",
-      // Horoscope
       showHoroscope: true,
       starId: "",
       rasiId: "",
@@ -383,19 +394,21 @@ export default function RegisterPage() {
       birthTime: "",
       birthPlace: "",
       birthCityId: "",
-      horoscopeImage: "",
-      // Location & Lifestyle
+      horoscopeImageUrl: "", // ← aligned
       country: "India",
       state: "Tamil Nadu",
       city: "",
-      relocatePreference: "Flexible",
+      countryId: "",
+      stateId: "",
+      cityId: "",
       diet: "Veg",
       drink: "No",
       smoke: "No",
-      fitnessLevel: "Occasional",
-      languages: [],
-      hobbies: [],
-      // Education & Career
+      fitness: "Occasional", // ← aligned
+      relocation: "Flexible", // ← aligned
+      careerAfterMarriage: "Yes", // ← aligned
+      spirituality: "Not Spiritual",
+      aboutMe: "", // ← aligned
       highestEducation: "",
       fieldOfStudy: "",
       college: "",
@@ -404,8 +417,6 @@ export default function RegisterPage() {
       designation: "",
       incomeRange: "",
       exactIncome: "",
-      careerPlanAfterMarriage: "",
-      // Values & Preferences
       ambition: 3,
       familyOrientation: 3,
       emotionalStability: 3,
@@ -423,10 +434,6 @@ export default function RegisterPage() {
       preferredIncomeRange: "",
       partnerLocationPreference: "",
       profileVisibility: "Members Only",
-      childrenCount: "",
-      countryId: "",
-      stateId: "",
-      cityId: "",
       employmentTypeId: "",
       incomeCurrencyId: "",
       incomeRangeId: "",
@@ -456,18 +463,24 @@ export default function RegisterPage() {
     }
   }, [watchedReligionId, setValue]);
 
-  // Auto-sync Partner Caste(s) to User's Caste
+  // Auto-sync Partner Caste to User's Caste
   useEffect(() => {
     if (watchedCasteId && watchedPartnerReligion === watchedReligionId) {
       let preferred = String(watchedCasteId);
-      if (preferred === "0") {
-        preferred = "any";
-      }
+      if (preferred === "0") preferred = "any";
       setValue("partnerCastes", [preferred]);
     }
   }, [watchedCasteId, watchedPartnerReligion, watchedReligionId, setValue]);
 
-  // Load step 1 data immediately (only countries needed for code picker)
+  // Clear children fields when switching back to Never Married
+  useEffect(() => {
+    if (watchedMaritalStatus === "Never Married") {
+      setValue("childrenCount", "");
+      setValue("childrenLivingWith", false);
+    }
+  }, [watchedMaritalStatus, setValue]);
+
+  // Load step 1 data
   useEffect(() => {
     masterService
       .getCountries()
@@ -479,7 +492,7 @@ export default function RegisterPage() {
       .catch(console.error);
   }, [setValue]);
 
-  // Load step 2 data when user reaches step 2
+  // Load step 2 data
   useEffect(() => {
     if (step === 2) {
       Promise.all([
@@ -496,7 +509,7 @@ export default function RegisterPage() {
     }
   }, [step]);
 
-  // Load step 3 data (horoscope + cities) when user reaches step 3
+  // Load step 3 data
   useEffect(() => {
     if (step === 3) {
       Promise.all([
@@ -517,7 +530,7 @@ export default function RegisterPage() {
     }
   }, [step]);
 
-  // Load step 5 data when user reaches step 5
+  // Load step 5 data
   useEffect(() => {
     if (step === 5) {
       Promise.all([
@@ -554,12 +567,6 @@ export default function RegisterPage() {
   }, [watchedReligionId, setValue]);
 
   useEffect(() => {
-    if (watchedMaritalStatus === "Never Married") {
-      (setValue as any)("childrenCount", "");
-    }
-  }, [watchedMaritalStatus, setValue]);
-
-  useEffect(() => {
     if (watchedCountryId) {
       masterService
         .getStatesByCountry(watchedCountryId)
@@ -590,7 +597,6 @@ export default function RegisterPage() {
     }
   }, [watchedEmploymentTypeId, setValue]);
 
-  // Load partner castes when partner religion selection changes
   useEffect(() => {
     if (watchedPartnerReligion) {
       masterService
@@ -638,10 +644,6 @@ export default function RegisterPage() {
   };
 
   const handleStep1Register = async () => {
-    // Validate Photos - Optional now
-    const totalPhotos = uploadedPhotos.length + pendingPhotos.length;
-    // Removed mandatory check as per user request
-
     const isValid = await (trigger as any)([
       "firstName",
       "email",
@@ -650,7 +652,6 @@ export default function RegisterPage() {
     ]);
     if (!isValid) return;
 
-    // Detect existing session to avoid "User Already Exists" error on back-navigation
     if (localStorage.getItem("token")) {
       setIsOtpModalOpen(true);
       return;
@@ -674,7 +675,6 @@ export default function RegisterPage() {
         null,
       );
 
-      // If success, upload pending photos
       if (pendingPhotos.length > 0) {
         setUploading(true);
         try {
@@ -696,30 +696,28 @@ export default function RegisterPage() {
         }
       }
 
-      // Move to next step (OTP)
       setIsOtpModalOpen(true);
     } catch (err) {
-      // Error handled by useAuth hook's error state
       console.error("Registration error:", err);
     }
   };
 
+  // ── Final submit — field names already aligned, just assemble dob ──
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      // Final synchronization to all 8 tables
       const payload = {
         ...data,
         dob:
           data.dobYear && data.dobMonth && data.dobDay
             ? `${data.dobYear}-${data.dobMonth.padStart(2, "0")}-${data.dobDay.padStart(2, "0")}`
             : null,
-        motherTongueId: Number(data.motherTongueId),
+        motherTongue: Number(data.motherTongue), // aligned key
         religionId: Number(data.religionId),
         casteId:
           data.casteId && data.casteId !== "0" && data.casteId !== ""
             ? Number(data.casteId)
             : null,
-        heightCm: Number(data.heightCm),
+        height: Number(data.height), // aligned key
         partnerAgeMin: Number(data.partnerAgeMin),
         partnerAgeMax: Number(data.partnerAgeMax),
       };
@@ -747,7 +745,7 @@ export default function RegisterPage() {
       <div className="absolute top-0 -right-4 w-72 h-72 bg-gold-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
       <div className="absolute -bottom-8 left-20 w-72 h-72 bg-indigo-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
 
-      {/* --- OTP MODAL --- */}
+      {/* OTP MODAL */}
       <Transition appear show={isOtpModalOpen} as={Fragment}>
         <Dialog
           as="div"
@@ -902,17 +900,16 @@ export default function RegisterPage() {
             onSubmit={handleSubmit(onSubmit)}
             className="space-y-8 relative"
           >
-            {/* Step 1: Basic Identity */}
+            {/* ═══════════════ STEP 1: Basic Identity ═══════════════ */}
             {step === 1 && (
               <div className="space-y-6 animate-in fade-in slide-in-from-right-10 duration-500">
-                {/* Photo Upload Section */}
+                {/* Photo Upload */}
                 <div className="pb-6 border-b border-purple-500/10">
                   <label className="block text-sm font-bold text-slate-300 mb-4 flex items-center gap-2">
                     <PhotoIcon className="w-5 h-5 text-purple-400" />
                     Profile Photos (Optional)
                   </label>
                   <div className="flex flex-wrap gap-4">
-                    {/* Uploaded Photos */}
                     {uploadedPhotos.map((photo) => (
                       <div
                         key={photo.id}
@@ -935,12 +932,10 @@ export default function RegisterPage() {
                         </button>
                       </div>
                     ))}
-
-                    {/* Pending Photos (Pre-registration) */}
                     {pendingPhotos.map((photo, idx) => (
                       <div
                         key={`pending-${idx}`}
-                        className="relative w-24 h-24 rounded-2xl overflow-hidden border border-amber-500/40 group animate-pulse-subtle bg-slate-900/50"
+                        className="relative w-24 h-24 rounded-2xl overflow-hidden border border-amber-500/40 group bg-slate-900/50"
                       >
                         <img
                           src={photo.preview}
@@ -961,7 +956,6 @@ export default function RegisterPage() {
                         </button>
                       </div>
                     ))}
-
                     {uploadedPhotos.length + pendingPhotos.length < 5 && (
                       <label className="w-24 h-24 rounded-2xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center cursor-pointer hover:border-purple-500/50 transition-all bg-slate-900/50">
                         <input
@@ -1011,6 +1005,7 @@ export default function RegisterPage() {
                       )}
                     />
                   </div>
+
                   <div>
                     <label className="block text-sm font-bold text-slate-300 mb-4">
                       Gender
@@ -1032,6 +1027,7 @@ export default function RegisterPage() {
                       ))}
                     </div>
                   </div>
+
                   <div>
                     <label className="block text-sm font-bold text-slate-300 mb-2">
                       Full Name
@@ -1048,6 +1044,7 @@ export default function RegisterPage() {
                       </p>
                     )}
                   </div>
+
                   <div className="grid grid-cols-3 gap-4 col-span-full">
                     <div className="col-span-1">
                       <label className="block text-sm font-bold text-slate-300 mb-2">
@@ -1082,6 +1079,7 @@ export default function RegisterPage() {
                       />
                     </div>
                   </div>
+
                   <div className="col-span-full grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
                       <label className="block text-sm font-bold text-slate-300 mb-2">
@@ -1106,6 +1104,7 @@ export default function RegisterPage() {
                       />
                     </div>
                   </div>
+
                   <div className="col-span-full">
                     <label className="block text-sm font-bold text-slate-300 mb-2">
                       Convenient Time to Call
@@ -1127,39 +1126,39 @@ export default function RegisterPage() {
                       )}
                     />
                   </div>
+
                   <div className="col-span-full grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-bold text-slate-300 mb-2">
-                        LinkedIn (Optional)
-                      </label>
-                      <input
-                        {...register("linkedInUrl")}
-                        placeholder="https://linkedin.com/in/..."
-                        className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none placeholder:text-slate-600 transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-slate-300 mb-2">
-                        Instagram (Optional)
-                      </label>
-                      <input
-                        {...register("instagramUrl")}
-                        placeholder="https://instagram.com/..."
-                        className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none placeholder:text-slate-600 transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-slate-300 mb-2">
-                        Facebook (Optional)
-                      </label>
-                      <input
-                        {...register("facebookUrl")}
-                        placeholder="https://facebook.com/..."
-                        className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none placeholder:text-slate-600 transition-all"
-                      />
-                    </div>
+                    {[
+                      {
+                        name: "linkedInUrl" as const,
+                        label: "LinkedIn (Optional)",
+                        placeholder: "https://linkedin.com/in/...",
+                      },
+                      {
+                        name: "instagramUrl" as const,
+                        label: "Instagram (Optional)",
+                        placeholder: "https://instagram.com/...",
+                      },
+                      {
+                        name: "facebookUrl" as const,
+                        label: "Facebook (Optional)",
+                        placeholder: "https://facebook.com/...",
+                      },
+                    ].map(({ name, label, placeholder }) => (
+                      <div key={name}>
+                        <label className="block text-sm font-bold text-slate-300 mb-2">
+                          {label}
+                        </label>
+                        <input
+                          {...register(name)}
+                          placeholder={placeholder}
+                          className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none placeholder:text-slate-600 transition-all"
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
+
                 <div className="flex justify-end pt-6">
                   <button
                     type="button"
@@ -1173,16 +1172,16 @@ export default function RegisterPage() {
               </div>
             )}
 
-            {/* Step 2: Personal Background */}
+            {/* ═══════════════ STEP 2: Personal Background ═══════════════ */}
             {step === 2 && (
               <div className="space-y-6 animate-in fade-in slide-in-from-right-10 duration-500">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* DOB */}
                   <div className="col-span-full">
                     <label className="block text-sm font-bold text-slate-300 mb-2">
-                      Date of Birth (Legacy Age Verification)
+                      Date of Birth
                     </label>
                     <div className="grid grid-cols-3 gap-4">
-                      {/* ... DOB Controls ... */}
                       <Controller
                         control={control}
                         name="dobDay"
@@ -1241,13 +1240,14 @@ export default function RegisterPage() {
                     </div>
                   </div>
 
+                  {/* Height — aligned field name */}
                   <div>
                     <label className="block text-sm font-bold text-slate-300 mb-2">
                       Height
                     </label>
                     <Controller
                       control={control}
-                      name="heightCm"
+                      name="height"
                       render={({ field }) => (
                         <SearchableDropdown
                           options={heights}
@@ -1261,8 +1261,14 @@ export default function RegisterPage() {
                         />
                       )}
                     />
+                    {errors.height && (
+                      <p className="mt-1 text-xs text-rose-400">
+                        {errors.height.message}
+                      </p>
+                    )}
                   </div>
 
+                  {/* Marital Status */}
                   <div>
                     <label className="block text-sm font-bold text-slate-300 mb-2">
                       Marital Status
@@ -1285,6 +1291,76 @@ export default function RegisterPage() {
                     />
                   </div>
 
+                  {/* ── CHILDREN (shown when not Never Married) ── */}
+                  {watchedMaritalStatus !== "Never Married" && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-bold text-slate-300 mb-2">
+                          Number of Children
+                        </label>
+                        <Controller
+                          control={control}
+                          name="childrenCount"
+                          render={({ field }) => (
+                            <PremiumSelect
+                              options={[
+                                { id: "0", name: "None" },
+                                { id: "1", name: "1" },
+                                { id: "2", name: "2" },
+                                { id: "3+", name: "3 or more" },
+                              ]}
+                              value={field.value ?? ""}
+                              onChange={field.onChange}
+                            />
+                          )}
+                        />
+                        {errors.childrenCount && (
+                          <p className="mt-1 text-xs text-rose-400">
+                            {errors.childrenCount.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-4 pt-2">
+                        <label
+                          htmlFor="childrenLivingWith"
+                          className="flex items-center gap-3 cursor-pointer"
+                        >
+                          <input
+                            {...register("childrenLivingWith")}
+                            type="checkbox"
+                            id="childrenLivingWith"
+                            className="w-6 h-6 rounded-lg border-white/10 bg-white/5 text-purple-500 focus:ring-purple-500 transition-all"
+                          />
+                          <span className="text-slate-300 font-semibold text-sm">
+                            Children living with me
+                          </span>
+                        </label>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Physical Status */}
+                  <div>
+                    <label className="block text-sm font-bold text-slate-300 mb-2">
+                      Physical Status
+                    </label>
+                    <Controller
+                      control={control}
+                      name="physicalStatus"
+                      render={({ field }) => (
+                        <PremiumSelect
+                          options={["Normal", "Physically Challenged"].map(
+                            (opt) => ({ id: opt, name: opt }),
+                          )}
+                          value={field.value}
+                          onChange={field.onChange}
+                        />
+                      )}
+                    />
+                  </div>
+
+                  {/* Religion */}
                   <div>
                     <label className="block text-sm font-bold text-slate-300 mb-2">
                       Religion
@@ -1305,13 +1381,14 @@ export default function RegisterPage() {
                     />
                   </div>
 
+                  {/* Mother Tongue — aligned field name */}
                   <div>
                     <label className="block text-sm font-bold text-slate-300 mb-2">
                       Mother Tongue
                     </label>
                     <Controller
                       control={control}
-                      name="motherTongueId"
+                      name="motherTongue"
                       render={({ field }) => (
                         <SearchableDropdown
                           options={motherTongues}
@@ -1326,19 +1403,20 @@ export default function RegisterPage() {
                     />
                   </div>
 
+                  {/* About Me — aligned field name */}
                   <div className="col-span-full">
                     <label className="block text-sm font-bold text-slate-300 mb-2">
                       About Me / Bio
                     </label>
                     <textarea
-                      {...register("shortBio")}
+                      {...register("aboutMe")}
                       rows={4}
                       className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none placeholder:text-slate-600 transition-all resize-none"
                       placeholder="Tell us about yourself, your values, and what you're looking for..."
                     />
-                    {errors.shortBio && (
+                    {errors.aboutMe && (
                       <p className="mt-1 text-xs text-rose-400">
-                        {errors.shortBio.message}
+                        {errors.aboutMe.message}
                       </p>
                     )}
                   </div>
@@ -1360,11 +1438,12 @@ export default function RegisterPage() {
                         "dobDay",
                         "dobMonth",
                         "dobYear",
-                        "heightCm",
+                        "height",
                         "maritalStatus",
+                        "childrenCount",
                         "religionId",
-                        "motherTongueId",
-                        "shortBio",
+                        "motherTongue",
+                        "aboutMe",
                       ])
                     }
                     className="group px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl font-black shadow-[0_10px_20px_rgba(168,85,247,0.3)] hover:scale-[1.05] active:scale-95 transition-all flex items-center space-x-2"
@@ -1376,7 +1455,7 @@ export default function RegisterPage() {
               </div>
             )}
 
-            {/* Step 3: Heritage (Family & Horoscope) */}
+            {/* ═══════════════ STEP 3: Heritage (Family & Horoscope) ═══════════════ */}
             {step === 3 && (
               <div className="space-y-8 animate-in fade-in slide-in-from-right-10 duration-500">
                 <div className="pb-4 border-b border-purple-500/20">
@@ -1459,13 +1538,14 @@ export default function RegisterPage() {
                       )}
                     />
                   </div>
+                  {/* subCaste — aligned field name */}
                   <div>
                     <label className="block text-sm font-bold text-slate-300 mb-2">
-                      Subcaste
+                      Sub-caste
                     </label>
                     <input
                       type="text"
-                      {...register("subcaste")}
+                      {...register("subCaste")}
                       placeholder="e.g. Kongu, Iyer"
                       className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none"
                     />
@@ -1506,6 +1586,27 @@ export default function RegisterPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-slate-300 mb-2">
+                      Family Status
+                    </label>
+                    <Controller
+                      control={control}
+                      name="familyStatus"
+                      render={({ field }) => (
+                        <PremiumSelect
+                          options={[
+                            "Middle Class",
+                            "Upper Middle Class",
+                            "Rich",
+                            "Affluent",
+                          ].map((opt) => ({ id: opt, name: opt }))}
+                          value={field.value ?? ""}
+                          onChange={field.onChange}
+                        />
+                      )}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-300 mb-2">
                       Own House
                     </label>
                     <Controller
@@ -1513,38 +1614,31 @@ export default function RegisterPage() {
                       name="ownHouse"
                       render={({ field }) => (
                         <div className="flex gap-4 mt-4">
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <div
-                              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${field.value === true ? "border-purple-500 bg-purple-500/20" : "border-slate-600"}`}
-                              onClick={() => field.onChange(true)}
+                          {[true, false].map((val) => (
+                            <label
+                              key={String(val)}
+                              className="flex items-center gap-2 cursor-pointer"
                             >
-                              {field.value === true && (
-                                <div className="w-3 h-3 rounded-full bg-purple-500" />
-                              )}
-                            </div>
-                            <span className="text-slate-300 font-medium">
-                              Yes
-                            </span>
-                          </label>
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <div
-                              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${field.value === false ? "border-purple-500 bg-purple-500/20" : "border-slate-600"}`}
-                              onClick={() => field.onChange(false)}
-                            >
-                              {field.value === false && (
-                                <div className="w-3 h-3 rounded-full bg-purple-500" />
-                              )}
-                            </div>
-                            <span className="text-slate-300 font-medium">
-                              No
-                            </span>
-                          </label>
+                              <div
+                                className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${field.value === val ? "border-purple-500 bg-purple-500/20" : "border-slate-600"}`}
+                                onClick={() => field.onChange(val)}
+                              >
+                                {field.value === val && (
+                                  <div className="w-3 h-3 rounded-full bg-purple-500" />
+                                )}
+                              </div>
+                              <span className="text-slate-300 font-medium">
+                                {val ? "Yes" : "No"}
+                              </span>
+                            </label>
+                          ))}
                         </div>
                       )}
                     />
                   </div>
                 </div>
 
+                {/* Horoscope Section */}
                 <div className="pt-6 pb-4 border-b border-purple-500/20 flex items-center justify-between">
                   <h3 className="text-lg font-bold text-white flex items-center gap-2">
                     <StarIcon className="w-5 h-5 text-amber-400" />
@@ -1563,21 +1657,18 @@ export default function RegisterPage() {
                           role="switch"
                           aria-checked={field.value}
                           onClick={() => field.onChange(!field.value)}
-                          className={`${
-                            field.value ? "bg-amber-400" : "bg-slate-700"
-                          } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 focus:ring-offset-slate-900`}
+                          className={`${field.value ? "bg-amber-400" : "bg-slate-700"} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 focus:ring-offset-slate-900`}
                         >
                           <span
                             aria-hidden="true"
-                            className={`${
-                              field.value ? "translate-x-5" : "translate-x-0"
-                            } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+                            className={`${field.value ? "translate-x-5" : "translate-x-0"} pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
                           />
                         </button>
                       )}
                     />
                   </div>
                 </div>
+
                 {watchedShowHoroscope && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
@@ -1674,11 +1765,6 @@ export default function RegisterPage() {
                         {...register("birthTime")}
                         className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none"
                       />
-                      {errors.birthTime && (
-                        <p className="text-rose-500 text-xs mt-1">
-                          {errors.birthTime.message}
-                        </p>
-                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-slate-300 mb-2">
@@ -1739,6 +1825,8 @@ export default function RegisterPage() {
                         )}
                       />
                     </div>
+
+                    {/* Horoscope image — aligned field name */}
                     <div className="col-span-full">
                       <label className="block text-sm font-bold text-slate-300 mb-4 flex items-center gap-2">
                         <DocumentArrowUpIcon className="w-5 h-5 text-amber-400" />
@@ -1780,11 +1868,6 @@ export default function RegisterPage() {
                           )}
                         </label>
                       )}
-                      {errors.horoscopeImage && (
-                        <p className="text-rose-500 text-xs mt-1">
-                          {errors.horoscopeImage.message}
-                        </p>
-                      )}
                     </div>
                   </div>
                 )}
@@ -1804,12 +1887,10 @@ export default function RegisterPage() {
                       nextStep([
                         "fatherName",
                         "motherName",
-                        "fatherOccupation",
-                        "motherOccupation",
                         "nativeDistrict",
                         "familyType",
                         "casteId",
-                        "subcaste",
+                        "subCaste",
                         "siblingsCount",
                         "ownHouse",
                         "showHoroscope",
@@ -1818,7 +1899,6 @@ export default function RegisterPage() {
                         "laknamId",
                         "gothramId",
                         "birthTime",
-                        "birthPlace",
                         "sevvaiDhosham",
                         "rahuKetuDhosham",
                       ])
@@ -1832,41 +1912,23 @@ export default function RegisterPage() {
               </div>
             )}
 
-            {/* Step 4: Location & Lifestyle */}
+            {/* ═══════════════ STEP 4: Location & Lifestyle ═══════════════ */}
             {step === 4 && (
               <div className="space-y-8 animate-in fade-in slide-in-from-right-10 duration-500">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="col-span-full grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                      <label className="block text-sm font-bold text-slate-300 mb-2">
-                        Country
-                      </label>
-                      <input
-                        type="text"
-                        {...register("country")}
-                        className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-slate-300 mb-2">
-                        State
-                      </label>
-                      <input
-                        type="text"
-                        {...register("state")}
-                        className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-slate-300 mb-2">
-                        City
-                      </label>
-                      <input
-                        type="text"
-                        {...register("city")}
-                        className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none"
-                      />
-                    </div>
+                    {["country", "state", "city"].map((f) => (
+                      <div key={f}>
+                        <label className="block text-sm font-bold text-slate-300 mb-2 capitalize">
+                          {f}
+                        </label>
+                        <input
+                          type="text"
+                          {...register(f as any)}
+                          className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none"
+                        />
+                      </div>
+                    ))}
                   </div>
 
                   <div className="pt-4 col-span-full border-t border-white/5"></div>
@@ -1892,24 +1954,27 @@ export default function RegisterPage() {
                       )}
                     />
                   </div>
+
+                  {/* fitness — aligned field name */}
                   <div>
                     <label className="block text-sm font-bold text-slate-300 mb-2">
                       Fitness Level
                     </label>
                     <Controller
                       control={control}
-                      name="fitnessLevel"
+                      name="fitness"
                       render={({ field }) => (
                         <PremiumSelect
                           options={["Regular", "Occasional", "Not at all"].map(
                             (opt) => ({ id: opt, name: opt }),
                           )}
-                          value={field.value}
+                          value={field.value ?? ""}
                           onChange={field.onChange}
                         />
                       )}
                     />
                   </div>
+
                   <div>
                     <label className="block text-sm font-bold text-slate-300 mb-2">
                       Smoking Habit
@@ -1929,6 +1994,7 @@ export default function RegisterPage() {
                       )}
                     />
                   </div>
+
                   <div>
                     <label className="block text-sm font-bold text-slate-300 mb-2">
                       Drinking Habit
@@ -1943,6 +2009,69 @@ export default function RegisterPage() {
                             name: opt,
                           }))}
                           value={field.value}
+                          onChange={field.onChange}
+                        />
+                      )}
+                    />
+                  </div>
+
+                  {/* relocation — aligned field name */}
+                  <div>
+                    <label className="block text-sm font-bold text-slate-300 mb-2">
+                      Relocation Openness
+                    </label>
+                    <Controller
+                      control={control}
+                      name="relocation"
+                      render={({ field }) => (
+                        <PremiumSelect
+                          options={["Yes", "No", "Flexible"].map((opt) => ({
+                            id: opt,
+                            name: opt,
+                          }))}
+                          value={field.value ?? ""}
+                          onChange={field.onChange}
+                        />
+                      )}
+                    />
+                  </div>
+
+                  {/* careerAfterMarriage — aligned field name */}
+                  <div>
+                    <label className="block text-sm font-bold text-slate-300 mb-2">
+                      Career Post-Marriage
+                    </label>
+                    <Controller
+                      control={control}
+                      name="careerAfterMarriage"
+                      render={({ field }) => (
+                        <PremiumSelect
+                          options={["Yes", "No", "Flexible"].map((opt) => ({
+                            id: opt,
+                            name: opt,
+                          }))}
+                          value={field.value ?? ""}
+                          onChange={field.onChange}
+                        />
+                      )}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-slate-300 mb-2">
+                      Spiritual Essence
+                    </label>
+                    <Controller
+                      control={control}
+                      name="spirituality"
+                      render={({ field }) => (
+                        <PremiumSelect
+                          options={[
+                            "Very Spiritual",
+                            "Moderately Spiritual",
+                            "Not Spiritual",
+                          ].map((opt) => ({ id: opt, name: opt }))}
+                          value={field.value ?? ""}
                           onChange={field.onChange}
                         />
                       )}
@@ -1967,9 +2096,11 @@ export default function RegisterPage() {
                         "state",
                         "city",
                         "diet",
-                        "fitnessLevel",
+                        "fitness",
                         "smoke",
                         "drink",
+                        "relocation",
+                        "careerAfterMarriage",
                       ])
                     }
                     className="group px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl font-black shadow-[0_10px_20px_rgba(168,85,247,0.3)] hover:scale-[1.05] active:scale-95 transition-all flex items-center space-x-2"
@@ -1981,7 +2112,7 @@ export default function RegisterPage() {
               </div>
             )}
 
-            {/* Step 5: Education & Career */}
+            {/* ═══════════════ STEP 5: Education & Career ═══════════════ */}
             {step === 5 && (
               <div className="space-y-8 animate-in fade-in slide-in-from-right-10 duration-500">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -2010,6 +2141,7 @@ export default function RegisterPage() {
                       </p>
                     )}
                   </div>
+
                   <div>
                     <label className="block text-sm font-bold text-slate-300 mb-2">
                       Employment Type
@@ -2030,6 +2162,7 @@ export default function RegisterPage() {
                       )}
                     />
                   </div>
+
                   <div>
                     <label className="block text-sm font-bold text-slate-300 mb-2">
                       Designation
@@ -2041,6 +2174,7 @@ export default function RegisterPage() {
                       className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none"
                     />
                   </div>
+
                   <div className="col-span-full">
                     <label className="block text-sm font-bold text-slate-300 mb-2">
                       Annual Income Range
@@ -2095,7 +2229,7 @@ export default function RegisterPage() {
               </div>
             )}
 
-            {/* Step 6: Values & Preferences */}
+            {/* ═══════════════ STEP 6: Values & Preferences ═══════════════ */}
             {step === 6 && (
               <div className="space-y-8 animate-in fade-in slide-in-from-right-10 duration-500">
                 <div className="grid grid-cols-1 gap-8">
@@ -2147,7 +2281,7 @@ export default function RegisterPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-bold text-slate-300 mb-2">
-                        Preferred Partner Age (Min)
+                        Partner Age (Min)
                       </label>
                       <input
                         type="number"
@@ -2158,7 +2292,7 @@ export default function RegisterPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-slate-300 mb-2">
-                        Preferred Partner Age (Max)
+                        Partner Age (Max)
                       </label>
                       <input
                         type="number"
@@ -2167,7 +2301,54 @@ export default function RegisterPage() {
                         placeholder="35"
                       />
                     </div>
-                    <div className="col-span-full">
+                    <div>
+                      <label className="block text-sm font-bold text-slate-300 mb-2">
+                        Partner Height Min (cm)
+                      </label>
+                      <input
+                        type="number"
+                        {...register("partnerHeightMin")}
+                        className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none"
+                        placeholder="150"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-300 mb-2">
+                        Partner Height Max (cm)
+                      </label>
+                      <input
+                        type="number"
+                        {...register("partnerHeightMax")}
+                        className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none"
+                        placeholder="190"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-300 mb-2">
+                        Preferred Marital Status
+                      </label>
+                      <Controller
+                        control={control}
+                        name="partnerMaritalStatus"
+                        render={({ field }) => (
+                          <PremiumSelect
+                            options={[
+                              "Never Married",
+                              "Divorced",
+                              "Widowed",
+                              "Awaiting Divorce",
+                              "Any",
+                            ].map((opt) => ({
+                              id: opt,
+                              name: opt === "Any" ? "Any Status" : opt,
+                            }))}
+                            value={field.value ?? ""}
+                            onChange={field.onChange}
+                          />
+                        )}
+                      />
+                    </div>
+                    <div>
                       <label className="block text-sm font-bold text-slate-300 mb-2">
                         Preferred Religion
                       </label>
@@ -2222,7 +2403,7 @@ export default function RegisterPage() {
                     </div>
                     <div className="col-span-full">
                       <label className="block text-sm font-bold text-slate-300 mb-2">
-                        Specific Location Preference
+                        Location Preference
                       </label>
                       <textarea
                         {...register("partnerLocationPreference")}
@@ -2234,7 +2415,7 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
-                {/* Combined Step 7 Fields */}
+                {/* Visibility & Final CTA */}
                 <div className="pt-8 mt-8 border-t border-white/5 space-y-6">
                   <div className="bg-white/5 p-8 rounded-3xl border border-white/10 text-center space-y-4">
                     <div className="w-20 h-20 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -2244,11 +2425,10 @@ export default function RegisterPage() {
                       Legacy Complete!
                     </h3>
                     <p className="text-slate-400 max-w-md mx-auto">
-                      Your profile is ready for curation. Choose how you'd like to
-                      appear to the AuraWeds elite community.
+                      Your profile is ready for curation. Choose how you'd like
+                      to appear to the AuraWeds elite community.
                     </p>
                   </div>
-
                   <div>
                     <label className="block text-sm font-bold text-slate-300 mb-2">
                       Profile Visibility
@@ -2260,7 +2440,10 @@ export default function RegisterPage() {
                         <PremiumSelect
                           options={[
                             { id: "Public", name: "Visible to All" },
-                            { id: "Members Only", name: "Premium Members Only" },
+                            {
+                              id: "Members Only",
+                              name: "Premium Members Only",
+                            },
                             { id: "Hidden", name: "Keep it Private for now" },
                           ]}
                           value={field.value ?? ""}
@@ -2299,6 +2482,7 @@ export default function RegisterPage() {
             )}
           </form>
         </div>
+
         <p className="mt-8 text-center text-[10px] text-slate-500 uppercase tracking-widest leading-loose">
           By creating an account, you agree to AuraWeds Premium{" "}
           <Link href="#" className="underline">

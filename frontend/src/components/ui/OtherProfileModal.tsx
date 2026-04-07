@@ -103,7 +103,7 @@ export default function OtherProfileModal({
   const tabs = ["about"];
   if (hasBackgroundTab) tabs.push("background");
   if (hasAstrologyTab) tabs.push("astrology");
-
+  console.log("profile in other profile", profileData);
   return (
     <div
       className="profile-modal-overlay z-50 fixed inset-0 flex p-4"
@@ -174,7 +174,11 @@ export default function OtherProfileModal({
                     <p className="text-white/60 text-sm flex items-center gap-2 font-medium bg-black/40 px-3 py-2 rounded-lg border border-white/5">
                       <Lock size={14} className="text-[#D4AF37]" />{" "}
                       <span className="font-mono tracking-[0.15em] text-white">
-                        {maskPhoneNumber(profile?.basicDetails?.mobile, false, false) || "Restricted Contact"}
+                        {maskPhoneNumber(
+                          profile?.basicDetails?.mobile,
+                          false,
+                          false,
+                        ) || "Restricted Contact"}
                       </span>
                     </p>
                     <button
@@ -414,7 +418,7 @@ export default function OtherProfileModal({
                         <span className="detail-value">
                           {profile?.EducationCareer?.Education?.name ||
                             profile?.EducationCareer?.highestEducation ||
-                            "-"}
+                            "WORKING"}
                         </span>
                       </div>
                       <div className="detail-item">

@@ -82,6 +82,11 @@ export default function Step7Lifestyle({
               />
             )}
           />
+          {errors.diet && (
+            <p className="text-xs text-rose-400 font-bold mt-2">
+              {errors.diet.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-3">
@@ -101,6 +106,11 @@ export default function Step7Lifestyle({
               />
             )}
           />
+          {errors.spirituality && (
+            <p className="text-xs text-rose-400 font-bold mt-2">
+              {errors.spirituality.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-3">
@@ -119,6 +129,11 @@ export default function Step7Lifestyle({
               />
             )}
           />
+          {errors.drink && (
+            <p className="text-xs text-rose-400 font-bold mt-2">
+              {errors.drink.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-3">
@@ -137,6 +152,11 @@ export default function Step7Lifestyle({
               />
             )}
           />
+          {errors.smoke && (
+            <p className="text-xs text-rose-400 font-bold mt-2">
+              {errors.smoke.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-3">
@@ -155,6 +175,11 @@ export default function Step7Lifestyle({
               />
             )}
           />
+          {errors.ambition && (
+            <p className="text-xs text-rose-400 font-bold mt-2">
+              {errors.ambition.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-3">
@@ -173,6 +198,11 @@ export default function Step7Lifestyle({
               />
             )}
           />
+          {errors.careerAfterMarriage && (
+            <p className="text-xs text-rose-400 font-bold mt-2">
+              {errors.careerAfterMarriage.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-3">
@@ -191,6 +221,11 @@ export default function Step7Lifestyle({
               />
             )}
           />
+          {errors.relocation && (
+            <p className="text-xs text-rose-400 font-bold mt-2">
+              {errors.relocation.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-3">
@@ -209,6 +244,11 @@ export default function Step7Lifestyle({
               />
             )}
           />
+          {errors.fitness && (
+            <p className="text-xs text-rose-400 font-bold mt-2">
+              {errors.fitness.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-3 sm:col-span-2">
@@ -229,6 +269,11 @@ export default function Step7Lifestyle({
               />
             )}
           />
+          {errors.familyStatus && (
+            <p className="text-xs text-rose-400 font-bold mt-2">
+              {errors.familyStatus.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-3 sm:col-span-2">
@@ -262,7 +307,7 @@ export default function Step7Lifestyle({
               Finalizing...
             </span>
           ) : (
-            "Update Profile Complete"
+            "Save & Continue"
           )}
         </button>
       </div>
