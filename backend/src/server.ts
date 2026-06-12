@@ -1,12 +1,20 @@
 import express, { Request, Response } from "express";
-import cors from "cors";
+import compression from "compression";
 import dotenv from "dotenv";
 import http from "http";
 import { Server } from "socket.io";
 import { connectPostgres } from "./config/db.postgres";
 import authRoutes from "./routes/authRoutes";
 import { sequelize } from "./models/sequelize"; // Ensures models are loaded for sync
-import path from "path";
+import logger from "./utils/logger";
+import {
+  corsMiddleware,
+  secureHeaders,
+  apiLimiter,
+  allowedOrigins,
+} from "./config/security";
+import { requestLogger } from "./middlewares/requestLogger";
+import { globalErrorHandler, notFound } from "./middlewares/errorHandler";
 
 dotenv.config();
 
@@ -14,67 +22,38 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PATCH", "DELETE"],
   },
 });
 
 const PORT = process.env.PORT || 5000;
-const isServerless = process.env.VERCEL === "1";
-export const uploadDir = isServerless
-  ? "/tmp/uploads"
-  : path.join(process.cwd(), "uploads");
-// Middlewares
-app.use(cors());
-app.use(express.json());
-app.use("/uploads", express.static(uploadDir));
 
-// ✅ 👉 ADD HERE (important position)
-let isInitialized = false;
+// Security & core middlewares
+app.use(secureHeaders);
+app.use(corsMiddleware);
+app.use(compression());
+app.use(express.json({ limit: "1mb" }));
+app.use(requestLogger);
+app.use("/uploads", express.static("uploads"));
 
-const init = async () => {
-  if (!isInitialized) {
-    await connectPostgres();
+// Rate-limit all API routes
+app.use("/api", apiLimiter);
+
+// Health Route (verifies DB connectivity)
+app.get("/api/health", async (req: Request, res: Response) => {
+  try {
     await sequelize.authenticate();
-    await seedMasterData();
-    console.log("DB initialized");
-    isInitialized = true;
+    res.json({
+      status: "ok",
+      message: "AuraWeds API is running",
+      db: "connected",
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    res.status(503).json({ status: "error", db: "disconnected" });
   }
-};
-
-app.use(async (req, res, next) => {
-  await init();
-  next();
-});
-
-// --- Diagnostics Routes ---
-const availableRoutes = [
-  "/",
-  "/api",
-  "/api/health",
-  "/api/auth",
-  "/api/profile",
-  "/api/matches",
-  "/api/interests",
-  "/api/subscription",
-  "/api/master",
-  "/api/moderation",
-  "/api/notifications",
-  "/api/admin",
-];
-
-// Root Route
-app.get("/", (req: Request, res: Response) => {
-  res.json({
-    message: "AuraWeds Backend API is live on Vercel!",
-    routes: availableRoutes,
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// Basic Route
-app.get("/api/health", (req: Request, res: Response) => {
-  res.json({ status: "ok", message: "AuraWeds API is running" });
 });
 
 // Auth Routes
@@ -104,13 +83,9 @@ app.use("/api/master", masterRoutes);
 import moderationRoutes from "./routes/moderationRoutes";
 app.use("/api/moderation", moderationRoutes);
 
-// Notification Routes
-import notificationRoutes from "./routes/notificationRoutes";
-app.use("/api/notifications", notificationRoutes);
-
-// Admin Routes
-import adminRoutes from "./routes/adminRoutes";
-app.use("/api/admin", adminRoutes);
+// 404 + centralized error handling (must be registered after all routes)
+app.use(notFound);
+app.use(globalErrorHandler);
 
 import { seedMasterData } from "./config/masterSeeder";
 
@@ -125,34 +100,45 @@ const startServer = async () => {
 
     // Seed initial master tables if empty
     await seedMasterData();
-    console.log("Database connected and schema synced successfully.");
+
+    io.on("connection", (socket) => {
+      logger.info(`Socket connected: ${socket.id}`);
+
+      // Listen for chat messages
+      socket.on("send_message", (data) => {
+        // Broadcast or send to specific user using receiverId
+        io.emit("receive_message", data);
+      });
+
+      // WebRTC Signaling
+      socket.on("video_invite", (data) => {
+        socket.broadcast.emit("video_invite", data);
+      });
+
+      socket.on("webrtc_offer", (data) => {
+        socket.broadcast.emit("webrtc_offer", data);
+      });
+
+      socket.on("webrtc_answer", (data) => {
+        socket.broadcast.emit("webrtc_answer", data);
+      });
+
+      socket.on("ice_candidate", (data) => {
+        socket.broadcast.emit("ice_candidate", data);
+      });
+
+      socket.on("disconnect", () => {
+        logger.info(`Socket disconnected: ${socket.id}`);
+      });
+    });
+
+    server.listen(PORT, () => {
+      logger.info(`Server is running on port ${PORT}`);
+    });
   } catch (error) {
-    console.error("Failed to connect to the database:", error);
+    logger.error("Failed to start server", { error });
+    process.exit(1);
   }
 };
 
-// Start the database connection process
-// For Vercel Serverless, we invoke startServer() so the DB connects asynchronously.
-// The first API request might experience a slight delay, but subsequent requests will reuse the instance.
-// startServer();
-
-// Socket.io removed for Vercel compatibility, as Serverless functions are stateless
-// and do not natively support WebSockets effectively.
-
-// Only listen locally, Vercel will export the app instead
-
-app.get("/debug-pg", (req, res) => {
-  try {
-    const pg = require("pg");
-    res.json({ ok: true });
-  } catch (e) {
-    res.status(500).json({ ok: false });
-  }
-});
-if (require.main === module) {
-  server.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
-}
-
-module.exports = app;
+startServer();

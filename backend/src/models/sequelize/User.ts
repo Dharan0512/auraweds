@@ -156,5 +156,9 @@ User.init(
     tableName: "users",
     timestamps: true,
     paranoid: true, // Enables soft deletes using `deletedAt`
+    indexes: [
+      // Match discovery filters by gender + isActive; index speeds those scans.
+      { fields: ["gender", "isActive"], name: "idx_users_gender_active" },
+    ],
   },
 );

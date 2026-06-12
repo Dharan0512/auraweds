@@ -2,9 +2,9 @@ import { Request } from "express";
 import multer, { FileFilterCallback } from "multer"; // Triggers type merging for Express.Multer namespace
 import path from "path";
 import fs from "fs";
-import { uploadDir } from "../server";
 
-// Decide upload directory
+// Upload directory (configurable via UPLOAD_DIR, defaults to ./uploads)
+export const uploadDir = path.resolve(process.env.UPLOAD_DIR || "uploads");
 
 // Ensure directory exists
 if (!fs.existsSync(uploadDir)) {

@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import * as jsonwebtoken from "jsonwebtoken";
 import { User } from "../models/sequelize/User";
 import { UserProfile } from "../models/sequelize/UserProfile";
+import { env } from "../config/env";
 import { sequelize } from "../config/db.postgres";
 import { Badge } from "../models/sequelize/Badge";
 
@@ -81,7 +82,7 @@ export const register = async (
 
     const token = jsonwebtoken.sign(
       { id: newUser.id, role: newUser.role },
-      process.env.JWT_SECRET || "secret",
+      env.jwtSecret,
       {
         expiresIn: "7d",
       },
@@ -127,7 +128,7 @@ export const login = async (
 
     const token = jsonwebtoken.sign(
       { id: user.id, role: user.role },
-      process.env.JWT_SECRET || "secret",
+      env.jwtSecret,
       {
         expiresIn: "7d",
       },
