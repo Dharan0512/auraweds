@@ -76,7 +76,12 @@ const registerSchema = z
       .regex(/^\d+$/, "Only numbers allowed")
       .min(10, "10 digits required"),
     email: z.string().email("Invalid email address"),
-    password: z.string().min(6, "Min 6 characters"),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[A-Z]/, "Password must contain an uppercase letter")
+      .regex(/[0-9]/, "Password must contain a number")
+      .regex(/[^A-Za-z0-9]/, "Password must contain a special character"),
     convenientTimeToCall: z.string().optional(),
     linkedInUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
     instagramUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
@@ -348,6 +353,7 @@ export default function RegisterPage() {
     control,
     trigger,
     setValue,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -698,8 +704,23 @@ export default function RegisterPage() {
       }
 
       setIsOtpModalOpen(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Registration error:", err);
+      // Map server-side field validation errors back onto the form so they
+      // render inline beneath the relevant inputs.
+      const fieldErrors = err?.fieldErrors as
+        | Record<string, string>
+        | undefined;
+      if (fieldErrors) {
+        (Object.keys(fieldErrors) as Array<keyof RegisterFormData>).forEach(
+          (field) => {
+            setError(field, {
+              type: "server",
+              message: fieldErrors[field as string],
+            });
+          },
+        );
+      }
     }
   };
 
@@ -1079,6 +1100,11 @@ export default function RegisterPage() {
                         placeholder="Phone number"
                         className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none placeholder:text-slate-600 transition-all"
                       />
+                      {errors.mobile && (
+                        <p className="mt-1 text-xs text-rose-400">
+                          {errors.mobile.message}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -1093,6 +1119,11 @@ export default function RegisterPage() {
                         placeholder="name@example.com"
                         className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none placeholder:text-slate-600 transition-all"
                       />
+                      {errors.email && (
+                        <p className="mt-1 text-xs text-rose-400">
+                          {errors.email.message}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-slate-300 mb-2">
@@ -1104,6 +1135,11 @@ export default function RegisterPage() {
                         placeholder="••••••••"
                         className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none placeholder:text-slate-600 transition-all"
                       />
+                      {errors.password && (
+                        <p className="mt-1 text-xs text-rose-400 whitespace-pre-line">
+                          {errors.password.message}
+                        </p>
+                      )}
                     </div>
                   </div>
 

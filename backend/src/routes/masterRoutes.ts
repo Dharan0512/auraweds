@@ -6,6 +6,7 @@ import {
   getMotherTongues,
   getReligions,
   getCastes,
+  getSubcastes,
   getHeights,
   getEducations,
   getEmploymentTypes,
@@ -29,6 +30,7 @@ router.get("/cities", getCities);
 router.get("/mother-tongues", getMotherTongues);
 router.get("/religions", getReligions);
 router.get("/castes", getCastes);
+router.get("/subcastes", getSubcastes);
 
 // Physical
 router.get("/heights", getHeights);

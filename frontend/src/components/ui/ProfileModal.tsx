@@ -1,6 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useTransform,
+} from "framer-motion";
 import toast from "react-hot-toast";
 import { profileService } from "@/services/profileService";
 import {
@@ -11,7 +17,6 @@ import {
   Home,
   Heart,
   MapPin,
-  LogOut,
   Edit2,
   Trash2,
   Linkedin,
@@ -21,9 +26,12 @@ import {
   Settings,
   Lock,
   Eye,
-  EyeOff,
   Phone,
-  Mail,
+  BadgeCheck,
+  GraduationCap,
+  Wine,
+  Globe,
+  Star,
 } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
 import UpgradeModal from "./UpgradeModal";
@@ -41,6 +49,111 @@ interface ProfileModalProps {
   userId?: string;
 }
 
+/* ------------------------------------------------------------------ */
+/* Presentational helpers (defined module-level to avoid re-creation)  */
+/* ------------------------------------------------------------------ */
+
+const EASE = [0.16, 1, 0.3, 1] as const;
+
+/** Reveals its children with a soft fade/slide as they enter the scroll viewport. */
+function Reveal({
+  children,
+  root,
+  delay = 0,
+  className,
+}: {
+  children: React.ReactNode;
+  root: React.RefObject<HTMLElement>;
+  delay?: number;
+  className?: string;
+}) {
+  return (
+    <motion.div
+      className={className}
+      initial={{ opacity: 0, y: 26 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ root, once: true, margin: "0px 0px -48px 0px" }}
+      transition={{ duration: 0.6, ease: EASE, delay }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function SectionHeader({
+  icon,
+  title,
+  subtitle,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle?: string;
+}) {
+  return (
+    <div className="aw-shead">
+      <span className="aw-shead-ic">{icon}</span>
+      <div>
+        <div className="aw-shead-tt">{title}</div>
+        {subtitle && <div className="aw-shead-sub">{subtitle}</div>}
+      </div>
+    </div>
+  );
+}
+
+function Detail({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: React.ReactNode;
+  accent?: boolean;
+}) {
+  return (
+    <div className="aw-detail">
+      <span className="aw-detail-l">{label}</span>
+      <span className={`aw-detail-v${accent ? " accent" : ""}`}>{value}</span>
+    </div>
+  );
+}
+
+function CompletionRing({ value }: { value: number }) {
+  const r = 17;
+  const c = 2 * Math.PI * r;
+  const offset = c - (value / 100) * c;
+  return (
+    <div className="aw-completion" title={`Profile ${value}% complete`}>
+      <div className="aw-completion-label">
+        Profile
+        <b>{value}%</b>
+      </div>
+      <svg className="aw-ring" width="40" height="40" viewBox="0 0 40 40">
+        <circle
+          className="aw-ring-track"
+          cx="20"
+          cy="20"
+          r={r}
+          fill="none"
+          strokeWidth="4"
+        />
+        <circle
+          className="aw-ring-fill"
+          cx="20"
+          cy="20"
+          r={r}
+          fill="none"
+          strokeWidth="4"
+          strokeDasharray={c}
+          strokeDashoffset={offset}
+        />
+      </svg>
+    </div>
+  );
+}
+
+const TABS_OWN = ["about", "background", "astrology", "partner", "manage"];
+const TABS_OTHER = ["about", "background", "astrology", "partner"];
+
 export default function ProfileModal({
   isOpen,
   onClose,
@@ -52,10 +165,9 @@ export default function ProfileModal({
   const { tier } = useSubscription();
   const { theme, setTheme } = useTheme();
   const [showUpgrade, setShowUpgrade] = useState(false);
-  const [isViewingContact, setIsViewingContact] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("about");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  console.log("profile in profilemodal", profile);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -65,6 +177,12 @@ export default function ProfileModal({
     loading: false,
   });
   const [privacySaving, setPrivacySaving] = useState(false);
+
+  // Hero parallax — driven by the scroll container's scrollTop.
+  const scrollMv = useMotionValue(0);
+  const heroY = useTransform(scrollMv, [0, 300], [0, 60]);
+  const heroScale = useTransform(scrollMv, [0, 300], [1, 1.16]);
+  const heroFade = useTransform(scrollMv, [0, 220], [1, 0.35]);
 
   // New features state
   const [previewImage, setPreviewImage] = useState<{
@@ -82,6 +200,7 @@ export default function ProfileModal({
   useEffect(() => {
     if (isOpen) {
       fetchProfile();
+      setActiveTab("about");
     }
   }, [isOpen]);
 
@@ -318,19 +437,101 @@ export default function ProfileModal({
 
   if (!isOpen) return null;
 
+  /* ----- derived display data (only when profile is present) ----- */
+  const p = profile?.profile || {};
+  const u = profile?.user || {};
+  const photos: any[] = profile?.photos || [];
+  const fullName = `${u.firstName || ""} ${u.lastName || ""}`.trim() || "Member";
+  const gender = u.gender || p.basicDetails?.gender || "—";
+  const dob = p.dob || p.basicDetails?.dob;
+  const age = dob ? calculateAge(dob) : "—";
+  const religion = p.Religion?.name || p.basicDetails?.religion || "Other";
+  const motherTongue = p.MotherTongue?.name;
+  const city =
+    p.City?.name ||
+    p.LocationLifestyle?.city ||
+    p.basicDetails?.location ||
+    "India";
+  const diet = p.LocationLifestyle?.diet || p.lifestyle?.diet;
+  const smoke = p.LocationLifestyle?.smoke || p.lifestyle?.smoke;
+  const drink = p.LocationLifestyle?.drink || p.lifestyle?.drink;
+  // Caste name comes through as an association (own profile) or a flat
+  // serialized string (other members), so read both shapes.
+  const caste = p.Caste?.name || p.basicDetails?.caste;
+  const subcaste = p.subcaste || p.basicDetails?.subcaste;
+  const physicalStatus = p.physicalStatus || p.basicDetails?.physicalStatus;
+  const education =
+    p.EducationCareer?.highestEducation ||
+    p.Education?.name ||
+    p.professionalInfo?.highestEducation;
+  const designation =
+    p.EducationCareer?.designation ||
+    p.Occupation?.name ||
+    p.professionalInfo?.designation;
+  const company =
+    p.EducationCareer?.companyName || p.professionalInfo?.companyName;
+  const incomeRange =
+    p.EducationCareer?.incomeRange ||
+    p.IncomeRange?.displayLabel ||
+    p.professionalInfo?.incomeRange;
+  const heightCm = p.heightCm || p.basicDetails?.heightCm;
+  const verified = !!(
+    profile?.badge?.mobileVerified ||
+    profile?.isVerified ||
+    u.isVerified
+  );
+  const bio = p.shortBio;
+  const lookingFor = p.partnerExpectations || p.lookingFor;
+
+  // profile completion (mirrors the dashboard checklist)
+  const checklist = [
+    !!u.firstName,
+    photos.length > 0,
+    !!(designation || education),
+    !!(profile?.preferences || profile?.partnerPreferences),
+    verified,
+  ];
+  const completion = profile
+    ? Math.round((checklist.filter(Boolean).length / checklist.length) * 100)
+    : 0;
+
+  // compatibility highlight chips (skip empties)
+  const highlights = [
+    religion && { icon: <Heart size={13} />, label: religion },
+    motherTongue && { icon: <Globe size={13} />, label: motherTongue },
+    education && { icon: <GraduationCap size={13} />, label: education },
+    city && { icon: <MapPin size={13} />, label: city },
+    diet && { icon: <Wine size={13} />, label: diet },
+  ].filter(Boolean) as { icon: React.ReactNode; label: string }[];
+
+  const tabs = userId ? TABS_OTHER : TABS_OWN;
+
+  const heroBg = getImageUrl(
+    photos?.[0]?.url || photos?.[0],
+    u.firstName,
+  );
+  const avatarUrl = getImageUrl(photos?.[0]?.url || photos?.[0], u.firstName);
+
   return (
     <div className="profile-modal-overlay" onClick={onClose}>
       <div
         className="profile-modal-container"
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Profile"
       >
-        <button className="profile-modal-close" onClick={onClose}>
-          <X size={24} />
+        <button
+          className="profile-modal-close"
+          onClick={onClose}
+          aria-label="Close profile"
+        >
+          <X size={22} />
         </button>
 
         {loading ? (
           <div className="flex items-center justify-center flex-1">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#D4AF37]"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--accent-2)]"></div>
           </div>
         ) : profile && isEditing ? (
           <EditProfileForm
@@ -342,128 +543,72 @@ export default function ProfileModal({
             onCancel={() => setIsEditing(false)}
           />
         ) : profile ? (
-          <>
-            <div className="profile-hero">
-              <img
-                src={getImageUrl(
-                  profile.photos?.[0]?.url || profile.photos?.[0],
-                  profile.user?.firstName,
-                )}
-                alt={profile.user?.firstName}
-                className="profile-hero-image"
+          <div
+            className="aw-scroll"
+            ref={scrollRef}
+            onScroll={(e) => scrollMv.set(e.currentTarget.scrollTop)}
+          >
+            {/* ---------------- Cinematic hero ---------------- */}
+            <div className="aw-hero">
+              <motion.div
+                className="aw-hero-bg"
+                style={{
+                  backgroundImage: `url("${heroBg}")`,
+                  y: heroY,
+                  scale: heroScale,
+                  opacity: heroFade,
+                }}
               />
-              <div className="profile-hero-gradient"></div>
+              <div className="aw-hero-tint" />
 
-              {!userId && profile.photos?.[0] && (
-                <div className="hero-action-overlay">
+              {!userId && photos?.[0] && (
+                <div className="aw-hero-actions">
                   <button
                     className="hero-action-btn"
-                    title="Preview Cover"
+                    title="Preview cover"
                     onClick={() =>
                       setPreviewImage({
-                        url: getImageUrl(
-                          profile.photos?.[0]?.url || profile.photos?.[0],
-                          profile.user?.firstName,
-                        ),
+                        url: heroBg,
                         title: "Cover Photo",
                         showDownload: true,
                       })
                     }
                   >
-                    <Eye size={18} />
+                    <Eye size={16} />
                   </button>
                   <button
                     className="hero-action-btn"
-                    title="Crop / Edit Cover"
+                    title="Crop / edit cover"
                     onClick={() =>
                       setCroppingImage({
-                        url: getImageUrl(
-                          profile.photos?.[0]?.url || profile.photos?.[0],
-                          profile.user?.firstName,
-                        ),
+                        url: heroBg,
                         type: "photo",
-                        id: profile.photos?.[0]?.id,
+                        id: photos?.[0]?.id,
                         aspect: 21 / 9,
                       })
                     }
                   >
-                    <Edit2 size={18} />
+                    <Edit2 size={16} />
                   </button>
                   <button
                     className="hero-action-btn delete"
-                    title="Delete Cover"
+                    title="Delete cover"
                     onClick={() => {
-                      const photoId = profile.photos?.[0]?.id;
+                      const photoId = photos?.[0]?.id;
                       if (photoId) handleDeletePhoto(photoId);
                     }}
                   >
-                    <Trash2 size={18} />
+                    <Trash2 size={16} />
                   </button>
                 </div>
               )}
-              <div className="profile-hero-info">
-                <h2 className="profile-name">
-                  {profile.user?.firstName} {profile.user?.lastName}
-                </h2>
-                <div className="profile-badges">
-                  <span className="badge">
-                    {profile.user?.gender ||
-                      profile.profile?.basicDetails?.gender}
-                    ,{" "}
-                    {profile.profile?.dob || profile.profile?.basicDetails?.dob
-                      ? calculateAge(
-                          profile.profile.dob ||
-                            profile.profile.basicDetails.dob,
-                        )
-                      : "28"}{" "}
-                    yrs
-                  </span>
-                  <span className="badge">
-                    {profile.profile?.Religion?.name ||
-                      profile.profile?.basicDetails?.religion ||
-                      "Other"}
-                  </span>
-                </div>
-                {/* Social Links */}
-                <div className="flex gap-4 mt-4">
-                  {profile.profile?.linkedInUrl && (
-                    <a
-                      href={profile.profile.linkedInUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-white hover:text-[#D4AF37] transition-colors"
-                    >
-                      <Linkedin size={20} />
-                    </a>
-                  )}
-                  {profile.profile?.instagramUrl && (
-                    <a
-                      href={profile.profile.instagramUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-white hover:text-[#D4AF37] transition-colors"
-                    >
-                      <Instagram size={20} />
-                    </a>
-                  )}
-                  {profile.profile?.facebookUrl && (
-                    <a
-                      href={profile.profile.facebookUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-white hover:text-[#D4AF37] transition-colors"
-                    >
-                      <Facebook size={20} />
-                    </a>
-                  )}
-                </div>
-              </div>
+
               {!userId && (
                 <button
-                  className="absolute bottom-6 right-8 px-6 py-3 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 rounded-2xl font-black uppercase tracking-wider hover:scale-[1.02] active:scale-95 transition-all shadow-xl flex items-center justify-center space-x-2 text-xs"
+                  className="aw-cover-add"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <Camera size={16} className="text-slate-900" />
+                  <Camera size={15} />
                   <span>Add Photo</span>
                 </button>
               )}
@@ -476,998 +621,1068 @@ export default function ProfileModal({
               />
             </div>
 
-            {/* Content Tabs Navigation */}
-            <div className="flex px-8 border-b border-white/10 gap-8 mt-2 overflow-x-auto custom-scrollbar">
-              {(userId
-                ? ["about", "background", "astrology", "partner"]
-                : ["about", "background", "astrology", "partner", "manage"]
-              ).map((tab) => (
-                <button
-                  key={tab}
-                  className={`py-4 text-sm font-bold tracking-wider uppercase transition-colors whitespace-nowrap border-b-2 ${
-                    activeTab === tab
-                      ? "text-[#D4AF37] border-[#D4AF37]"
-                      : "text-slate-400 border-transparent hover:text-white"
-                  }`}
-                  onClick={() => setActiveTab(tab)}
-                >
-                  {tab === "manage" ? (
-                    <span className="flex items-center gap-2">
-                      <Settings size={16} /> Manage
+            {/* ---------------- Identity band ---------------- */}
+            <div className="aw-identity">
+              <motion.div
+                className="aw-avatar-wrap"
+                whileHover={{ scale: 1.035, rotate: -0.5 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                onClick={() =>
+                  setPreviewImage({
+                    url: avatarUrl,
+                    title: fullName,
+                    showDownload: !userId,
+                  })
+                }
+              >
+                <img className="aw-avatar" src={avatarUrl} alt={fullName} />
+                {!userId && (
+                  <button
+                    className="aw-avatar-cam"
+                    title="Add / change photo"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fileInputRef.current?.click();
+                    }}
+                  >
+                    <Camera size={16} />
+                  </button>
+                )}
+              </motion.div>
+
+              <div className="aw-identity-main">
+                <div className="aw-name-row">
+                  <h2 className="aw-name">{fullName}</h2>
+                  {verified && (
+                    <span className="aw-verified">
+                      <BadgeCheck size={13} /> Verified
                     </span>
-                  ) : (
-                    tab
                   )}
-                </button>
-              ))}
-            </div>
+                </div>
 
-            {/* Content Area */}
-            <div className="profile-content pt-6">
-              {activeTab === "about" && (
-                <div className="space-y-8 animate-in fade-in duration-300">
-                  {/* Photo Gallery */}
-                  <div>
-                    <div className="section-title">
-                      <Camera size={20} /> Photo Gallery
-                    </div>
-                    <div className="photo-gallery">
-                      {profile.photos && profile.photos.length > 0 ? (
-                        profile.photos.map((photo: any, idx: number) => {
-                          const photoUrl = getImageUrl(
-                            photo.url || photo,
-                            profile.user?.firstName,
-                          );
-                          return (
-                            <div key={idx} className="gallery-item">
-                              <img
-                                src={photoUrl}
-                                alt={`Gallery ${idx}`}
-                                className=""
-                              />
-                              <div className="gallery-item-overlay">
-                                <button
-                                  className="action-btn action-btn-preview"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setPreviewImage({
-                                      url: photoUrl,
-                                      title: `Photo ${idx + 1}`,
-                                      showDownload: !userId, // Only allow download if it's the own profile
-                                    });
-                                  }}
-                                >
-                                  <Eye size={12} /> Preview
-                                </button>
-                                {!userId && (
-                                  <>
-                                    <button
-                                      className="action-btn action-btn-edit"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setCroppingImage({
-                                          url: photoUrl,
-                                          type: "photo",
-                                          id: photo.id,
-                                        });
-                                      }}
-                                    >
-                                      <Edit2 size={12} /> Edit
-                                    </button>
-                                    <button
-                                      className="action-btn action-btn-delete"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (photo.id)
-                                          handleDeletePhoto(photo.id);
-                                      }}
-                                    >
-                                      <Trash2 size={12} /> Delete
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <div className="text-slate-500 italic text-sm py-4">
-                          No gallery photos yet. Add some to stand out!
-                        </div>
-                      )}
-                      <div
-                        className="add-photo-btn"
-                        onClick={() => fileInputRef.current?.click()}
+                <div className="aw-chips">
+                  <span className="aw-chip">
+                    {gender}, {age} yrs
+                  </span>
+                  <span className="aw-chip">
+                    <Heart size={12} /> {religion}
+                  </span>
+                  <span className="aw-chip aw-chip-loc">
+                    <MapPin size={12} /> {city}
+                  </span>
+                </div>
+
+                {(p.linkedInUrl || p.instagramUrl || p.facebookUrl) && (
+                  <div className="aw-socials">
+                    {p.linkedInUrl && (
+                      <a
+                        href={p.linkedInUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="LinkedIn"
                       >
-                        <Camera size={24} />
-                        <span className="text-xs">Add photo</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Bio */}
-                  {profile.profile?.shortBio && (
-                    <div>
-                      <div className="section-title">
-                        <User size={20} /> About Me
-                      </div>
-                      <div className="p-4 bg-slate-900/40 rounded-2xl border border-white/5 text-slate-300 italic text-sm leading-relaxed">
-                        &ldquo;{profile.profile.shortBio}&rdquo;
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Basic Details */}
-                    <div>
-                      <div className="section-title">
-                        <User size={20} /> Personal Info
-                      </div>
-                      <div className="details-grid grid-cols-1 gap-y-3">
-                        <div className="detail-item justify-between border-b border-white/5 pb-2">
-                          <span className="detail-label">Full Name</span>
-                          <span className="detail-value">
-                            {profile.user?.firstName} {profile.user?.lastName}
-                          </span>
-                        </div>
-                        <div className="detail-item justify-between border-b border-white/5 pb-2">
-                          <span className="detail-label">Date of Birth</span>
-                          <span className="detail-value">
-                            {profile.profile?.dob ||
-                              profile.profile?.basicDetails?.dob ||
-                              "Not specified"}
-                          </span>
-                        </div>
-                        <div className="detail-item justify-between border-b border-white/5 pb-2">
-                          <span className="detail-label">Height</span>
-                          <span className="detail-value">
-                            {profile.profile?.heightCm ||
-                              profile.profile?.basicDetails?.heightCm ||
-                              "Not specified"}{" "}
-                            cm
-                          </span>
-                        </div>
-                        <div className="detail-item justify-between">
-                          <span className="detail-label">Marital Status</span>
-                          <span className="detail-value">
-                            {profile.profile?.maritalStatus ||
-                              profile.profile?.basicDetails?.maritalStatus ||
-                              "Not specified"}
-                          </span>
-                        </div>
-                        {profile.profile?.maritalStatus !== "Never Married" && (
-                          <>
-                            <div className="detail-item justify-between border-t border-white/5 pt-2">
-                              <span className="detail-label">Children</span>
-                              <span className="detail-value">
-                                {profile.profile?.childrenCount || 0}
-                              </span>
-                            </div>
-                            <div className="detail-item justify-between">
-                              <span className="detail-label">Living With</span>
-                              <span className="detail-value">
-                                {profile.profile?.childrenLivingWith
-                                  ? "Yes"
-                                  : "No"}
-                              </span>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Location & Lifestyle */}
-                    <div>
-                      <div className="section-title">
-                        <MapPin size={20} /> Lifestyle & Location
-                      </div>
-                      <div className="details-grid grid-cols-1 gap-y-3">
-                        <div className="detail-item justify-between border-b border-white/5 pb-2">
-                          <span className="detail-label">Current City</span>
-                          <span className="detail-value">
-                            {profile.profile?.City?.name ||
-                              profile.profile?.LocationLifestyle?.city ||
-                              profile.profile?.basicDetails?.location ||
-                              "Not specified"}
-                          </span>
-                        </div>
-                        <div className="detail-item justify-between border-b border-white/5 pb-2">
-                          <span className="detail-label">Diet</span>
-                          <span className="detail-value">
-                            {profile.profile?.LocationLifestyle?.diet ||
-                              profile.profile?.lifestyle?.diet ||
-                              "Not specified"}
-                          </span>
-                        </div>
-                        <div className="detail-item justify-between border-b border-white/5 pb-2">
-                          <span className="detail-label">Smoking</span>
-                          <span className="detail-value">
-                            {profile.profile?.LocationLifestyle?.smoke || "No"}
-                          </span>
-                        </div>
-                        <div className="detail-item justify-between">
-                          <span className="detail-label">Drinking</span>
-                          <span className="detail-value">
-                            {profile.profile?.LocationLifestyle?.drink || "No"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Contact Information - Only for other profiles */}
-                  {userId && (
-                    <div className="mt-8 pt-8 border-t border-white/5">
-                      <div className="section-title">
-                        <Phone size={20} className="text-[#D4AF37]" /> Contact
-                        Information
-                      </div>
-
-                      <div className="p-6 bg-slate-900/60 rounded-3xl border border-[#D4AF37]/20 relative overflow-hidden group">
-                        {profile.user?.mobile || profile.user?.email ? (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
-                            <div className="flex items-center gap-4">
-                              <div className="w-10 h-10 rounded-full bg-[#D4AF37]/10 flex items-center justify-center text-[#D4AF37]">
-                                <Phone size={18} />
-                              </div>
-                              <div>
-                                <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">
-                                  Mobile Number
-                                </p>
-                                <p className="text-white font-medium flex items-center gap-2">
-                                  {profile.user?.mobile?.includes("X") && (
-                                    <Lock
-                                      size={14}
-                                      className="text-[#D4AF37]"
-                                    />
-                                  )}
-                                  {profile.user?.mobile || "N/A"}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <div className="w-10 h-10 rounded-full bg-[#D4AF37]/10 flex items-center justify-center text-[#D4AF37]">
-                                <Mail size={18} />
-                              </div>
-                              <div>
-                                <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">
-                                  Email Address
-                                </p>
-                                <p className="text-white font-medium">
-                                  {profile.user.email || "N/A"}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-center py-4 relative z-10">
-                            <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 mx-auto mb-4">
-                              <Lock size={24} />
-                            </div>
-                            <h4 className="text-white font-bold mb-2">
-                              Contact Details Locked
-                            </h4>
-                            <p className="text-slate-400 text-sm max-w-sm mx-auto mb-6">
-                              {tier === "Basic Member"
-                                ? "Basic members cannot view contact details. Upgrade to Silver or Gold to unlock contact access."
-                                : tier === "Silver"
-                                  ? "You have reached your limit of 10 contact views per month. Upgrade to Gold for unlimited access!"
-                                  : "Contact details are hidden by the user or requires a higher tier."}
-                            </p>
-                            <button
-                              onClick={() => setShowUpgrade(true)}
-                              className="px-8 py-3 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 font-black uppercase tracking-wider rounded-2xl hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2 mx-auto mt-4 text-xs"
-                            >
-                              Upgrade Now to Unlock
-                            </button>
-                          </div>
-                        )}
-
-                        {/* Decorative background element */}
-                        <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-[#D4AF37]/5 rounded-full blur-3xl group-hover:bg-[#D4AF37]/10 transition-colors" />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeTab === "background" && (
-                <div className="space-y-8 animate-in fade-in duration-300">
-                  {/* Religion Section */}
-                  <div>
-                    <div className="section-title">
-                      <Heart size={20} /> Religion & Ethnicity
-                    </div>
-                    <div className="details-grid">
-                      <div className="detail-item">
-                        <span className="detail-label">Religion</span>
-                        <span className="detail-value">
-                          {profile.profile?.Religion?.name ||
-                            profile.profile?.basicDetails?.religion ||
-                            "Not specified"}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Caste / Sub-caste</span>
-                        <span className="detail-value">
-                          {profile.profile?.Caste?.name || "Open"} /{" "}
-                          {profile.profile?.subcaste ||
-                            profile.profile?.basicDetails?.subcaste ||
-                            "Open"}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Mother Tongue</span>
-                        <span className="detail-value">
-                          {profile.profile?.MotherTongue?.name || "English"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Professional Section */}
-                  <div>
-                    <div className="section-title">
-                      <Briefcase size={20} /> Education & Career
-                    </div>
-                    <div className="details-grid">
-                      <div className="detail-item">
-                        <span className="detail-label">Highest Education</span>
-                        <span className="detail-value">
-                          {profile.profile?.EducationCareer?.highestEducation ||
-                            profile.profile?.Education?.name ||
-                            profile?.profile?.professionalInfo
-                              ?.highestEducation ||
-                            "Not specified"}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Designation</span>
-                        <span className="detail-value">
-                          {profile.profile?.EducationCareer?.designation ||
-                            profile.profile?.Occupation?.name ||
-                            profile?.profile?.professionalInfo?.designation ||
-                            "Not specified"}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Company</span>
-                        <span className="detail-value">
-                          {profile.profile?.EducationCareer?.companyName ||
-                            profile?.profile?.professionalInfo?.companyName ||
-                            "Not specified"}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Employment Type</span>
-                        <span className="detail-value">
-                          {profile.profile?.EducationCareer?.employmentType ||
-                            profile?.profile?.professionalInfo
-                              ?.employmentType ||
-                            "Not specified"}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Annual Income</span>
-                        <span className="detail-value">
-                          {profile.profile?.EducationCareer?.incomeRange ||
-                            profile.profile?.IncomeRange?.displayLabel ||
-                            profile?.profile?.professionalInfo?.incomeRange ||
-                            "Confidential"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Family Roots Section */}
-                  <div>
-                    <div className="section-title">
-                      <Home size={20} /> Family Roots
-                    </div>
-                    <div className="details-grid">
-                      <div className="detail-item">
-                        <span className="detail-label">Father's Name</span>
-                        <span className="detail-value">
-                          {profile.profile?.FamilyDetail?.fatherName ||
-                            profile.profile?.familyRoots?.fatherName ||
-                            "Not specified"}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">
-                          Father's Occupation
-                        </span>
-                        <span className="detail-value">
-                          {profile.profile?.FamilyDetail?.fatherOccupation ||
-                            profile.profile?.familyRoots?.fatherOccupation ||
-                            "Not specified"}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Mother's Name</span>
-                        <span className="detail-value">
-                          {profile.profile?.FamilyDetail?.motherName ||
-                            profile.profile?.familyRoots?.motherName ||
-                            "Not specified"}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">
-                          Mother's Occupation
-                        </span>
-                        <span className="detail-value">
-                          {profile.profile?.FamilyDetail?.motherOccupation ||
-                            profile.profile?.familyRoots?.motherOccupation ||
-                            "Not specified"}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Family Type</span>
-                        <span className="detail-value">
-                          {profile.profile?.FamilyDetail?.familyType ||
-                            profile.profile?.familyRoots?.familyType ||
-                            "Nuclear"}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Family Status</span>
-                        <span className="detail-value">
-                          {profile.profile?.FamilyDetail?.familyStatus ||
-                            profile.profile?.lifestyle?.familyStatus ||
-                            profile.profile?.familyStatus ||
-                            "Middle Class"}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Siblings</span>
-                        <span className="detail-value">
-                          {profile.profile?.FamilyDetail?.siblingsCount ??
-                            profile.profile?.familyRoots?.siblingsCount ??
-                            0}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Own House</span>
-                        <span className="detail-value">
-                          {(profile.profile?.FamilyDetail?.ownHouse ??
-                            profile.profile?.familyRoots?.ownHouse)
-                            ? "Yes"
-                            : "No"}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Native District</span>
-                        <span className="detail-value">
-                          {profile.profile?.FamilyDetail?.nativeDistrict ||
-                            profile.profile?.familyRoots?.nativeDistrict ||
-                            "Not specified"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === "astrology" && (
-                <div className="space-y-8 animate-in fade-in duration-300">
-                  {/* Horoscope Section */}
-                  <div>
-                    <div className="section-title">
-                      <Sparkles size={20} className="text-amber-400" />{" "}
-                      Horoscope & Astrology
-                    </div>
-                    <div className="details-grid">
-                      <div className="detail-item">
-                        <span className="detail-label">Star (Nakshatram)</span>
-                        <span className="detail-value">
-                          {profile.profile?.HoroscopeDetail?.Star?.name ||
-                            profile.profile?.HoroscopeDetail?.star ||
-                            profile.profile?.horoscope?.star ||
-                            "Not specified"}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Rasi</span>
-                        <span className="detail-value">
-                          {profile.profile?.HoroscopeDetail?.Rasi?.name ||
-                            profile.profile?.HoroscopeDetail?.rasi ||
-                            profile.profile?.horoscope?.rasi ||
-                            "Not specified"}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Laknam</span>
-                        <span className="detail-value">
-                          {profile.profile?.HoroscopeDetail?.Laknam?.name ||
-                            profile.profile?.HoroscopeDetail?.laknam ||
-                            profile.profile?.horoscope?.laknam ||
-                            "Not specified"}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Gothram</span>
-                        <span className="detail-value">
-                          {profile.profile?.HoroscopeDetail?.Gothram?.name ||
-                            profile.profile?.HoroscopeDetail?.gothram ||
-                            profile.profile?.horoscope?.gothram ||
-                            "Not specified"}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Sevvai Dosham</span>
-                        <span className="detail-value text-amber-500 font-bold">
-                          {profile.profile?.HoroscopeDetail?.sevvaiDhosham ||
-                            profile.profile?.horoscope?.sevvaiDhosham ||
-                            "No"}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Rahu Ketu Dosham</span>
-                        <span className="detail-value text-amber-500 font-bold">
-                          {profile.profile?.HoroscopeDetail?.rahuKetuDhosham ||
-                            profile.profile?.horoscope?.rahuKetuDhosham ||
-                            "No"}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Birth Time</span>
-                        <span className="detail-value">
-                          {profile.profile?.HoroscopeDetail?.birthTime ||
-                            profile.profile?.horoscope?.birthTime ||
-                            "Not specified"}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Birth Place</span>
-                        <span className="detail-value">
-                          {profile.profile?.HoroscopeDetail?.BirthCity?.name ||
-                            profile.profile?.HoroscopeDetail?.birthPlace ||
-                            profile.profile?.horoscope?.birthPlace ||
-                            "Not specified"}
-                        </span>
-                      </div>
-                    </div>
-
-                    {profile.profile?.HoroscopeDetail?.horoscopeImageUrl && (
-                      <div className="mt-8">
-                        <span className="section-title mb-6">
-                          <Eye size={20} /> Horoscope Chart
-                        </span>
-                        <div className="horoscope-chart-container group cursor-pointer">
-                          <img
-                            src={getImageUrl(
-                              profile.profile?.HoroscopeDetail
-                                ?.horoscopeImageUrl ||
-                                profile.profile?.horoscope?.horoscopeImageUrl,
-                            )}
-                            alt="Horoscope Chart"
-                            className="horoscope-chart-image"
-                          />
-                          <div className="horoscope-chart-overlay">
-                            <button
-                              className="action-btn action-btn-preview"
-                              onClick={() =>
-                                setPreviewImage({
-                                  url: getImageUrl(
-                                    profile.profile?.HoroscopeDetail
-                                      ?.horoscopeImageUrl ||
-                                      profile.profile?.horoscope
-                                        ?.horoscopeImageUrl,
-                                  ),
-                                  title: "Horoscope Chart",
-                                })
-                              }
-                            >
-                              <Eye size={14} /> Preview
-                            </button>
-                            {!userId && (
-                              <>
-                                <button
-                                  className="action-btn action-btn-edit"
-                                  onClick={() =>
-                                    setCroppingImage({
-                                      url: getImageUrl(
-                                        profile.profile?.HoroscopeDetail
-                                          ?.horoscopeImageUrl ||
-                                          profile.profile?.horoscope
-                                            ?.horoscopeImageUrl,
-                                      ),
-                                      type: "horoscope",
-                                    })
-                                  }
-                                >
-                                  <Edit2 size={14} /> Edit
-                                </button>
-                                <button
-                                  className="action-btn action-btn-delete"
-                                  onClick={handleDeleteHoroscope}
-                                >
-                                  <Trash2 size={14} /> Delete
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                        <Linkedin size={19} />
+                      </a>
                     )}
-
-                    {!userId &&
-                      !(
-                        profile.profile?.HoroscopeDetail?.horoscopeImageUrl ||
-                        profile.profile?.horoscope?.horoscopeImageUrl
-                      ) && (
-                        <div className="mt-8">
-                          <label className="w-full h-40 rounded-3xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center cursor-pointer hover:border-[#D4AF37]/50 transition-all bg-slate-900/40 group">
-                            <input
-                              type="file"
-                              className="hidden"
-                              onChange={handleHoroscopeFileSelect}
-                              accept="image/*"
-                            />
-                            <Camera
-                              size={32}
-                              className="text-slate-600 mb-3 group-hover:text-[#D4AF37] transition-colors"
-                            />
-                            <span className="text-sm font-bold text-slate-500 group-hover:text-slate-300">
-                              Upload Horoscope Chart
-                            </span>
-                          </label>
-                        </div>
-                      )}
-                  </div>
-                </div>
-              )}
-
-              {activeTab === "partner" && (
-                <div className="space-y-8 animate-in fade-in duration-300">
-                  {/* Preferences Section */}
-                  <div>
-                    <div className="section-title">
-                      <Heart size={20} className="text-[#D4AF37]" /> Partner
-                      Preferences
-                    </div>
-                    <div className="details-grid">
-                      <div className="detail-item">
-                        <span className="detail-label">Age Range</span>
-                        <span className="detail-value">
-                          {profile.preferences?.minAge} -{" "}
-                          {profile.preferences?.maxAge} years
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Height Range</span>
-                        <span className="detail-value">
-                          {profile.preferences?.minHeightCm}cm -{" "}
-                          {profile.preferences?.maxHeightCm}cm
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Marital Status</span>
-                        <span className="detail-value">
-                          {profile.preferences?.maritalStatus || "Any"}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">
-                          Religion Preference
-                        </span>
-                        <span className="detail-value">
-                          {profile.preferences?.Religion?.name || "Any"}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Preferred Location</span>
-                        <span className="detail-value">
-                          {profile.preferences?.preferredLocation ||
-                            profile.preferences?.City?.name ||
-                            "Open to any"}
-                        </span>
-                      </div>
-                      {profile.preferences?.partnerCastes &&
-                        Array.isArray(profile.preferences.partnerCastes) &&
-                        profile.preferences.partnerCastes.length > 0 && (
-                          <div className="detail-item col-span-full">
-                            <span className="detail-label">
-                              Preferred Caste(s)
-                            </span>
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              {profile.preferences.partnerCastes.map(
-                                (caste: string) => (
-                                  <span
-                                    key={caste}
-                                    className="px-3 py-1 bg-purple-500/10 border border-purple-500/30 text-purple-300 rounded-full text-xs"
-                                  >
-                                    {caste === "any" ? "Any Caste" : caste}
-                                  </span>
-                                ),
-                              )}
-                            </div>
-                          </div>
-                        )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === "manage" && (
-                <div className="space-y-8 animate-in fade-in duration-300">
-                  {/* Interface Theme Selection */}
-                  <div>
-                    <div className="section-title">
-                      <Sparkles
-                        size={20}
-                        className="text-[var(--accent-color)]"
-                      />{" "}
-                      Interface Theme
-                    </div>
-                    <div className="p-6 bg-slate-900/40 rounded-2xl border border-white/5">
-                      <p className="text-sm text-slate-400 mb-6 font-medium">
-                        Personalize your AuraWeds experience with a premium
-                        interface theme.
-                      </p>
-                      <div className="grid grid-cols-2 gap-4">
-                        <button
-                          onClick={() => setTheme("theme-violet")}
-                          className={`flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all group ${
-                            theme === "theme-violet"
-                              ? "bg-purple-600/10 border-purple-500 shadow-[0_0_20px_rgba(124,58,237,0.2)]"
-                              : "bg-slate-800/40 border-white/5 hover:border-white/20"
-                          }`}
-                        >
-                          <div
-                            className={`w-12 h-12 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 ${
-                              theme === "theme-violet"
-                                ? "bg-purple-500 text-white"
-                                : "bg-slate-700 text-slate-400"
-                            }`}
-                          >
-                            <Sparkles size={24} />
-                          </div>
-                          <div className="text-center">
-                            <h4
-                              className={`text-sm font-bold ${theme === "theme-violet" ? "text-white" : "text-slate-400"}`}
-                            >
-                              Violet Tech
-                            </h4>
-                            <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1 font-black">
-                              Default
-                            </p>
-                          </div>
-                        </button>
-
-                        <button
-                          onClick={() => setTheme("theme-gold")}
-                          className={`flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all group ${
-                            theme === "theme-gold"
-                              ? "bg-amber-600/10 border-amber-500 shadow-[0_0_20px_rgba(212,175,55,0.2)]"
-                              : "bg-slate-800/40 border-white/5 hover:border-white/20"
-                          }`}
-                        >
-                          <div
-                            className={`w-12 h-12 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 ${
-                              theme === "theme-gold"
-                                ? "bg-amber-500 text-black"
-                                : "bg-slate-700 text-slate-400"
-                            }`}
-                          >
-                            <Sparkles size={24} />
-                          </div>
-                          <div className="text-center">
-                            <h4
-                              className={`text-sm font-bold ${theme === "theme-gold" ? "text-white" : "text-slate-400"}`}
-                            >
-                              Royal Gold
-                            </h4>
-                            <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1 font-black">
-                              Elite
-                            </p>
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Privacy & Visibility */}
-                  <div>
-                    <div className="section-title">
-                      <Eye size={20} className="text-[var(--accent-color)]" />{" "}
-                      Profile Visibility & Privacy
-                    </div>
-
-                    <div className="p-6 bg-slate-900/40 rounded-2xl border border-white/5 space-y-6">
-                      <div className="flex items-center justify-between pb-6 border-b border-white/10">
-                        <div>
-                          <h4 className="text-white font-medium">
-                            Profile Status
-                          </h4>
-                          <p className="text-sm text-slate-400">
-                            Control who can see your profile
-                          </p>
-                        </div>
-                        <select
-                          className="bg-slate-800 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-[#D4AF37] transition-colors"
-                          value={profile.profile?.profileVisibility || "Public"}
-                          onChange={(e) => handleStatusChange(e.target.value)}
-                          disabled={privacySaving}
-                        >
-                          <option value="Public">Public (Everyone)</option>
-                          <option value="Members Only">Members Only</option>
-                          <option value="Hidden">Hidden (Invisible)</option>
-                        </select>
-                      </div>
-
-                      {[
-                        {
-                          key: "showHoroscope",
-                          label: "Show Horoscope",
-                          desc: "Display your astrology chart and details",
-                        },
-                        {
-                          key: "showAstroMatch",
-                          label: "Show Astro Match",
-                          desc: "Allow others to see horoscope compatibility",
-                        },
-                        {
-                          key: "showExactIncome",
-                          label: "Show Exact Income",
-                          desc: "Display your precise salary digits",
-                        },
-                        {
-                          key: "showFamilyDetails",
-                          label: "Show Family Details",
-                          desc: "Display parents occupations and siblings",
-                        },
-                        {
-                          key: "showBirthDetails",
-                          label: "Show Birth Details",
-                          desc: "Display exact birth time and place",
-                        },
-                        {
-                          key: "showSocialLinks",
-                          label: "Show Social Links",
-                          desc: "Display your Instagram/LinkedIn/Facebook",
-                        },
-                        {
-                          key: "showValues",
-                          label: "Show Values Ratings",
-                          desc: "Display your ambition and personality scales",
-                        },
-                      ].map((setting) => {
-                        // Default to true for most, false for exact income (matching backend default)
-                        const isChecked =
-                          profile.profile?.privacySettings?.[setting.key] ??
-                          setting.key !== "showExactIncome";
-                        return (
-                          <div
-                            key={setting.key}
-                            className="flex items-center justify-between"
-                          >
-                            <div>
-                              <h4 className="text-white text-sm font-medium">
-                                {setting.label}
-                              </h4>
-                              <p className="text-xs text-slate-400">
-                                {setting.desc}
-                              </p>
-                            </div>
-                            <label className="relative inline-flex items-center cursor-pointer">
-                              <input
-                                type="checkbox"
-                                className="sr-only peer"
-                                checked={isChecked}
-                                onChange={(e) =>
-                                  handlePrivacyChange(
-                                    setting.key,
-                                    e.target.checked,
-                                  )
-                                }
-                                disabled={privacySaving}
-                              />
-                              <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#D4AF37]"></div>
-                            </label>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Change Password */}
-                  <div>
-                    <div className="section-title">
-                      <Lock size={20} className="text-slate-300" /> Change
-                      Password
-                    </div>
-
-                    <form
-                      onSubmit={handlePasswordChange}
-                      className="p-6 bg-slate-900/40 rounded-2xl border border-white/5 space-y-4 max-w-lg"
-                    >
-                      <div>
-                        <label className="block text-xs font-medium text-slate-400 mb-1 tracking-wider uppercase">
-                          Current Password
-                        </label>
-                        <input
-                          type="password"
-                          className="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all"
-                          value={passwordData.currentPassword}
-                          onChange={(e) =>
-                            setPasswordData({
-                              ...passwordData,
-                              currentPassword: e.target.value,
-                            })
-                          }
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-slate-400 mb-1 tracking-wider uppercase">
-                          New Password
-                        </label>
-                        <input
-                          type="password"
-                          className="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all"
-                          value={passwordData.newPassword}
-                          onChange={(e) =>
-                            setPasswordData({
-                              ...passwordData,
-                              newPassword: e.target.value,
-                            })
-                          }
-                          required
-                          minLength={6}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-slate-400 mb-1 tracking-wider uppercase">
-                          Confirm New Password
-                        </label>
-                        <input
-                          type="password"
-                          className="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all"
-                          value={passwordData.confirmPassword}
-                          onChange={(e) =>
-                            setPasswordData({
-                              ...passwordData,
-                              confirmPassword: e.target.value,
-                            })
-                          }
-                          required
-                          minLength={6}
-                        />
-                      </div>
-                      <button
-                        type="submit"
-                        disabled={passwordStatus.loading}
-                        className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-medium transition-colors disabled:opacity-50 mt-2"
+                    {p.instagramUrl && (
+                      <a
+                        href={p.instagramUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Instagram"
                       >
-                        {passwordStatus.loading
-                          ? "Updating..."
-                          : "Update Password"}
-                      </button>
-                    </form>
+                        <Instagram size={19} />
+                      </a>
+                    )}
+                    {p.facebookUrl && (
+                      <a
+                        href={p.facebookUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Facebook"
+                      >
+                        <Facebook size={19} />
+                      </a>
+                    )}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
               {!userId && (
-                <div className="mt-8 flex justify-center pt-8 border-t border-white/5">
+                <div className="aw-identity-aside">
+                  <CompletionRing value={completion} />
                   <button
-                    className="premium-btn px-12 py-4 text-lg"
+                    className="aw-edit-btn"
                     onClick={() => setIsEditing(true)}
                   >
-                    Edit My Profile
+                    <Edit2 size={14} /> Edit Profile
                   </button>
                 </div>
               )}
             </div>
-          </>
+
+            {/* ---------------- Sticky navigation ---------------- */}
+            <nav className="aw-nav" role="tablist">
+              {tabs.map((tab) => (
+                <button
+                  key={tab}
+                  role="tab"
+                  aria-selected={activeTab === tab}
+                  className={`aw-tab${activeTab === tab ? " active" : ""}`}
+                  onClick={() => setActiveTab(tab)}
+                >
+                  {tab === "manage" && <Settings size={14} />}
+                  <span>{tab}</span>
+                  {activeTab === tab && (
+                    <motion.span
+                      layoutId="aw-tab-underline"
+                      className="aw-tab-underline"
+                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                    />
+                  )}
+                </button>
+              ))}
+            </nav>
+
+            {/* ---------------- Tab content ---------------- */}
+            <div className="aw-content">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.32, ease: EASE }}
+                >
+                  {/* ============ ABOUT ============ */}
+                  {activeTab === "about" && (
+                    <div className="aw-grid">
+                      {/* ---- left column ---- */}
+                      <div className="aw-col">
+                        {bio && (
+                          <Reveal root={scrollRef}>
+                            <div className="aw-card">
+                              <SectionHeader
+                                icon={<User size={17} />}
+                                title="About Me"
+                              />
+                              <p className="aw-prose">“{bio}”</p>
+                            </div>
+                          </Reveal>
+                        )}
+
+                        <Reveal root={scrollRef} delay={0.04}>
+                          <div className="aw-card">
+                            <SectionHeader
+                              icon={<User size={17} />}
+                              title="Basic Information"
+                            />
+                            <div className="aw-details">
+                              <Detail
+                                label="Height"
+                                value={heightCm ? `${heightCm} cm` : "—"}
+                              />
+                              <Detail
+                                label="Marital Status"
+                                value={
+                                  p.maritalStatus ||
+                                  p.basicDetails?.maritalStatus ||
+                                  "Never Married"
+                                }
+                              />
+                              <Detail label="Date of Birth" value={dob || "—"} />
+                              <Detail
+                                label="Mother Tongue"
+                                value={motherTongue || "—"}
+                              />
+                              <Detail
+                                label="Physical Status"
+                                value={physicalStatus || "Normal"}
+                              />
+                              {p.maritalStatus &&
+                                p.maritalStatus !== "Never Married" && (
+                                  <Detail
+                                    label="Children"
+                                    value={p.childrenCount || 0}
+                                  />
+                                )}
+                            </div>
+                          </div>
+                        </Reveal>
+
+                        {(designation || company || education || incomeRange) && (
+                          <Reveal root={scrollRef} delay={0.08}>
+                            <div className="aw-card">
+                              <SectionHeader
+                                icon={<Briefcase size={17} />}
+                                title="Education & Career"
+                              />
+                              <div className="aw-details">
+                                {education && (
+                                  <Detail label="Education" value={education} />
+                                )}
+                                {designation && (
+                                  <Detail
+                                    label="Designation"
+                                    value={designation}
+                                  />
+                                )}
+                                {company && (
+                                  <Detail label="Company" value={company} />
+                                )}
+                                <Detail
+                                  label="Annual Income"
+                                  value={incomeRange || "Confidential"}
+                                />
+                              </div>
+                            </div>
+                          </Reveal>
+                        )}
+
+                        <Reveal root={scrollRef} delay={0.12}>
+                          <div className="aw-card">
+                            <SectionHeader
+                              icon={<MapPin size={17} />}
+                              title="Lifestyle & Location"
+                            />
+                            <div className="aw-details">
+                              <Detail label="Current City" value={city} />
+                              <Detail label="Diet" value={diet || "—"} />
+                              <Detail label="Smoking" value={smoke || "No"} />
+                              <Detail label="Drinking" value={drink || "No"} />
+                            </div>
+                          </div>
+                        </Reveal>
+
+                        {/* Contact — only when viewing another member */}
+                        {userId && (
+                          <Reveal root={scrollRef} delay={0.16}>
+                            <div className="aw-card">
+                              <SectionHeader
+                                icon={<Phone size={17} />}
+                                title="Contact Information"
+                              />
+                              {u.mobile || u.email ? (
+                                <div className="aw-details">
+                                  <Detail
+                                    label="Mobile Number"
+                                    value={
+                                      <span className="flex items-center gap-2">
+                                        {u.mobile?.includes("X") && (
+                                          <Lock
+                                            size={13}
+                                            className="text-[var(--accent-2)]"
+                                          />
+                                        )}
+                                        {u.mobile || "N/A"}
+                                      </span>
+                                    }
+                                  />
+                                  <Detail
+                                    label="Email Address"
+                                    value={u.email || "N/A"}
+                                  />
+                                </div>
+                              ) : (
+                                <div className="text-center py-3">
+                                  <div className="w-14 h-14 rounded-full bg-[var(--surface-2)] flex items-center justify-center text-[var(--text-subtle)] mx-auto mb-3">
+                                    <Lock size={22} />
+                                  </div>
+                                  <h4 className="text-[var(--text)] font-bold mb-1">
+                                    Contact Details Locked
+                                  </h4>
+                                  <p className="text-[var(--text-muted)] text-sm max-w-sm mx-auto mb-4">
+                                    {tier === "Basic Member"
+                                      ? "Basic members cannot view contact details. Upgrade to Silver to unlock contact access."
+                                      : "Contact details are hidden by the user."}
+                                  </p>
+                                  {tier === "Basic Member" && (
+                                    <button
+                                      onClick={() => setShowUpgrade(true)}
+                                      className="aw-edit-btn mx-auto"
+                                    >
+                                      Upgrade to Silver
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </Reveal>
+                        )}
+                      </div>
+
+                      {/* ---- right column ---- */}
+                      <div className="aw-col">
+                        <Reveal root={scrollRef} delay={0.04}>
+                          <div className="aw-card">
+                            <SectionHeader
+                              icon={<Camera size={17} />}
+                              title="Photo Gallery"
+                              subtitle={
+                                photos.length
+                                  ? `${photos.length} photo${photos.length > 1 ? "s" : ""}`
+                                  : undefined
+                              }
+                            />
+                            <div className="aw-gallery">
+                              {photos.map((photo: any, idx: number) => {
+                                const photoUrl = getImageUrl(
+                                  photo.url || photo,
+                                  u.firstName,
+                                );
+                                return (
+                                  <div key={idx} className="aw-gallery-item">
+                                    <img
+                                      src={photoUrl}
+                                      alt={`Photo ${idx + 1}`}
+                                      loading="lazy"
+                                      decoding="async"
+                                    />
+                                    <div className="aw-gallery-overlay">
+                                      <button
+                                        className="aw-gmini"
+                                        title="Preview"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setPreviewImage({
+                                            url: photoUrl,
+                                            title: `Photo ${idx + 1}`,
+                                            showDownload: !userId,
+                                          });
+                                        }}
+                                      >
+                                        <Eye size={14} />
+                                      </button>
+                                      {!userId && (
+                                        <>
+                                          <button
+                                            className="aw-gmini"
+                                            title="Edit"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setCroppingImage({
+                                                url: photoUrl,
+                                                type: "photo",
+                                                id: photo.id,
+                                              });
+                                            }}
+                                          >
+                                            <Edit2 size={14} />
+                                          </button>
+                                          <button
+                                            className="aw-gmini del"
+                                            title="Delete"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              if (photo.id)
+                                                handleDeletePhoto(photo.id);
+                                            }}
+                                          >
+                                            <Trash2 size={14} />
+                                          </button>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                              {!userId && (
+                                <div
+                                  className="aw-gallery-add"
+                                  onClick={() => fileInputRef.current?.click()}
+                                >
+                                  <Camera size={22} />
+                                  <span>Add</span>
+                                </div>
+                              )}
+                              {userId && photos.length === 0 && (
+                                <div className="aw-empty">
+                                  No photos shared yet.
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </Reveal>
+
+                        <Reveal root={scrollRef} delay={0.08}>
+                          <div className="aw-card">
+                            <SectionHeader
+                              icon={<Heart size={17} />}
+                              title="Looking For"
+                            />
+                            <p className="aw-lookfor">
+                              {lookingFor ||
+                                "A life partner who is kind, ambitious, and shares similar values."}
+                            </p>
+                          </div>
+                        </Reveal>
+
+                        {highlights.length > 0 && (
+                          <Reveal root={scrollRef} delay={0.12}>
+                            <div className="aw-card">
+                              <SectionHeader
+                                icon={<Sparkles size={17} />}
+                                title="Compatibility Highlights"
+                              />
+                              <div className="aw-tags">
+                                {highlights.map((h, i) => (
+                                  <span key={i} className="aw-tag">
+                                    <span className="aw-tag-dot" />
+                                    {h.label}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </Reveal>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ============ BACKGROUND ============ */}
+                  {activeTab === "background" && (
+                    <div className="aw-col" style={{ gap: 22 }}>
+                      <Reveal root={scrollRef}>
+                        <div className="aw-card">
+                          <SectionHeader
+                            icon={<Heart size={17} />}
+                            title="Religion & Ethnicity"
+                          />
+                          <div className="aw-details">
+                            <Detail label="Religion" value={religion} />
+                            <Detail
+                              label="Caste / Sub-caste"
+                              value={`${caste || "Open"} / ${
+                                subcaste || "Open"
+                              }`}
+                            />
+                            <Detail
+                              label="Mother Tongue"
+                              value={motherTongue || "English"}
+                            />
+                          </div>
+                        </div>
+                      </Reveal>
+
+                      <Reveal root={scrollRef} delay={0.06}>
+                        <div className="aw-card">
+                          <SectionHeader
+                            icon={<Briefcase size={17} />}
+                            title="Education & Career"
+                          />
+                          <div className="aw-details">
+                            <Detail
+                              label="Highest Education"
+                              value={education || "Not specified"}
+                            />
+                            <Detail
+                              label="Designation"
+                              value={designation || "Not specified"}
+                            />
+                            <Detail
+                              label="Company"
+                              value={company || "Not specified"}
+                            />
+                            <Detail
+                              label="Employment Type"
+                              value={
+                                p.EducationCareer?.employmentType ||
+                                p.professionalInfo?.employmentType ||
+                                "Not specified"
+                              }
+                            />
+                            <Detail
+                              label="Annual Income"
+                              value={incomeRange || "Confidential"}
+                            />
+                          </div>
+                        </div>
+                      </Reveal>
+
+                      <Reveal root={scrollRef} delay={0.12}>
+                        <div className="aw-card">
+                          <SectionHeader
+                            icon={<Home size={17} />}
+                            title="Family Roots"
+                          />
+                          <div className="aw-details">
+                            <Detail
+                              label="Father's Name"
+                              value={
+                                p.FamilyDetail?.fatherName ||
+                                p.familyRoots?.fatherName ||
+                                "Not specified"
+                              }
+                            />
+                            <Detail
+                              label="Father's Occupation"
+                              value={
+                                p.FamilyDetail?.fatherOccupation ||
+                                p.familyRoots?.fatherOccupation ||
+                                "Not specified"
+                              }
+                            />
+                            <Detail
+                              label="Mother's Name"
+                              value={
+                                p.FamilyDetail?.motherName ||
+                                p.familyRoots?.motherName ||
+                                "Not specified"
+                              }
+                            />
+                            <Detail
+                              label="Mother's Occupation"
+                              value={
+                                p.FamilyDetail?.motherOccupation ||
+                                p.familyRoots?.motherOccupation ||
+                                "Not specified"
+                              }
+                            />
+                            <Detail
+                              label="Family Type"
+                              value={
+                                p.FamilyDetail?.familyType ||
+                                p.familyRoots?.familyType ||
+                                "Nuclear"
+                              }
+                            />
+                            <Detail
+                              label="Family Status"
+                              value={
+                                p.FamilyDetail?.familyStatus ||
+                                p.lifestyle?.familyStatus ||
+                                p.familyStatus ||
+                                "Middle Class"
+                              }
+                            />
+                            <Detail
+                              label="Siblings"
+                              value={
+                                p.FamilyDetail?.siblingsCount ??
+                                p.familyRoots?.siblingsCount ??
+                                0
+                              }
+                            />
+                            <Detail
+                              label="Native District"
+                              value={
+                                p.FamilyDetail?.nativeDistrict ||
+                                p.familyRoots?.nativeDistrict ||
+                                "Not specified"
+                              }
+                            />
+                          </div>
+                        </div>
+                      </Reveal>
+                    </div>
+                  )}
+
+                  {/* ============ ASTROLOGY ============ */}
+                  {activeTab === "astrology" && (
+                    <div className="aw-col" style={{ gap: 22 }}>
+                      <Reveal root={scrollRef}>
+                        <div className="aw-card">
+                          <SectionHeader
+                            icon={<Star size={17} />}
+                            title="Horoscope & Astrology"
+                          />
+                          <div className="aw-details">
+                            <Detail
+                              label="Star (Nakshatram)"
+                              value={
+                                p.HoroscopeDetail?.Star?.name ||
+                                p.HoroscopeDetail?.star ||
+                                p.horoscope?.star ||
+                                "Not specified"
+                              }
+                            />
+                            <Detail
+                              label="Rasi"
+                              value={
+                                p.HoroscopeDetail?.Rasi?.name ||
+                                p.HoroscopeDetail?.rasi ||
+                                p.horoscope?.rasi ||
+                                "Not specified"
+                              }
+                            />
+                            <Detail
+                              label="Laknam"
+                              value={
+                                p.HoroscopeDetail?.Laknam?.name ||
+                                p.HoroscopeDetail?.laknam ||
+                                p.horoscope?.laknam ||
+                                "Not specified"
+                              }
+                            />
+                            <Detail
+                              label="Gothram"
+                              value={
+                                p.HoroscopeDetail?.Gothram?.name ||
+                                p.HoroscopeDetail?.gothram ||
+                                p.horoscope?.gothram ||
+                                "Not specified"
+                              }
+                            />
+                            <Detail
+                              label="Sevvai Dosham"
+                              accent
+                              value={
+                                p.HoroscopeDetail?.sevvaiDhosham ||
+                                p.horoscope?.sevvaiDhosham ||
+                                "No"
+                              }
+                            />
+                            <Detail
+                              label="Rahu Ketu Dosham"
+                              accent
+                              value={
+                                p.HoroscopeDetail?.rahuKetuDhosham ||
+                                p.horoscope?.rahuKetuDhosham ||
+                                "No"
+                              }
+                            />
+                            <Detail
+                              label="Birth Time"
+                              value={
+                                p.HoroscopeDetail?.birthTime ||
+                                p.horoscope?.birthTime ||
+                                "Not specified"
+                              }
+                            />
+                            <Detail
+                              label="Birth Place"
+                              value={
+                                p.HoroscopeDetail?.BirthCity?.name ||
+                                p.HoroscopeDetail?.birthPlace ||
+                                p.horoscope?.birthPlace ||
+                                "Not specified"
+                              }
+                            />
+                          </div>
+
+                          {p.HoroscopeDetail?.horoscopeImageUrl && (
+                            <div className="mt-6">
+                              <div className="horoscope-chart-container group">
+                                <img
+                                  src={getImageUrl(
+                                    p.HoroscopeDetail?.horoscopeImageUrl ||
+                                      p.horoscope?.horoscopeImageUrl,
+                                  )}
+                                  alt="Horoscope Chart"
+                                  className="horoscope-chart-image"
+                                  loading="lazy"
+                                />
+                                <div className="horoscope-chart-overlay">
+                                  <button
+                                    className="action-btn"
+                                    onClick={() =>
+                                      setPreviewImage({
+                                        url: getImageUrl(
+                                          p.HoroscopeDetail?.horoscopeImageUrl ||
+                                            p.horoscope?.horoscopeImageUrl,
+                                        ),
+                                        title: "Horoscope Chart",
+                                      })
+                                    }
+                                  >
+                                    <Eye size={13} /> Preview
+                                  </button>
+                                  {!userId && (
+                                    <>
+                                      <button
+                                        className="action-btn action-btn-edit"
+                                        onClick={() =>
+                                          setCroppingImage({
+                                            url: getImageUrl(
+                                              p.HoroscopeDetail
+                                                ?.horoscopeImageUrl ||
+                                                p.horoscope?.horoscopeImageUrl,
+                                            ),
+                                            type: "horoscope",
+                                          })
+                                        }
+                                      >
+                                        <Edit2 size={13} /> Edit
+                                      </button>
+                                      <button
+                                        className="action-btn action-btn-delete"
+                                        onClick={handleDeleteHoroscope}
+                                      >
+                                        <Trash2 size={13} /> Delete
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {!userId &&
+                            !(
+                              p.HoroscopeDetail?.horoscopeImageUrl ||
+                              p.horoscope?.horoscopeImageUrl
+                            ) && (
+                              <label className="mt-6 w-full h-36 rounded-2xl border-2 border-dashed border-[var(--accent-border)] flex flex-col items-center justify-center cursor-pointer hover:bg-[var(--accent-soft-bg)] transition-all bg-[var(--surface-2)] group">
+                                <input
+                                  type="file"
+                                  className="hidden"
+                                  onChange={handleHoroscopeFileSelect}
+                                  accept="image/*"
+                                />
+                                <Camera
+                                  size={28}
+                                  className="text-[var(--text-subtle)] mb-2 group-hover:text-[var(--accent-2)] transition-colors"
+                                />
+                                <span className="text-sm font-bold text-[var(--text-subtle)] group-hover:text-[var(--text-muted)]">
+                                  Upload Horoscope Chart
+                                </span>
+                              </label>
+                            )}
+                        </div>
+                      </Reveal>
+                    </div>
+                  )}
+
+                  {/* ============ PARTNER ============ */}
+                  {activeTab === "partner" && (
+                    <div className="aw-col" style={{ gap: 22 }}>
+                      <Reveal root={scrollRef}>
+                        <div className="aw-card">
+                          <SectionHeader
+                            icon={<Heart size={17} />}
+                            title="Partner Preferences"
+                          />
+                          <div className="aw-details">
+                            <Detail
+                              label="Age Range"
+                              value={`${profile.preferences?.minAge ?? "—"} - ${
+                                profile.preferences?.maxAge ?? "—"
+                              } years`}
+                            />
+                            <Detail
+                              label="Height Range"
+                              value={`${profile.preferences?.minHeightCm ?? "—"}cm - ${
+                                profile.preferences?.maxHeightCm ?? "—"
+                              }cm`}
+                            />
+                            <Detail
+                              label="Marital Status"
+                              value={profile.preferences?.maritalStatus || "Any"}
+                            />
+                            <Detail
+                              label="Religion Preference"
+                              value={profile.preferences?.Religion?.name || "Any"}
+                            />
+                            <Detail
+                              label="Preferred Location"
+                              value={
+                                profile.preferences?.preferredLocation ||
+                                profile.preferences?.City?.name ||
+                                "Open to any"
+                              }
+                            />
+                          </div>
+
+                          {Array.isArray(
+                            profile.preferences?.partnerCastes,
+                          ) &&
+                            profile.preferences.partnerCastes.length > 0 && (
+                              <div className="mt-5">
+                                <span className="aw-detail-l">
+                                  Preferred Caste(s)
+                                </span>
+                                <div className="aw-tags mt-2">
+                                  {profile.preferences.partnerCastes.map(
+                                    (caste: string) => (
+                                      <span key={caste} className="aw-tag">
+                                        <span className="aw-tag-dot" />
+                                        {caste === "any" ? "Any Caste" : caste}
+                                      </span>
+                                    ),
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                        </div>
+                      </Reveal>
+                    </div>
+                  )}
+
+                  {/* ============ MANAGE ============ */}
+                  {activeTab === "manage" && (
+                    <div className="aw-col" style={{ gap: 22 }}>
+                      {/* Interface theme */}
+                      <Reveal root={scrollRef}>
+                        <div className="aw-card">
+                          <SectionHeader
+                            icon={<Sparkles size={17} />}
+                            title="Interface Theme"
+                          />
+                          <p className="text-sm text-[var(--text-muted)] mb-5">
+                            Personalize your AuraWeds experience with a premium
+                            interface theme.
+                          </p>
+                          <div className="grid grid-cols-2 gap-4">
+                            <button
+                              onClick={() => setTheme("theme-violet")}
+                              className={`flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all group ${
+                                theme === "theme-violet"
+                                  ? "bg-purple-600/10 border-purple-500 shadow-[0_0_20px_rgba(124,58,237,0.2)]"
+                                  : "bg-[var(--surface-2)] border-[var(--border)] hover:border-[var(--border-strong)]"
+                              }`}
+                            >
+                              <div
+                                className={`w-12 h-12 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 ${
+                                  theme === "theme-violet"
+                                    ? "bg-purple-500 text-white"
+                                    : "bg-[var(--surface-hover)] text-[var(--text-muted)]"
+                                }`}
+                              >
+                                <Sparkles size={24} />
+                              </div>
+                              <div className="text-center">
+                                <h4
+                                  className={`text-sm font-bold ${theme === "theme-violet" ? "text-[var(--text)]" : "text-[var(--text-muted)]"}`}
+                                >
+                                  Violet Tech
+                                </h4>
+                                <p className="text-[10px] text-[var(--text-subtle)] uppercase tracking-widest mt-1 font-black">
+                                  Default
+                                </p>
+                              </div>
+                            </button>
+
+                            <button
+                              onClick={() => setTheme("theme-gold")}
+                              className={`flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all group ${
+                                theme === "theme-gold"
+                                  ? "bg-amber-600/10 border-amber-500 shadow-[0_0_20px_rgba(212,175,55,0.2)]"
+                                  : "bg-[var(--surface-2)] border-[var(--border)] hover:border-[var(--border-strong)]"
+                              }`}
+                            >
+                              <div
+                                className={`w-12 h-12 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 ${
+                                  theme === "theme-gold"
+                                    ? "bg-amber-500 text-black"
+                                    : "bg-[var(--surface-hover)] text-[var(--text-muted)]"
+                                }`}
+                              >
+                                <Sparkles size={24} />
+                              </div>
+                              <div className="text-center">
+                                <h4
+                                  className={`text-sm font-bold ${theme === "theme-gold" ? "text-[var(--text)]" : "text-[var(--text-muted)]"}`}
+                                >
+                                  Royal Gold
+                                </h4>
+                                <p className="text-[10px] text-[var(--text-subtle)] uppercase tracking-widest mt-1 font-black">
+                                  Elite
+                                </p>
+                              </div>
+                            </button>
+                          </div>
+                        </div>
+                      </Reveal>
+
+                      {/* Privacy & visibility */}
+                      <Reveal root={scrollRef} delay={0.06}>
+                        <div className="aw-card">
+                          <SectionHeader
+                            icon={<Eye size={17} />}
+                            title="Profile Visibility & Privacy"
+                          />
+                          <div className="space-y-6">
+                            <div className="flex items-center justify-between pb-6 border-b border-[var(--border)]">
+                              <div>
+                                <h4 className="text-[var(--text)] font-medium">
+                                  Profile Status
+                                </h4>
+                                <p className="text-sm text-[var(--text-muted)]">
+                                  Control who can see your profile
+                                </p>
+                              </div>
+                              <select
+                                className="bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-4 py-2 text-[var(--text)] outline-none focus:border-[var(--accent-2)] transition-colors"
+                                value={p.profileVisibility || "Public"}
+                                onChange={(e) =>
+                                  handleStatusChange(e.target.value)
+                                }
+                                disabled={privacySaving}
+                              >
+                                <option value="Public">Public (Everyone)</option>
+                                <option value="Members Only">
+                                  Members Only
+                                </option>
+                                <option value="Hidden">
+                                  Hidden (Invisible)
+                                </option>
+                              </select>
+                            </div>
+
+                            {[
+                              {
+                                key: "showHoroscope",
+                                label: "Show Horoscope",
+                                desc: "Display your astrology chart and details",
+                              },
+                              {
+                                key: "showAstroMatch",
+                                label: "Show Astro Match",
+                                desc: "Allow others to see horoscope compatibility",
+                              },
+                              {
+                                key: "showExactIncome",
+                                label: "Show Exact Income",
+                                desc: "Display your precise salary digits",
+                              },
+                              {
+                                key: "showFamilyDetails",
+                                label: "Show Family Details",
+                                desc: "Display parents occupations and siblings",
+                              },
+                              {
+                                key: "showBirthDetails",
+                                label: "Show Birth Details",
+                                desc: "Display exact birth time and place",
+                              },
+                              {
+                                key: "showSocialLinks",
+                                label: "Show Social Links",
+                                desc: "Display your Instagram/LinkedIn/Facebook",
+                              },
+                              {
+                                key: "showValues",
+                                label: "Show Values Ratings",
+                                desc: "Display your ambition and personality scales",
+                              },
+                            ].map((setting) => {
+                              const isChecked =
+                                p.privacySettings?.[setting.key] ??
+                                setting.key !== "showExactIncome";
+                              return (
+                                <div
+                                  key={setting.key}
+                                  className="flex items-center justify-between"
+                                >
+                                  <div>
+                                    <h4 className="text-[var(--text)] text-sm font-medium">
+                                      {setting.label}
+                                    </h4>
+                                    <p className="text-xs text-[var(--text-muted)]">
+                                      {setting.desc}
+                                    </p>
+                                  </div>
+                                  <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      className="sr-only peer"
+                                      checked={isChecked}
+                                      onChange={(e) =>
+                                        handlePrivacyChange(
+                                          setting.key,
+                                          e.target.checked,
+                                        )
+                                      }
+                                      disabled={privacySaving}
+                                    />
+                                    <div className="w-11 h-6 bg-[var(--surface-hover)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--accent-2)]"></div>
+                                  </label>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </Reveal>
+
+                      {/* Change password */}
+                      <Reveal root={scrollRef} delay={0.12}>
+                        <div className="aw-card">
+                          <SectionHeader
+                            icon={<Lock size={17} />}
+                            title="Change Password"
+                          />
+                          <form
+                            onSubmit={handlePasswordChange}
+                            className="space-y-4 max-w-lg"
+                          >
+                            <div>
+                              <label className="block text-xs font-medium text-[var(--text-muted)] mb-1 tracking-wider uppercase">
+                                Current Password
+                              </label>
+                              <input
+                                type="password"
+                                className="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text)] outline-none focus:border-[var(--accent-2)] focus:ring-1 focus:ring-[var(--accent-2)] transition-all"
+                                value={passwordData.currentPassword}
+                                onChange={(e) =>
+                                  setPasswordData({
+                                    ...passwordData,
+                                    currentPassword: e.target.value,
+                                  })
+                                }
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-[var(--text-muted)] mb-1 tracking-wider uppercase">
+                                New Password
+                              </label>
+                              <input
+                                type="password"
+                                className="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text)] outline-none focus:border-[var(--accent-2)] focus:ring-1 focus:ring-[var(--accent-2)] transition-all"
+                                value={passwordData.newPassword}
+                                onChange={(e) =>
+                                  setPasswordData({
+                                    ...passwordData,
+                                    newPassword: e.target.value,
+                                  })
+                                }
+                                required
+                                minLength={6}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-[var(--text-muted)] mb-1 tracking-wider uppercase">
+                                Confirm New Password
+                              </label>
+                              <input
+                                type="password"
+                                className="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text)] outline-none focus:border-[var(--accent-2)] focus:ring-1 focus:ring-[var(--accent-2)] transition-all"
+                                value={passwordData.confirmPassword}
+                                onChange={(e) =>
+                                  setPasswordData({
+                                    ...passwordData,
+                                    confirmPassword: e.target.value,
+                                  })
+                                }
+                                required
+                                minLength={6}
+                              />
+                            </div>
+                            <button
+                              type="submit"
+                              disabled={passwordStatus.loading}
+                              className="w-full py-3 bg-[var(--surface-2)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--text)] rounded-xl font-medium transition-colors disabled:opacity-50 mt-2"
+                            >
+                              {passwordStatus.loading
+                                ? "Updating..."
+                                : "Update Password"}
+                            </button>
+                          </form>
+                        </div>
+                      </Reveal>
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
         ) : (
-          <div className="flex flex-col items-center justify-center flex-1 p-8 text-center bg-slate-900/40">
-            <User size={64} className="text-slate-700 mb-6" />
-            <h3 className="text-2xl font-serif font-bold text-white">
+          <div className="flex flex-col items-center justify-center flex-1 p-8 text-center bg-[var(--surface-2)]">
+            <User size={64} className="text-[var(--text-subtle)] mb-6" />
+            <h3 className="text-2xl font-serif font-bold text-[var(--text)]">
               Profile Not Found
             </h3>
-            <p className="text-slate-500 mt-2 max-w-xs">
+            <p className="text-[var(--text-subtle)] mt-2 max-w-xs">
               We couldn't load your profile. Please try logging in again to
               refresh your session.
             </p>

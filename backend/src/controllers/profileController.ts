@@ -1,5 +1,7 @@
 import { Response } from "express";
 import { Op, WhereOptions } from "sequelize";
+import fs from "fs";
+import path from "path";
 import { AuthRequest } from "../middlewares/authMiddleware";
 import {
   User,
@@ -15,7 +17,10 @@ import {
   MotherTongue,
   UserPhoto,
   Caste,
+  Subcaste,
   IncomeRange,
+  CasteRequest,
+  SubcasteRequest,
   Currency,
   UserDraft,
   FamilyDetails,
@@ -153,11 +158,16 @@ export const createOrUpdateProfile = async (
     
     if (profileData.religionId !== undefined) profileUpdate.religionId = parseId(profileData.religionId);
     if (profileData.casteId !== undefined) profileUpdate.casteId = parseId(profileData.casteId);
+    if (profileData.subcasteId !== undefined) profileUpdate.subcasteId = parseId(profileData.subcasteId);
     if (profileData.motherTongueId !== undefined || profileData.motherTongue !== undefined) {
       profileUpdate.motherTongueId = parseId(profileData.motherTongueId || profileData.motherTongue);
     }
     if (profileData.subcaste !== undefined || profileData.subCaste !== undefined) {
       profileUpdate.subcaste = profileData.subcaste || profileData.subCaste || "";
+    }
+    if (profileData.citizenship !== undefined) {
+      profileUpdate.citizenship =
+        profileData.citizenship === "" ? null : String(profileData.citizenship);
     }
     if (profileData.complexion !== undefined) profileUpdate.complexion = profileData.complexion;
     if (profileData.shortBio !== undefined || profileData.aboutMe !== undefined) {
@@ -394,9 +404,10 @@ export const uploadPhotos = async (
       return;
     }
 
-    // In a real app, you'd upload to S3/Cloudinary and get a URL
-    // For now, we'll use a local path or a mock URL
-    const photoUrl = `/uploads/${file.filename}`;
+    // Files are stored under a per-user subdirectory (see uploadMiddleware).
+    // Build the URL to match the actual on-disk location so it can be served
+    // and later unlinked correctly on deletion.
+    const photoUrl = `/uploads/user_${userId}/${file.filename}`;
 
     const photo = await UserPhoto.create({
       userId,
@@ -436,11 +447,13 @@ export const deletePhoto = async (
       return;
     }
 
-    // Optional: Delete physical file from uploads folder if using local storage
-    // const fs = require('fs');
-    // const path = require('path');
-    // const filePath = path.join(__dirname, '../../', photo.url);
-    // if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    // Delete physical file from disk if it exists
+    if (photo.url) {
+      const filePath = path.join(process.cwd(), photo.url);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
 
     await photo.destroy();
 
@@ -470,7 +483,7 @@ export const uploadHoroscope = async (
       return;
     }
 
-    const imageUrl = `/uploads/${file.filename}`;
+    const imageUrl = `/uploads/user_${userId}/${file.filename}`;
 
     const profile = await UserProfile.findOne({ where: { userId } });
     if (!profile) {
@@ -519,11 +532,11 @@ export const deleteHoroscope = async (
       return;
     }
 
-    // Optional: Delete physical file
-    // const fs = require('fs');
-    // const path = require('path');
-    // const filePath = path.join(process.cwd(), horoscope.horoscopeImageUrl);
-    // if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    // Delete physical file from disk if it exists
+    const filePath = path.join(process.cwd(), horoscope.horoscopeImageUrl);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
 
     horoscope.horoscopeImageUrl = null;
     await horoscope.save();
@@ -828,6 +841,7 @@ export const searchProfiles = async (
       diet,
       incomeRangeId,
       casteId,
+      subcasteId,
       familyStatus,
       smoking,
       drinking,
@@ -883,6 +897,8 @@ export const searchProfiles = async (
 
     if (stateId) where.stateId = stateId;
     if (religionId) where.religionId = religionId;
+    // Caste is available to all tiers (free users can filter by caste).
+    if (casteId) where.casteId = casteId;
 
     // Advanced Filters (Silver/Gold only)
     if (tier !== "Basic Member") {
@@ -892,7 +908,8 @@ export const searchProfiles = async (
       if (occupationId) where.occupationId = occupationId;
       if (motherTongueId) where.motherTongueId = motherTongueId;
       if (incomeRangeId) where.incomeRangeId = incomeRangeId;
-      if (casteId) where.casteId = casteId;
+      // Sub-caste stays premium-only.
+      if (subcasteId) where.subcasteId = subcasteId;
 
       if (heightMin || heightMax) {
         where.heightCm = {};
@@ -957,6 +974,7 @@ export const searchProfiles = async (
       Occupation,
       MotherTongue,
       Caste,
+      Subcaste,
       IncomeRange,
       {
         model: HoroscopeDetails,
@@ -1087,5 +1105,119 @@ export const getViewers = async (
   } catch (error) {
     console.error("Get viewers error:", error);
     res.status(500).json({ message: "Server error fetching viewers" });
+  }
+};
+
+const REQUEST_SUBMITTED_MESSAGE =
+  "Your caste/subcaste request has been submitted for review. Our team will verify and add it if approved.";
+
+const toId = (id: any): number | null => {
+  const parsed = parseInt(id);
+  return isNaN(parsed) ? null : parsed;
+};
+
+// User submits a new caste that is missing from the master list.
+export const requestCaste = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: "Not authorized" });
+      return;
+    }
+
+    const religionId = toId(req.body.religionId);
+    const name = String(req.body.name || "").trim();
+
+    if (!religionId) {
+      res.status(400).json({ message: "Religion is required" });
+      return;
+    }
+    if (!name) {
+      res.status(400).json({ message: "Caste name is required" });
+      return;
+    }
+
+    // Dedupe against the existing master list (case-insensitive).
+    const existingCaste = await Caste.findOne({
+      where: { religionId, name: { [Op.iLike]: name } },
+    });
+    if (existingCaste) {
+      res.status(200).json({
+        message: "This caste already exists.",
+        caste: existingCaste,
+        alreadyExists: true,
+      });
+      return;
+    }
+
+    // Dedupe against pending requests for the same religion.
+    const existingRequest = await CasteRequest.findOne({
+      where: { religionId, name: { [Op.iLike]: name }, status: "Pending" },
+    });
+    if (existingRequest) {
+      res.status(200).json({ message: REQUEST_SUBMITTED_MESSAGE });
+      return;
+    }
+
+    await CasteRequest.create({ userId: req.user.id, religionId, name });
+    res.status(201).json({ message: REQUEST_SUBMITTED_MESSAGE });
+  } catch (error) {
+    console.error("Request caste error:", error);
+    res.status(500).json({ message: "Server error submitting caste request" });
+  }
+};
+
+// User submits a new subcaste that is missing from the master list.
+export const requestSubcaste = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: "Not authorized" });
+      return;
+    }
+
+    const casteId = toId(req.body.casteId);
+    const name = String(req.body.name || "").trim();
+
+    if (!casteId) {
+      res.status(400).json({ message: "Caste is required" });
+      return;
+    }
+    if (!name) {
+      res.status(400).json({ message: "Subcaste name is required" });
+      return;
+    }
+
+    const existingSubcaste = await Subcaste.findOne({
+      where: { casteId, name: { [Op.iLike]: name } },
+    });
+    if (existingSubcaste) {
+      res.status(200).json({
+        message: "This subcaste already exists.",
+        subcaste: existingSubcaste,
+        alreadyExists: true,
+      });
+      return;
+    }
+
+    const existingRequest = await SubcasteRequest.findOne({
+      where: { casteId, name: { [Op.iLike]: name }, status: "Pending" },
+    });
+    if (existingRequest) {
+      res.status(200).json({ message: REQUEST_SUBMITTED_MESSAGE });
+      return;
+    }
+
+    await SubcasteRequest.create({ userId: req.user.id, casteId, name });
+    res.status(201).json({ message: REQUEST_SUBMITTED_MESSAGE });
+  } catch (error) {
+    console.error("Request subcaste error:", error);
+    res
+      .status(500)
+      .json({ message: "Server error submitting subcaste request" });
   }
 };

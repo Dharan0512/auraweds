@@ -9,6 +9,9 @@ export interface Religion extends MasterItem {}
 export interface Caste extends MasterItem {
   religionId: string;
 }
+export interface Subcaste extends MasterItem {
+  casteId: string;
+}
 export interface Country extends MasterItem {
   isoCode: string;
   phoneCode: string;
@@ -58,6 +61,15 @@ export const masterService = {
   ): Promise<Caste[]> => {
     const { data } = await apiClient.get(
       `/master/castes?religion_id=${religionId}`,
+    );
+    return data;
+  },
+
+  getSubcastesByCaste: async (
+    casteId: string | number,
+  ): Promise<Subcaste[]> => {
+    const { data } = await apiClient.get(
+      `/master/subcastes?caste_id=${casteId}`,
     );
     return data;
   },

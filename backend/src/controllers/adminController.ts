@@ -7,6 +7,8 @@ import {
   Subscription,
   Payment,
   Plan,
+  CasteRequest,
+  SubcasteRequest,
 } from "../models/sequelize";
 import { sequelize } from "../config/db.postgres";
 
@@ -24,6 +26,8 @@ export const getDashboardStats = async (
       newSignupsToday,
       paidUsers,
       revenueTodayResult,
+      pendingCasteRequestsCount,
+      pendingSubcasteRequestsCount,
     ] = await Promise.all([
       User.count({ where: { role: "user" } }),
       User.count({
@@ -55,6 +59,8 @@ export const getDashboardStats = async (
         },
         raw: true,
       }),
+      CasteRequest.count({ where: { status: "Pending" } }),
+      SubcasteRequest.count({ where: { status: "Pending" } }),
     ]);
 
     // Distribution
@@ -79,6 +85,8 @@ export const getDashboardStats = async (
         paidUsers,
         revenueToday,
         tierDistribution,
+        pendingCasteRequests:
+          pendingCasteRequestsCount + pendingSubcasteRequestsCount,
       },
     });
   } catch (error) {

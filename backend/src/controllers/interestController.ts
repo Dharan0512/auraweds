@@ -141,6 +141,7 @@ export const getInterests = async (
     // 2. Fetch requester's subscription tier
     const { tier: myTier } = await getUserTier(req.user.id);
     const isGoldRequester = myTier === "Gold";
+    const isSilverRequester = myTier === "Silver";
 
     const formattedInterests = (interests as any[]).map((interest: any) => {
       const otherUser =
@@ -153,9 +154,8 @@ export const getInterests = async (
               : interest.Sender;
       const otherProfile = otherUser?.UserProfile;
 
-      // Disclose contact info if requester is Gold and interest is ACCEPTED
-      const shouldDiscloseContact =
-        isGoldRequester && interest.status === "ACCEPTED";
+      // Silver and Gold members get full contact access on the interests page
+      const shouldDiscloseContact = isGoldRequester || isSilverRequester;
 
       return {
         id: interest.id,

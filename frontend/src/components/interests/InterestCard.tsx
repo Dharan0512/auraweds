@@ -64,6 +64,8 @@ export default function InterestCard({
   const isFree = userTier === "Basic Member";
   const isGold = userTier === "Gold" || userTier === "Elite Gold";
   const isSilver = userTier === "Silver";
+  // Silver and Gold both get full contact access on the interests page
+  const canRevealContact = isGold || isSilver;
 
   if (!profile) return null;
 
@@ -88,7 +90,7 @@ export default function InterestCard({
         );
       case "WITHDRAWN":
         return (
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-500/10 text-slate-400 text-[10px] font-bold uppercase tracking-wider border border-slate-500/20">
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-500/10 text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-wider border border-slate-500/20">
             <X size={12} /> Withdrawn
           </span>
         );
@@ -118,20 +120,20 @@ export default function InterestCard({
 
   return (
     <div
-      className={`relative group p-5 rounded-[2rem] bg-slate-900/40 backdrop-blur-xl border transition-all duration-700 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] ${type === "accepted" ? "border-[#D4AF37]/40 shadow-[#D4AF37]/5 bg-gradient-to-br from-slate-900/60 to-[#D4AF37]/5" : "border-white/10 hover:border-[#D4AF37]/30"}`}
+      className={`theme-card relative group p-5 rounded-[2rem] bg-[var(--surface)] backdrop-blur-xl border transition-all duration-500 hover:-translate-y-1 ${type === "accepted" ? "border-[var(--accent-border)] bg-gradient-to-br from-[var(--surface)] to-[var(--accent-soft-bg)]" : "border-[var(--border)] hover:border-[var(--accent-border)]"}`}
     >
       {/* Decorative Gradient Background */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
       <div className="flex gap-5">
         {/* Photo Container */}
-        <div className="relative shrink-0 w-28 h-28 rounded-2xl overflow-hidden border-2 border-white/10 group-hover:border-[#D4AF37]/30 transition-colors duration-500">
+        <div className="relative shrink-0 w-28 h-28 rounded-2xl overflow-hidden border-2 border-[var(--border)] group-hover:border-[#D4AF37]/30 transition-colors duration-500">
           <img
             src={getImageUrl(profile.photos[0], profile.basicDetails.firstName)}
             alt={profile.basicDetails.firstName}
             className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
           />
           {type === "received" && !interest.viewedAt && (
-            <div className="absolute top-3 right-3 w-3 h-3 bg-[#D4AF37] rounded-full ring-4 ring-slate-950 shadow-[0_0_15px_rgba(212,175,55,0.8)] animate-pulse"></div>
+            <div className="absolute top-3 right-3 w-3 h-3 bg-[var(--accent-2)] rounded-full ring-4 ring-[var(--surface-solid)] shadow-[0_0_15px_rgba(212,175,55,0.8)] animate-pulse"></div>
           )}
 
           {/* Match Score Overlay */}
@@ -148,7 +150,7 @@ export default function InterestCard({
             <div className="flex items-start justify-between mb-2 gap-3">
               <div className="flex flex-col flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-xl font-bold text-white truncate hover:text-[#D4AF37] transition-colors cursor-pointer">
+                  <h3 className="text-xl font-bold text-[var(--text)] truncate hover:text-[var(--accent-2)] transition-colors cursor-pointer">
                     {name}, {age}
                   </h3>
                   {profile.badge?.mobileVerified && (
@@ -166,12 +168,12 @@ export default function InterestCard({
                   )}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 text-slate-400 text-[11px] font-medium">
-                  <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/5 border border-white/10">
-                    <User size={12} className="text-slate-500" />
+                <div className="flex flex-wrap items-center gap-3 text-[var(--text-muted)] text-[11px] font-medium">
+                  <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-[var(--surface-2)] border border-[var(--border)]">
+                    <User size={12} className="text-[var(--text-subtle)]" />
                     {profile.basicDetails.religion}
                   </span>
-                  <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/5 border border-white/10">
+                  <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-[var(--surface-2)] border border-[var(--border)]">
                     📍 {profile.basicDetails.location.split(",")[0]}
                   </span>
                 </div>
@@ -184,15 +186,15 @@ export default function InterestCard({
                     New
                   </span>
                 )}
-                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-1">
-                  <Clock size={10} className="text-slate-600" />
+                <span className="text-[10px] text-[var(--text-subtle)] font-bold uppercase tracking-widest flex items-center gap-1">
+                  <Clock size={10} className="text-[var(--text-subtle)]" />
                   {timeAgo(new Date(interest.createdAt))}
                 </span>
               </div>
             </div>
 
             {/* Highlights (Optional) */}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-slate-400 text-[10px] font-medium min-h-[1rem] mb-4">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[var(--text-muted)] text-[10px] font-medium min-h-[1rem] mb-4">
               {profile.professionalInfo.profession && (
                 <span className="flex items-center gap-1">
                   💼 {profile.professionalInfo.profession}
@@ -212,7 +214,7 @@ export default function InterestCard({
                 <div className="flex items-center gap-3">
                   {getStatusBadge()}
                   {interest.status === "PENDING" && interest.viewedAt && (
-                    <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1">
+                    <span className="text-[10px] text-[var(--text-subtle)] font-bold flex items-center gap-1">
                       <Clock size={10} /> Viewed
                     </span>
                   )}
@@ -245,7 +247,7 @@ export default function InterestCard({
                 <>
                   <button
                     onClick={() => onWithdraw?.(interest.id)}
-                    className="px-4 py-2 rounded-xl bg-white/5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-white/5 transition-all text-[10px] font-bold uppercase tracking-widest"
+                    className="px-4 py-2 rounded-xl bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-rose-400 hover:bg-rose-500/10 border border-[var(--border)] transition-all text-[10px] font-bold uppercase tracking-widest"
                   >
                     Withdraw
                   </button>
@@ -253,7 +255,7 @@ export default function InterestCard({
                     <button
                       onClick={() => onSendReminder?.(interest.id)}
                       disabled={!isGold}
-                      className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${isGold ? "bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 hover:bg-[#D4AF37]/20" : "bg-slate-800 text-slate-600 border border-white/5 cursor-not-allowed"}`}
+                      className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${isGold ? "bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 hover:bg-[#D4AF37]/20" : "bg-[var(--surface-2)] text-[var(--text-subtle)] border border-[var(--border)] cursor-not-allowed"}`}
                     >
                       {isGold ? (
                         "Send Reminder"
@@ -277,10 +279,10 @@ export default function InterestCard({
                   </button>
                   <button
                     onClick={() => onContact?.(profile.userId)}
-                    disabled={!isGold}
-                    className={`flex items-center gap-2 px-5 py-3 rounded-xl transition-all font-black uppercase tracking-widest border-2 ${isGold ? "bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/30 hover:bg-[#D4AF37]/20 text-[10px]" : "bg-slate-900/40 text-slate-400 border-white/10 hover:border-[#D4AF37]/30 hover:text-[#D4AF37]"}`}
+                    disabled={!canRevealContact}
+                    className={`flex items-center gap-2 px-5 py-3 rounded-xl transition-all font-black uppercase tracking-widest border-2 ${canRevealContact ? "bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/30 hover:bg-[#D4AF37]/20 text-[10px]" : "bg-[var(--surface)] text-[var(--text-muted)] border-[var(--border)] hover:border-[#D4AF37]/30 hover:text-[#D4AF37]"}`}
                   >
-                    {isGold ? (
+                    {canRevealContact ? (
                       <>
                         <Phone size={14} /> Call Now
                       </>
@@ -291,7 +293,7 @@ export default function InterestCard({
                           <span className="font-mono tracking-wider text-[11px]">
                             {maskPhoneNumber(
                               profile.basicDetails.mobile,
-                              isGold,
+                              canRevealContact,
                               false
                             ) || "Hidden Profile"}
                           </span>
@@ -308,7 +310,7 @@ export default function InterestCard({
               {type === "rejected" && (
                 <button
                   onClick={() => onRemove?.(interest.id)}
-                  className="p-2.5 rounded-xl bg-white/5 text-slate-500 hover:text-white transition-all border border-white/5"
+                  className="p-2.5 rounded-xl bg-[var(--surface-2)] text-[var(--text-subtle)] hover:text-[var(--text)] transition-all border border-[var(--border)]"
                   title="Remove from list"
                 >
                   <X size={18} />
@@ -327,7 +329,7 @@ export default function InterestCard({
 
               <button
                 onClick={() => onViewProfile(profile.userId)}
-                className="p-2.5 rounded-xl bg-white/5 text-slate-300 hover:bg-white/10 transition-all border border-white/5"
+                className="p-2.5 rounded-xl bg-[var(--surface-2)] text-[var(--text)] hover:bg-[var(--surface-hover)] transition-all border border-[var(--border)]"
                 title="View Profile"
               >
                 <User size={18} />
@@ -338,19 +340,19 @@ export default function InterestCard({
       </div>
 
       {isFree && type === "received" && (
-        <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-between bg-white/[0.02] -mx-5 -mb-5 px-5 pb-5 rounded-b-[2rem]">
+        <div className="mt-5 pt-4 border-t border-[var(--border)] flex items-center justify-between bg-[var(--surface-2)] -mx-5 -mb-5 px-5 pb-5 rounded-b-[2rem]">
           <div className="flex items-center gap-4">
             <div className="p-2.5 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#B8860B] text-slate-950 shadow-[0_0_15px_rgba(212,175,55,0.3)]">
               <Lock size={16} />
             </div>
             <div>
-              <p className="text-[11px] text-white font-bold leading-none mb-1">
+              <p className="text-[11px] text-[var(--text)] font-bold leading-none mb-1">
                 Detailed Profile is Locked
               </p>
-              <p className="text-[10px] text-slate-400 font-medium tracking-tight">
+              <p className="text-[10px] text-[var(--text-muted)] font-medium tracking-tight">
                 Upgrade to{" "}
                 <span className="text-[#D4AF37] font-bold">
-                  Gold Membership
+                  Silver Membership
                 </span>{" "}
                 to reveal details
               </p>

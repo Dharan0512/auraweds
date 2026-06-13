@@ -7,6 +7,7 @@ import { searchService } from "@/services/searchService";
 import {
   useReligions,
   useCastes,
+  useSubcastes,
   useCountries,
   useStates,
 } from "@/hooks/useMasterData";
@@ -20,6 +21,7 @@ export default function SearchFeature() {
   // Master Data API hooks
   const { data: religions } = useReligions();
   const { data: castes } = useCastes(filters.religionId || null);
+  const { data: subcastes } = useSubcastes(filters.casteId || null);
   const { data: countries } = useCountries();
   const { data: states } = useStates(filters.countryId || null);
 
@@ -67,6 +69,7 @@ export default function SearchFeature() {
                 onClear={clearFilters}
                 religions={religions}
                 castes={castes}
+                subcastes={subcastes}
                 countries={countries}
                 states={states}
               />

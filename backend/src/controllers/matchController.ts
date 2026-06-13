@@ -27,18 +27,19 @@ export const getDailyMatches = async (
       return;
     }
 
-    const oppositeGender = ["Male", "male"].includes(myUser.gender)
-      ? "Female"
-      : "Male";
+    // users.gender is a Postgres enum (Male | Female | Other), so we must
+    // match the exact enum label — a lowercased variant fails to cast and
+    // crashes the whole query.
+    const oppositeGender = myUser.gender === "Male" ? "Female" : "Male";
 
-    // Find opposite gender users from MySQL
+    // Find opposite gender users
     const matches = await UserProfile.findAll({
       include: [
         {
           model: User,
           where: {
             id: { [Op.ne]: req.user.id },
-            gender: { [Op.in]: [oppositeGender, oppositeGender.toLowerCase()] },
+            gender: oppositeGender,
           },
         },
         Religion,

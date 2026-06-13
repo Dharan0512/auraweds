@@ -11,7 +11,9 @@ const locationSchema = z.object({
   countryId: z.string().min(1, "Country is required"),
   stateId: z.string().min(1, "State is required"),
   cityId: z.string().min(1, "City is required"),
-  citizenship: z.string().min(1, "Citizenship is required"),
+  // citizenship is not persisted by the backend, so it loads empty when editing.
+  // Keep it optional so a missing value never blocks the wizard.
+  citizenship: z.string().optional().or(z.literal("")),
 });
 
 type LocationData = z.infer<typeof locationSchema>;

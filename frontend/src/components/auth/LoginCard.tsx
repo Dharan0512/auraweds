@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import toast from "react-hot-toast";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, ArrowRight } from "lucide-react";
+import { Lock, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
@@ -39,13 +38,18 @@ export default function LoginCard() {
   return (
     <Card className="w-full max-w-md">
       <div className="relative z-10 space-y-8">
-        <div className="text-center space-y-2">
-          <h3 className="text-3xl font-serif font-bold text-white tracking-tight">
-            Welcome Back
-          </h3>
-          <p className="text-slate-400 text-sm font-medium">
-            Continue your legacy journey.
-          </p>
+        <div className="flex flex-col items-center space-y-3 text-center">
+          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-gold/10 text-gold ring-1 ring-gold/20">
+            <Lock className="h-5 w-5" />
+          </span>
+          <div className="space-y-1.5">
+            <h3 className="text-3xl font-serif font-bold tracking-tight text-white">
+              Welcome Back
+            </h3>
+            <p className="text-sm font-medium text-slate-400">
+              Continue your legacy journey.
+            </p>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -95,7 +99,15 @@ export default function LoginCard() {
           </Button>
         </form>
 
-        <div className="pt-6 border-t border-white/5 text-center">
+        <div className="flex items-center gap-4">
+          <span className="h-px flex-1 bg-gradient-to-r from-transparent to-white/10" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-600">
+            New here
+          </span>
+          <span className="h-px flex-1 bg-gradient-to-l from-transparent to-white/10" />
+        </div>
+
+        <div className="text-center">
           <p className="text-sm text-slate-500">
             Seeking a new connection?{" "}
             <Link

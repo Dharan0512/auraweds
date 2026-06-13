@@ -3,6 +3,7 @@ import { MasterItem } from "@/services/masterService";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Lock } from "lucide-react";
 import UpgradeModal from "@/components/ui/UpgradeModal";
+import SearchableDropdown from "@/components/ui/SearchableDropdown";
 
 interface SearchSidebarProps {
   filters: Record<string, string>;
@@ -11,6 +12,7 @@ interface SearchSidebarProps {
   // Passing master data down for simplicity
   religions?: MasterItem[];
   castes?: MasterItem[];
+  subcastes?: MasterItem[];
   countries?: MasterItem[];
   states?: MasterItem[];
   education?: MasterItem[];
@@ -23,6 +25,7 @@ export default function SearchSidebar({
   onClear,
   religions,
   castes,
+  subcastes,
   education,
   incomeRanges,
 }: SearchSidebarProps) {
@@ -31,6 +34,13 @@ export default function SearchSidebar({
 
   const isBasic = tier === "Basic Member";
   const isGold = tier === "Gold";
+
+  // Currently selected caste/subcaste objects for the searchable dropdowns.
+  const selectedCaste =
+    castes?.find((c) => String(c.id) === String(filters.casteId)) || null;
+  const selectedSubcaste =
+    subcastes?.find((s) => String(s.id) === String(filters.subcasteId)) ||
+    null;
 
   const handleSelectChange = (
     e: React.ChangeEvent<HTMLSelectElement>,
@@ -106,7 +116,14 @@ export default function SearchSidebar({
           </label>
           <select
             value={filters.religionId || ""}
-            onChange={(e) => handleSelectChange(e, "religionId")}
+            onChange={(e) =>
+              // Reset caste + sub-caste because they depend on the religion.
+              onChange({
+                religionId: e.target.value || null,
+                casteId: null,
+                subcasteId: null,
+              })
+            }
             className="w-full rounded-md border-gray-300 text-sm focus:border-[#6A0DAD] focus:ring-[#6A0DAD]"
           >
             <option value="">Any Religion</option>
@@ -118,26 +135,58 @@ export default function SearchSidebar({
           </select>
         </div>
 
-        {/* Caste - Silver/Gold only */}
+        {/* Caste - searchable, Silver/Gold only */}
         <div className="relative">
           <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center justify-between">
             <span>Caste</span>
             {isBasic && <Lock size={12} className="text-gray-400" />}
           </label>
           <div className="relative">
-            <select
-              value={filters.casteId || ""}
-              onChange={(e) => handleSelectChange(e, "casteId")}
-              disabled={isBasic}
-              className={`w-full rounded-md border-gray-300 text-sm focus:border-[#6A0DAD] focus:ring-[#6A0DAD] ${isBasic ? "bg-gray-50 opacity-60" : ""}`}
-            >
-              <option value="">Any Caste</option>
-              {castes?.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+            <SearchableDropdown
+              theme="light"
+              options={castes || []}
+              value={selectedCaste}
+              onChange={(val) =>
+                // Clear sub-caste whenever the caste changes so the
+                // sub-caste filter never references a stale caste.
+                onChange({
+                  casteId: val ? String(val.id) : null,
+                  subcasteId: null,
+                })
+              }
+              placeholder={
+                filters.religionId ? "Search caste..." : "Select a religion first"
+              }
+              disabled={isBasic || !filters.religionId}
+            />
+            {isBasic && (
+              <div
+                className="absolute inset-0 cursor-pointer"
+                onClick={() => setShowUpgrade(true)}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Sub-caste - searchable, Silver/Gold only */}
+        <div className="relative">
+          <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center justify-between">
+            <span>Sub-caste</span>
+            {isBasic && <Lock size={12} className="text-gray-400" />}
+          </label>
+          <div className="relative">
+            <SearchableDropdown
+              theme="light"
+              options={subcastes || []}
+              value={selectedSubcaste}
+              onChange={(val) =>
+                onChange({ subcasteId: val ? String(val.id) : null })
+              }
+              placeholder={
+                filters.casteId ? "Search sub-caste..." : "Select a caste first"
+              }
+              disabled={isBasic || !filters.casteId}
+            />
             {isBasic && (
               <div
                 className="absolute inset-0 cursor-pointer"

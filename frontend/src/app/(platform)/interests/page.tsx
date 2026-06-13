@@ -258,33 +258,56 @@ export default function InterestsPage() {
     <div className="relative min-h-screen overflow-hidden">
       {/* Decorative Background Elements */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-900/15 blur-[120px] rounded-full animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-amber-900/10 blur-[120px] rounded-full animate-pulse delay-700" />
-        <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-indigo-900/10 blur-[100px] rounded-full animate-pulse delay-1000" />
+        <div
+          className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] blur-[120px] rounded-full animate-pulse"
+          style={{ background: "var(--app-grad-1)" }}
+        />
+        <div
+          className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] blur-[120px] rounded-full animate-pulse delay-700"
+          style={{ background: "var(--app-grad-2)" }}
+        />
+        <div
+          className="absolute top-[20%] right-[10%] w-[30%] h-[30%] blur-[100px] rounded-full animate-pulse delay-1000"
+          style={{ background: "var(--app-grad-3)" }}
+        />
       </div>
 
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 pb-32 relative z-10">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 mb-16 animate-in fade-in slide-in-from-top-4 duration-700">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[#D4AF37] text-[10px] font-black uppercase tracking-[0.2em]">
+            <div
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em]"
+              style={{
+                background: "var(--accent-soft-bg)",
+                border: "1px solid var(--accent-border)",
+                color: "var(--accent-2)",
+              }}
+            >
               <Sparkles size={12} />
               The Pipeline
             </div>
-            <h1 className="text-5xl font-serif font-bold text-white tracking-tight leading-tight">
+            <h1 className="text-4xl sm:text-5xl font-serif font-bold text-[var(--text)] tracking-tight leading-tight">
               Aura{" "}
-              <span className="bg-gradient-to-r from-white via-white to-[#D4AF37] bg-clip-text text-transparent">
+              <span
+                style={{
+                  backgroundImage: "var(--accent-gradient)",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  color: "transparent",
+                }}
+              >
                 Interests
               </span>
             </h1>
-            <p className="max-w-lg text-slate-400 text-sm font-medium leading-relaxed">
+            <p className="max-w-lg text-[var(--text-muted)] text-sm font-medium leading-relaxed">
               Track your matchmaking journey. Manage incoming and outgoing
-              interests with our premium relationship pipeline.
+              interests in one premium relationship pipeline.
             </p>
           </div>
 
           <div className="w-full md:w-72">
-            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-1">
+            <label className="block text-[10px] font-black text-[var(--text-subtle)] uppercase tracking-widest mb-3 ml-1">
               Filter Pipeline
             </label>
             <PremiumSelect
@@ -301,9 +324,9 @@ export default function InterestsPage() {
         </div>
 
         {/* Tabs Layout */}
-        <div className="bg-slate-900/40 backdrop-blur-3xl border border-white/10 rounded-[3.5rem] overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] transition-all duration-500 hover:border-white/20">
+        <div className="theme-card bg-[var(--surface)] backdrop-blur-3xl border border-[var(--border)] rounded-[2.5rem] sm:rounded-[3.5rem] overflow-hidden">
           {/* Navigation */}
-          <div className="flex flex-wrap border-b border-white/10 p-3 gap-2 bg-slate-950/40 backdrop-blur-md">
+          <div className="flex flex-wrap border-b border-[var(--border)] p-3 gap-2 bg-[var(--surface-2)] backdrop-blur-md">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -314,10 +337,10 @@ export default function InterestsPage() {
                     setActiveTab(tab.id as TabType);
                     setPage(1);
                   }}
-                  className={`flex-1 min-w-[140px] flex items-center justify-center gap-3 py-4 rounded-[2.5rem] text-sm font-black transition-all duration-500 relative group overflow-hidden ${
+                  className={`flex-1 min-w-[120px] flex items-center justify-center gap-3 py-4 rounded-[2.5rem] text-sm font-black transition-all duration-500 relative group overflow-hidden ${
                     isActive
                       ? "text-slate-950"
-                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                      : "text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-hover)]"
                   }`}
                 >
                   {isActive && (
@@ -332,7 +355,7 @@ export default function InterestsPage() {
                       className={`relative z-10 px-2.5 py-0.5 rounded-full text-[10px] font-black border transition-all duration-500 ${
                         isActive
                           ? "bg-slate-950 text-[#D4AF37] border-slate-800"
-                          : "bg-slate-800/80 text-white border-white/5 group-hover:border-[#D4AF37]/50 group-hover:text-[#D4AF37]"
+                          : "bg-[var(--surface-2)] text-[var(--text)] border-[var(--border)] group-hover:border-[var(--accent-border)] group-hover:text-[var(--accent-2)]"
                       }`}
                     >
                       {tab.count}
@@ -354,15 +377,25 @@ export default function InterestsPage() {
             ) : interests.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-32 text-center animate-in fade-in zoom-in duration-700">
                 <div className="relative mb-10">
-                  <div className="absolute inset-0 bg-[#D4AF37]/20 blur-3xl rounded-full scale-150 animate-pulse" />
-                  <div className="relative w-32 h-32 bg-slate-950/60 backdrop-blur-xl border border-[#D4AF37]/30 rounded-full flex items-center justify-center text-[#D4AF37] shadow-inner">
+                  <div
+                    className="absolute inset-0 blur-3xl rounded-full scale-150 animate-pulse"
+                    style={{ background: "var(--accent-soft-bg)" }}
+                  />
+                  <div
+                    className="relative w-32 h-32 backdrop-blur-xl rounded-full flex items-center justify-center shadow-inner"
+                    style={{
+                      background: "var(--surface-2)",
+                      border: "1px solid var(--accent-border)",
+                      color: "var(--accent-2)",
+                    }}
+                  >
                     <Search size={48} className="animate-bounce" />
                   </div>
                 </div>
-                <h3 className="text-3xl font-serif font-bold text-white mb-4">
+                <h3 className="text-3xl font-serif font-bold text-[var(--text)] mb-4">
                   No Interests Yet
                 </h3>
-                <p className="text-slate-400 max-w-sm font-medium leading-relaxed">
+                <p className="text-[var(--text-muted)] max-w-sm font-medium leading-relaxed">
                   Connect with potential matches. Start expressing interest to
                   fill your relationship pipeline.
                 </p>
@@ -383,6 +416,7 @@ export default function InterestsPage() {
                       interest={interest}
                       type={activeTab === "declined" ? "rejected" : activeTab}
                       userTier={userTier}
+                      onAction={handleAction}
                       onWithdraw={handleWithdraw}
                       onRemove={handleRemove}
                       onBlock={handleBlock}
@@ -408,7 +442,7 @@ export default function InterestsPage() {
                           // Failure case (not mutual/premium): notify user and show connection wish
                           await interestService.notifyCall(uid);
                           toast.error(
-                            `Profile ${firstName} wants to connect with you. (Upgrade to Gold to view contact)`,
+                            `Profile ${firstName} wants to connect with you. (Upgrade to Silver to view contact)`,
                             { duration: 5000 },
                           );
                         }
@@ -423,17 +457,17 @@ export default function InterestsPage() {
                     <button
                       disabled={page === 1}
                       onClick={() => setPage((p) => p - 1)}
-                      className="p-3 rounded-xl bg-white/5 border border-white/5 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                      className="p-3 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-hover)] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                     >
                       <ChevronLeft size={20} />
                     </button>
-                    <span className="text-sm font-bold text-slate-500 tracking-widest">
+                    <span className="text-sm font-bold text-[var(--text-subtle)] tracking-widest">
                       PAGE {page} OF {Math.ceil(total / 10)}
                     </span>
                     <button
                       disabled={page >= Math.ceil(total / 10)}
                       onClick={() => setPage((p) => p + 1)}
-                      className="p-3 rounded-xl bg-white/5 border border-white/5 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                      className="p-3 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-hover)] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                     >
                       <ChevronRight size={20} />
                     </button>

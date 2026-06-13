@@ -12,6 +12,8 @@ import {
   updatePrivacySettings,
   searchProfiles,
   getViewers,
+  requestCaste,
+  requestSubcaste,
 } from "../controllers/profileController";
 import { protect } from "../middlewares/authMiddleware";
 import { searchFilterGating } from "../middlewares/subscriptionMiddleware";
@@ -32,5 +34,9 @@ router.get("/user/:id", protect, getOtherProfile);
 router.get("/search", protect, searchFilterGating, searchProfiles);
 router.patch("/privacy", protect, updatePrivacySettings);
 router.get("/viewers", protect, getViewers);
+
+// Self-expanding master data requests
+router.post("/caste-request", protect, requestCaste);
+router.post("/subcaste-request", protect, requestSubcaste);
 
 export default router;

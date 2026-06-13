@@ -25,7 +25,7 @@ export default function MatchCard({
   const age = calculateAge(match.basicDetails.dob);
 
   return (
-    <div className="group relative flex flex-col bg-slate-900/30 backdrop-blur-sm border border-white/5 rounded-[2.5rem] overflow-hidden hover:border-white/10 transition-all duration-500">
+    <div className="theme-card group relative flex flex-col bg-[var(--surface)] backdrop-blur-sm border border-[var(--border)] rounded-[2.5rem] overflow-hidden hover:-translate-y-1.5 hover:border-[var(--border-strong)] transition-all duration-500">
       <div className="absolute inset-x-0 h-32 bg-gradient-to-b from-purple-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
 
       <div className="relative h-[20rem] m-2.5 overflow-hidden rounded-[2rem]">
@@ -87,36 +87,36 @@ export default function MatchCard({
       <div className="px-5 pb-5 pt-2 space-y-3">
         {/* Tag chips */}
         <div className="flex flex-wrap gap-2">
-          <span className="text-[10px] font-black uppercase tracking-widest bg-white/5 text-slate-400 px-3 py-1.5 rounded-lg border border-white/5">
+          <span className="text-[10px] font-black uppercase tracking-widest bg-[var(--surface-2)] text-[var(--text-muted)] px-3 py-1.5 rounded-lg border border-[var(--border)]">
             {match.basicDetails.religion}
           </span>
           {match.basicDetails.caste && (
-            <span className="text-[10px] font-black uppercase tracking-widest bg-white/5 text-slate-400 px-3 py-1.5 rounded-lg border border-white/5">
+            <span className="text-[10px] font-black uppercase tracking-widest bg-[var(--surface-2)] text-[var(--text-muted)] px-3 py-1.5 rounded-lg border border-[var(--border)]">
               {match.basicDetails.caste}
             </span>
           )}
-          <span className="text-[10px] font-black uppercase tracking-widest bg-white/5 text-slate-400 px-3 py-1.5 rounded-lg border border-white/5">
+          <span className="text-[10px] font-black uppercase tracking-widest bg-[var(--surface-2)] text-[var(--text-muted)] px-3 py-1.5 rounded-lg border border-[var(--border)]">
             {match.basicDetails.height}
           </span>
-          <span className="text-[10px] font-black uppercase tracking-widest bg-purple-500/10 text-purple-300 px-3 py-1.5 rounded-lg border border-purple-500/10">
+          <span className="text-[10px] font-black uppercase tracking-widest bg-[var(--accent-soft-bg)] text-[var(--accent)] px-3 py-1.5 rounded-lg border border-[var(--accent-border)]">
             {match.professionalInfo.incomeRange}
           </span>
         </div>
 
         {/* Education */}
-        <p className="text-slate-500 text-xs font-semibold truncate">
+        <p className="text-[var(--text-subtle)] text-xs font-semibold truncate">
           🎓 {match.professionalInfo.education}
         </p>
 
         {/* Actions */}
         <div className="flex gap-3">
           <button
-            className="w-[50px] h-[50px] flex items-center justify-center bg-white/5 hover:bg-white/10 text-slate-200 rounded-2xl border border-white/10 hover:border-white/20 transition-all active:scale-95 outline-none group/btn shrink-0"
+            className="w-[50px] h-[50px] flex items-center justify-center bg-[var(--surface-2)] hover:bg-[var(--surface-hover)] text-[var(--text)] rounded-2xl border border-[var(--border)] hover:border-[var(--border-strong)] transition-all active:scale-95 outline-none group/btn shrink-0"
             onClick={() => onViewProfile(match.userId)}
             title="View Profile"
           >
             <svg
-              className="w-5 h-5 text-slate-400 group-hover/btn:text-white transition-colors"
+              className="w-5 h-5 text-[var(--text-muted)] group-hover/btn:text-[var(--text)] transition-colors"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

@@ -40,7 +40,9 @@ export const profileSerializer = {
         heightCm: profile.heightCm,
         physicalStatus: profile.physicalStatus,
         maritalStatus: profile.maritalStatus,
-        subcaste: profile.subcaste,
+        caste: (profile as any).Caste?.name || null,
+        // Prefer the structured subcaste name, fall back to the legacy free-text value.
+        subcaste: (profile as any).Subcaste?.name || profile.subcaste || null,
         shortBio: profile.shortBio,
         // Disclose contact info only if explicitly requested, otherwise mask phone number
         mobile: maskPhoneNumber(user?.mobile, includeContact),

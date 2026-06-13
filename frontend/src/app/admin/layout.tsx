@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function AdminLayout({
   children,
@@ -9,11 +10,42 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const [pendingCasteRequests, setPendingCasteRequests] = useState(0);
+
+  // The global `body { zoom: 0.8 }` makes 100vh elements fill only ~80% of the
+  // visual viewport, exposing the (dark) body canvas below. Paint the body canvas
+  // with the admin surface colour while this layout is mounted so there's no gap.
+  useEffect(() => {
+    document.body.classList.add("admin-surface");
+    return () => document.body.classList.remove("admin-surface");
+  }, []);
+
+  useEffect(() => {
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (!token) return;
+    fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/stats`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    )
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.stats?.pendingCasteRequests != null) {
+          setPendingCasteRequests(data.stats.pendingCasteRequests);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const navItems = [
     { label: "Dashboard Overview", href: "/admin", exact: true },
     { label: "User Management", href: "/admin/users" },
     { label: "ID Verifications", href: "/admin/verifications", badge: 12 },
+    {
+      label: "Caste Requests",
+      href: "/admin/caste-requests",
+      badge: pendingCasteRequests || undefined,
+    },
     { label: "Reported Profiles", href: "/admin/reports" },
     { label: "Success Stories", href: "/admin/success" },
   ];

@@ -2,10 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   THEME SYSTEM
+   .theme-violet  → VIOLET TECH  (dark)
+   .theme-gold    → ROYAL GOLD   (light)
+   Both expose the same semantic tokens so app surfaces adapt.
+   ============================================================ */
 :root,
 .theme-violet {
-  --background: #020617;
-  --foreground: #f8fafc;
+  --background: #07060f;
+  --foreground: #f5f3ff;
 
   --primary: #8b5cf6;
   --primary-hover: #7c3aed;
@@ -14,46 +20,140 @@
   --secondary-hover: #9333ea;
 
   /* Accent aligned to CONNECT button */
-  /* old - 9333ea changed accent to : c084fc */
   --accent-color: #c084fc; /* Purple 600 */
-  --accent-hover: #7e22ce; /* Purple 700 default- #7e22ce*/
+  --accent-hover: #7e22ce; /* Purple 700 */
   --accent-border: rgba(147, 51, 234, 0.45);
   --accent-soft-bg: rgba(147, 51, 234, 0.12);
   --accent-shadow: rgba(147, 51, 234, 0.35);
-
   --accent-gradient: linear-gradient(135deg, #c084fc 0%, #4f46e5 100%);
+
+  /* ---- App semantic tokens (dark) ---- */
+  --app-bg: #07060f;
+  --app-grad-1: rgba(124, 58, 237, 0.22);
+  --app-grad-2: rgba(79, 70, 229, 0.16);
+  --app-grad-3: rgba(212, 175, 55, 0.08);
+
+  --surface: rgba(255, 255, 255, 0.045);
+  --surface-solid: #100c20;
+  --surface-2: rgba(255, 255, 255, 0.07);
+  --surface-hover: rgba(255, 255, 255, 0.09);
+
+  --border: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.16);
+
+  --text: #f5f3ff;
+  --text-muted: #a8a6c4;
+  --text-subtle: #6f6c89;
+
+  --accent: #a855f7;
+  --accent-2: #d4af37;
+  --accent-contrast: #ffffff;
+  --accent-2-contrast: #1a1206;
+  --ring: rgba(168, 85, 247, 0.55);
+
+  --nav-bg: rgba(10, 8, 20, 0.72);
+  --card-shadow: 0 24px 60px -28px rgba(0, 0, 0, 0.75);
+  --glow: 0 0 40px rgba(168, 85, 247, 0.18);
+
+  --positive: #4ade80;
+  --positive-soft: rgba(74, 222, 128, 0.14);
+  --warning: #fbbf24;
+  --danger: #fb7185;
+
+  --form-bg: rgba(255, 255, 255, 0.03);
+  --form-border: rgba(255, 255, 255, 0.1);
+  --form-label: #a8a6c4;
+  --form-text: #e2e8f0;
+
+  color-scheme: dark;
 }
 
 .theme-gold {
-  --background: #020617;
-  --foreground: #f8fafc;
-  --primary: #d4af37;
-  --primary-hover: #c9a227;
-  --secondary: #b8860b;
-  --secondary-hover: #a67c00;
+  --background: #fbf7f0;
+  --foreground: #1c1330;
+
+  --primary: #c9a227;
+  --primary-hover: #b08a20;
+  --secondary: #6d28d9;
+  --secondary-hover: #5b21b6;
 
   /* Premium Accent Variables (Royal Gold Elite) */
-  --accent-color: #d4af37;
-  --accent-hover: #c9a227;
-  --accent-border: rgba(212, 175, 55, 0.4);
-  --accent-soft-bg: rgba(212, 175, 55, 0.1);
-  --accent-shadow: rgba(212, 175, 55, 0.3);
-  --accent-gradient: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+  --accent-color: #c9a227;
+  --accent-hover: #b08a20;
+  --accent-border: rgba(201, 162, 39, 0.45);
+  --accent-soft-bg: rgba(201, 162, 39, 0.12);
+  --accent-shadow: rgba(201, 162, 39, 0.3);
+  --accent-gradient: linear-gradient(135deg, #ead08a 0%, #c9a227 50%, #b08a20 100%);
+
+  /* ---- App semantic tokens (light) ---- */
+  --app-bg: #fbf7f0;
+  --app-grad-1: rgba(124, 58, 237, 0.10);
+  --app-grad-2: rgba(201, 162, 39, 0.14);
+  --app-grad-3: rgba(244, 114, 182, 0.08);
+
+  --surface: #ffffff;
+  --surface-solid: #ffffff;
+  --surface-2: #fdfbf6;
+  --surface-hover: #faf4e6;
+
+  --border: rgba(76, 29, 149, 0.10);
+  --border-strong: rgba(76, 29, 149, 0.20);
+
+  --text: #1c1330;
+  --text-muted: #6b6280;
+  --text-subtle: #9a93ad;
+
+  --accent: #6d28d9;
+  --accent-2: #c9a227;
+  --accent-contrast: #ffffff;
+  --accent-2-contrast: #2e1065;
+  --ring: rgba(124, 58, 237, 0.4);
+
+  --nav-bg: rgba(251, 247, 240, 0.82);
+  --card-shadow: 0 4px 16px -4px rgba(76, 29, 149, 0.10),
+    0 24px 48px -16px rgba(76, 29, 149, 0.16);
+  --glow: 0 0 40px rgba(201, 162, 39, 0.18);
+
+  --positive: #16a34a;
+  --positive-soft: rgba(22, 163, 74, 0.10);
+  --warning: #d97706;
+  --danger: #e11d48;
+
+  --form-bg: #ffffff;
+  --form-border: rgba(76, 29, 149, 0.16);
+  --form-label: #6b6280;
+  --form-text: #1c1330;
+
+  color-scheme: light;
 }
 
-/* Shared UI Tokens */
 body {
-  --form-bg: rgba(255, 255, 255, 0.02);
-  --form-border: rgba(255, 255, 255, 0.1);
-  --form-label: #94a3b8;
-  --form-text: #e2e8f0;
-}
-
-body {
-  background: var(--background);
+  background: var(--app-bg);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
   zoom: 0.8;
+  transition: background-color 0.45s ease, color 0.3s ease;
+}
+
+/* App theming helpers (used across platform surfaces) */
+.app-surface {
+  background-color: var(--surface);
+  border-color: var(--border);
+  transition: background-color 0.35s ease, border-color 0.35s ease,
+    box-shadow 0.35s ease;
+}
+.theme-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--card-shadow);
+  transition: background-color 0.35s ease, border-color 0.35s ease,
+    transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+/* Admin section paints the body canvas to match its light surface,
+   so the body { zoom: 0.8 } height gap never shows the dark canvas. */
+.admin-surface {
+  background: #f9fafb !important;
 }
 
 /* Ensure Scrollbar track is always visible to prevent horizontal jitter */
@@ -101,18 +201,18 @@ html {
   padding-bottom: 0.625rem !important;
   padding-left: 1rem !important;
   border-radius: 0.75rem !important; /* xl */
-  background-color: rgba(2, 6, 23, 0.5) !important; /* bg-slate-950/50 */
-  border-color: rgba(255, 255, 255, 0.05) !important;
+  background-color: var(--surface-2) !important;
+  border-color: var(--border) !important;
   font-size: 0.875rem !important; /* text-sm */
 }
 
 .premium-select-filter button:hover {
-  border-color: rgba(212, 175, 55, 0.3) !important;
+  border-color: var(--accent-border) !important;
 }
 
 .premium-select-filter button:focus {
-  border-color: rgba(212, 175, 55, 0.5) !important;
-  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.1) !important;
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 0 0 2px var(--accent-soft-bg) !important;
 }
 
 /* Fix browser autofill styling for dark theme, taking accent color into consideration */
@@ -131,4 +231,104 @@ input:not(:placeholder-shown):not([type="radio"]):not([type="checkbox"]):not([ty
 textarea:not(:placeholder-shown) {
   border-color: var(--accent-color) !important;
   box-shadow: 0 0 10px var(--accent-soft-bg);
+}
+
+/* ---- Light theme (Royal Gold) overrides for global chrome ---- */
+.theme-gold ::-webkit-scrollbar-track {
+  background: #f1e9da;
+}
+.theme-gold ::-webkit-scrollbar-thumb {
+  background: #d8c9a6;
+}
+.theme-gold ::-webkit-scrollbar-thumb:hover {
+  background-color: var(--accent-color);
+}
+.theme-gold * {
+  scrollbar-color: #d8c9a6 #f1e9da;
+}
+.theme-gold input:-webkit-autofill,
+.theme-gold input:-webkit-autofill:hover,
+.theme-gold input:-webkit-autofill:focus,
+.theme-gold input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
+  -webkit-text-fill-color: #1c1330 !important;
+}
+
+/* ============================================================
+   LANDING PAGE — premium light theme (royal purple / gold / ivory)
+   Scoped under .landing-root so the dark platform UI is untouched.
+   ============================================================ */
+.landing-root {
+  --ink: #1c1330; /* deep aubergine ink for text on ivory */
+  --muted: #6b6280;
+  background: #fbf7f0;
+  color: var(--ink);
+  font-family: var(--font-outfit), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: clip;
+}
+
+.landing-root ::selection {
+  background: rgba(124, 58, 237, 0.18);
+  color: #2e1065;
+}
+
+/* Tasteful focus ring for keyboard users only */
+.landing-root :focus-visible {
+  outline: 2px solid #7c3aed;
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* Text wrapping helpers (graceful no-op in older engines) */
+.text-balance {
+  text-wrap: balance;
+}
+.text-pretty {
+  text-wrap: pretty;
+}
+
+/* Gold foil text */
+.text-gold-foil {
+  background: linear-gradient(120deg, #b08a20 0%, #ead08a 35%, #fff7df 50%, #c9a227 65%, #8c6b1f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Royal gradient text */
+.text-royal-foil {
+  background: linear-gradient(120deg, #4c1d95 0%, #7c3aed 50%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Subtle grain overlay for depth on solid panels */
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Animated SVG connection line for the hero (GSAP drives dashoffset) */
+.connection-path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .landing-root *,
+  .landing-root *::before,
+  .landing-root *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

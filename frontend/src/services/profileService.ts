@@ -142,4 +142,18 @@ export const profileService = {
     const response = await apiClient.post("/interests/send", { targetUserId });
     return response.data;
   },
+  requestCaste: async (payload: {
+    religionId: string | number;
+    name: string;
+  }) => {
+    const response = await apiClient.post("/profile/caste-request", payload);
+    return response.data;
+  },
+  requestSubcaste: async (payload: {
+    casteId: string | number;
+    name: string;
+  }) => {
+    const response = await apiClient.post("/profile/subcaste-request", payload);
+    return response.data;
+  },
 };

@@ -18,6 +18,15 @@ export const useCastes = (religionId: string | null) => {
   });
 };
 
+export const useSubcastes = (casteId: string | null) => {
+  return useQuery({
+    queryKey: ["subcastes", casteId],
+    queryFn: () => masterService.getSubcastesByCaste(casteId!),
+    enabled: !!casteId, // Only fetch if caste is selected
+    staleTime: 1000 * 60 * 60 * 24,
+  });
+};
+
 export const useCountries = () => {
   return useQuery({
     queryKey: ["countries"],

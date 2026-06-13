@@ -12,6 +12,16 @@ import {
   approvePhoto,
   rejectPhoto,
 } from "../controllers/moderationController";
+import {
+  getCasteRequests,
+  approveCasteRequest,
+  rejectCasteRequest,
+  mergeCasteRequest,
+  getSubcasteRequests,
+  approveSubcasteRequest,
+  rejectSubcasteRequest,
+  mergeSubcasteRequest,
+} from "../controllers/casteRequestController";
 import { protect, isAdmin } from "../middlewares/authMiddleware";
 
 const router = Router();
@@ -30,5 +40,16 @@ router.patch("/moderation/profile/:profileId/approve", approveProfile);
 router.patch("/moderation/profile/:profileId/reject", rejectProfile);
 router.patch("/moderation/photo/:photoId/approve", approvePhoto);
 router.patch("/moderation/photo/:photoId/reject", rejectPhoto);
+
+// Caste / Subcaste moderation
+router.get("/caste-requests", getCasteRequests);
+router.patch("/caste-requests/:id/approve", approveCasteRequest);
+router.patch("/caste-requests/:id/reject", rejectCasteRequest);
+router.patch("/caste-requests/:id/merge", mergeCasteRequest);
+
+router.get("/subcaste-requests", getSubcasteRequests);
+router.patch("/subcaste-requests/:id/approve", approveSubcasteRequest);
+router.patch("/subcaste-requests/:id/reject", rejectSubcasteRequest);
+router.patch("/subcaste-requests/:id/merge", mergeSubcasteRequest);
 
 export default router;

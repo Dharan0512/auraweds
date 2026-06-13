@@ -39,6 +39,7 @@ interface MasterDataContextType {
   fetchStates: (countryId: number) => Promise<MasterItem[]>;
   fetchCities: (stateId: number) => Promise<MasterItem[]>;
   fetchCastes: (religionId: number) => Promise<MasterItem[]>;
+  fetchSubcastes: (casteId: number) => Promise<MasterItem[]>;
   fetchOccupations: (employmentTypeId: number) => Promise<MasterItem[]>;
   fetchIncomeRanges: (currencyId: number) => Promise<MasterIncomeRange[]>;
   stars: MasterItem[];
@@ -141,6 +142,14 @@ export function MasterDataProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const fetchSubcastes = async (casteId: number) => {
+    try {
+      return await fetchApi(`/master/subcastes?caste_id=${casteId}`);
+    } catch {
+      return [];
+    }
+  };
+
   const fetchOccupations = async (employmentTypeId: number) => {
     try {
       return await fetchApi(
@@ -176,6 +185,7 @@ export function MasterDataProvider({ children }: { children: ReactNode }) {
         fetchStates,
         fetchCities,
         fetchCastes,
+        fetchSubcastes,
         fetchOccupations,
         fetchIncomeRanges,
         loading,

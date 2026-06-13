@@ -78,8 +78,12 @@ export function mapProfileToFormData(profile: any): Record<string, any> {
   const user = profile.user || {};
   const profileData = profile.profile || {};
   const preferences = profile.preferences || {};
-  const family = profileData.FamilyDetail || {};
-  const horoscope = profileData.HoroscopeDetail || {};
+  // Sequelize returns these associations under their plural model names
+  // (FamilyDetails / HoroscopeDetails). Keep the singular fallback for any
+  // legacy/serialized responses that still use it.
+  const family = profileData.FamilyDetails || profileData.FamilyDetail || {};
+  const horoscope =
+    profileData.HoroscopeDetails || profileData.HoroscopeDetail || {};
   const location = profileData.LocationLifestyle || {};
   const education = profileData.EducationCareer || {};
 
@@ -100,9 +104,13 @@ export function mapProfileToFormData(profile: any): Record<string, any> {
     height: profileData.heightCm != null ? String(profileData.heightCm) : "",
     physicalStatus: profileData.physicalStatus ?? "Normal",
     maritalStatus: profileData.maritalStatus ?? "Never Married",
+    // The dropdown collapses "3 or more" into the option id "3+", but the
+    // backend stores it as the integer 3. Map any count >= 3 back to "3+".
     childrenCount:
       profileData.childrenCount != null
-        ? String(profileData.childrenCount)
+        ? profileData.childrenCount >= 3
+          ? "3+"
+          : String(profileData.childrenCount)
         : "0",
     childrenLivingWith: profileData.childrenLivingWith ?? false,
 
@@ -110,6 +118,8 @@ export function mapProfileToFormData(profile: any): Record<string, any> {
     religionId:
       profileData.religionId != null ? String(profileData.religionId) : "",
     casteId: profileData.casteId != null ? String(profileData.casteId) : "",
+    subcasteId:
+      profileData.subcasteId != null ? String(profileData.subcasteId) : "",
     subCaste: profileData.subcaste ?? "",
     motherTongue:
       profileData.motherTongueId != null
@@ -158,7 +168,11 @@ export function mapProfileToFormData(profile: any): Record<string, any> {
     stateId: profileData.stateId != null ? String(profileData.stateId) : "",
     cityId: profileData.cityId != null ? String(profileData.cityId) : "",
     citizenship:
-      location.citizenship != null ? String(location.citizenship) : "",
+      profileData.citizenship != null
+        ? String(profileData.citizenship)
+        : location.citizenship != null
+          ? String(location.citizenship)
+          : "",
 
     // ── Step 6: Partner Preferences (Partner Pref Tab) ──────────────────────
     // These MUST be Numbers as per Step6Preferences.tsx schema

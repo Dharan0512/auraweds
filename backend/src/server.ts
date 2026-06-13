@@ -83,6 +83,10 @@ app.use("/api/master", masterRoutes);
 import moderationRoutes from "./routes/moderationRoutes";
 app.use("/api/moderation", moderationRoutes);
 
+// Admin Routes
+import adminRoutes from "./routes/adminRoutes";
+app.use("/api/admin", adminRoutes);
+
 // 404 + centralized error handling (must be registered after all routes)
 app.use(notFound);
 app.use(globalErrorHandler);

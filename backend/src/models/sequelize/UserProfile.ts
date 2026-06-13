@@ -4,6 +4,7 @@ import { User } from "./User";
 import { MotherTongue } from "./master/MotherTongue";
 import { Religion } from "./master/Religion";
 import { Caste } from "./master/Caste";
+import { Subcaste } from "./master/Subcaste";
 import { Country } from "./master/Country";
 import { State } from "./master/State";
 import { City } from "./master/City";
@@ -25,7 +26,9 @@ interface UserProfileAttributes {
   motherTongueId: number | null;
   religionId: number | null;
   casteId: number | null;
+  subcasteId: number | null;
   subcaste: string | null;
+  citizenship: string | null;
   complexion: string | null;
   shortBio: string | null;
   profileStrength: number;
@@ -62,7 +65,9 @@ interface UserProfileCreationAttributes extends Optional<
   | "motherTongueId"
   | "religionId"
   | "casteId"
+  | "subcasteId"
   | "subcaste"
+  | "citizenship"
   | "complexion"
   | "shortBio"
   | "profileStrength"
@@ -100,7 +105,9 @@ export class UserProfile
   public motherTongueId!: number | null;
   public religionId!: number | null;
   public casteId!: number | null;
+  public subcasteId!: number | null;
   public subcaste!: string | null;
+  public citizenship!: string | null;
   public complexion!: string | null;
   public shortBio!: string | null;
   public convenientTimeToCall!: string | null;
@@ -178,7 +185,14 @@ UserProfile.init(
       references: { model: Caste, key: "id" },
       onDelete: "SET NULL",
     },
+    subcasteId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: { model: Subcaste, key: "id" },
+      onDelete: "SET NULL",
+    },
     subcaste: { type: DataTypes.STRING(100), allowNull: true },
+    citizenship: { type: DataTypes.STRING(100), allowNull: true },
     complexion: { type: DataTypes.STRING(50), allowNull: true },
     shortBio: { type: DataTypes.TEXT, allowNull: true },
     convenientTimeToCall: { type: DataTypes.STRING(100), allowNull: true },
@@ -289,6 +303,9 @@ Religion.hasMany(UserProfile, { foreignKey: "religionId" });
 
 UserProfile.belongsTo(Caste, { foreignKey: "casteId" });
 Caste.hasMany(UserProfile, { foreignKey: "casteId" });
+
+UserProfile.belongsTo(Subcaste, { foreignKey: "subcasteId" });
+Subcaste.hasMany(UserProfile, { foreignKey: "subcasteId" });
 
 UserProfile.belongsTo(Country, { foreignKey: "countryId" });
 Country.hasMany(UserProfile, { foreignKey: "countryId" });

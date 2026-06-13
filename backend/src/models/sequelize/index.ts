@@ -7,6 +7,7 @@ import { City } from "./master/City";
 import { MotherTongue } from "./master/MotherTongue";
 import { Religion } from "./master/Religion";
 import { Caste } from "./master/Caste";
+import { Subcaste } from "./master/Subcaste";
 import { Height } from "./master/Height";
 import { Education } from "./master/Education";
 import { EmploymentType } from "./master/EmploymentType";
@@ -47,6 +48,10 @@ import { Coupon } from "./Coupon";
 import { Block, Report } from "./Moderation";
 import { SuccessStory } from "./SuccessStory";
 
+// Master data requests
+import { CasteRequest } from "./CasteRequest";
+import { SubcasteRequest } from "./SubcasteRequest";
+
 // Associations
 UserProfile.hasOne(FamilyDetails, { foreignKey: "userProfileId" });
 FamilyDetails.belongsTo(UserProfile, { foreignKey: "userProfileId" });
@@ -71,6 +76,7 @@ export {
   MotherTongue,
   Religion,
   Caste,
+  Subcaste,
   Height,
   Education,
   EmploymentType,
@@ -105,4 +111,6 @@ export {
   ProfileView,
   PhoneViewLog,
   Coupon,
+  CasteRequest,
+  SubcasteRequest,
 };

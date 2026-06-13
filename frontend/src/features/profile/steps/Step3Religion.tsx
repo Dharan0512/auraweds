@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import {
   useReligions,
   useCastes,
+  useSubcastes,
   useMotherTongues,
   useStars,
   useRasis,
@@ -25,6 +26,7 @@ const religionSchema = z
   .object({
     religionId: z.string().min(1, "Religion is required"),
     casteId: z.string().optional(),
+    subcasteId: z.string().optional(),
     subCaste: z.string().optional(),
     motherTongue: z.string().min(1, "Mother tongue is required"),
     // Horoscope fields
@@ -98,11 +100,67 @@ export default function Step3Religion({ initialData, onNext, onBack }: Props) {
   }, [initialData, reset]);
 
   const selectedReligion = watch("religionId");
+  const selectedCaste = watch("casteId");
   const selectedMotherTongue = watch("motherTongue");
 
   const { data: religions, isLoading: loadingReligions } = useReligions();
   const { data: castes, isLoading: loadingCastes } =
     useCastes(selectedReligion);
+  const { data: subcastes, isLoading: loadingSubcastes } =
+    useSubcastes(selectedCaste || null);
+
+  // "Other → request new value" flow (admin-moderated).
+  const OTHER_ID = "__other__";
+  const [casteOtherOpen, setCasteOtherOpen] = useState(false);
+  const [subcasteOtherOpen, setSubcasteOtherOpen] = useState(false);
+  const [casteOtherName, setCasteOtherName] = useState("");
+  const [subcasteOtherName, setSubcasteOtherName] = useState("");
+  const [submittingCaste, setSubmittingCaste] = useState(false);
+  const [submittingSubcaste, setSubmittingSubcaste] = useState(false);
+
+  const handleRequestCaste = async () => {
+    const name = casteOtherName.trim();
+    if (!name) {
+      toast.error("Please enter a caste name");
+      return;
+    }
+    try {
+      setSubmittingCaste(true);
+      const res = await profileService.requestCaste({
+        religionId: selectedReligion,
+        name,
+      });
+      toast.success(res.message);
+      setCasteOtherName("");
+      setCasteOtherOpen(false);
+    } catch {
+      toast.error("Could not submit request. Please try again.");
+    } finally {
+      setSubmittingCaste(false);
+    }
+  };
+
+  const handleRequestSubcaste = async () => {
+    const name = subcasteOtherName.trim();
+    if (!name) {
+      toast.error("Please enter a sub-caste name");
+      return;
+    }
+    try {
+      setSubmittingSubcaste(true);
+      const res = await profileService.requestSubcaste({
+        casteId: selectedCaste || "",
+        name,
+      });
+      toast.success(res.message);
+      setSubcasteOtherName("");
+      setSubcasteOtherOpen(false);
+    } catch {
+      toast.error("Could not submit request. Please try again.");
+    } finally {
+      setSubmittingSubcaste(false);
+    }
+  };
   const { data: motherTongues, isLoading: loadingMotherTongues } =
     useMotherTongues();
   const { data: stars } = useStars();
@@ -156,6 +214,7 @@ export default function Step3Religion({ initialData, onNext, onBack }: Props) {
             onChange={(option) => {
               setValue("religionId", option?.id.toString() || "");
               setValue("casteId", "");
+              setValue("subcasteId", "");
             }}
             placeholder="Search Religion..."
           />
@@ -169,18 +228,56 @@ export default function Step3Religion({ initialData, onNext, onBack }: Props) {
         <div className="space-y-3">
           <label>Caste / Community</label>
           <SearchableDropdown
-            options={castes || []}
+            options={[
+              ...(castes || []),
+              { id: OTHER_ID, name: "➕ Other (request new)" },
+            ]}
             value={
               castes?.find((c) => c.id.toString() === watch("casteId")) || null
             }
-            onChange={(option) =>
-              setValue("casteId", option?.id.toString() || "")
-            }
+            onChange={(option) => {
+              if (option?.id === OTHER_ID) {
+                setCasteOtherOpen(true);
+                return;
+              }
+              setValue("casteId", option?.id.toString() || "");
+              setValue("subcasteId", "");
+              setSubcasteOtherOpen(false);
+            }}
             placeholder={
               loadingCastes ? "Loading..." : "Search Caste / Community..."
             }
             disabled={!selectedReligion}
           />
+          {casteOtherOpen && (
+            <div className="flex gap-2 mt-2">
+              <input
+                type="text"
+                value={casteOtherName}
+                onChange={(e) => setCasteOtherName(e.target.value)}
+                placeholder="Enter your caste / community"
+                className="flex-1"
+              />
+              <button
+                type="button"
+                onClick={handleRequestCaste}
+                disabled={submittingCaste}
+                className="px-4 rounded-2xl bg-purple-600 text-white text-sm font-bold disabled:opacity-50"
+              >
+                {submittingCaste ? "..." : "Request"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setCasteOtherOpen(false);
+                  setCasteOtherName("");
+                }}
+                className="px-3 rounded-2xl border border-white/10 text-slate-400 text-sm"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          )}
           {errors.casteId && (
             <p className="text-xs text-rose-400 font-bold mt-2">
               {errors.casteId.message}
@@ -188,13 +285,62 @@ export default function Step3Religion({ initialData, onNext, onBack }: Props) {
           )}
         </div>
 
-        <div className="space-y-3 sm:col-span-2">
+        <div className="space-y-3">
           <label>Sub-caste (Optional)</label>
-          <input
-            {...register("subCaste")}
-            type="text"
-            placeholder="e.g. Mudaliar, Iyer, etc. Specify for better matching"
+          <SearchableDropdown
+            options={[
+              ...(subcastes || []),
+              { id: OTHER_ID, name: "➕ Other (request new)" },
+            ]}
+            value={
+              subcastes?.find((s) => s.id.toString() === watch("subcasteId")) ||
+              null
+            }
+            onChange={(option) => {
+              if (option?.id === OTHER_ID) {
+                setSubcasteOtherOpen(true);
+                return;
+              }
+              setValue("subcasteId", option?.id.toString() || "");
+            }}
+            placeholder={
+              !selectedCaste
+                ? "Select a caste first"
+                : loadingSubcastes
+                  ? "Loading..."
+                  : "Search Sub-caste..."
+            }
+            disabled={!selectedCaste}
           />
+          {subcasteOtherOpen && (
+            <div className="flex gap-2 mt-2">
+              <input
+                type="text"
+                value={subcasteOtherName}
+                onChange={(e) => setSubcasteOtherName(e.target.value)}
+                placeholder="Enter your sub-caste"
+                className="flex-1"
+              />
+              <button
+                type="button"
+                onClick={handleRequestSubcaste}
+                disabled={submittingSubcaste}
+                className="px-4 rounded-2xl bg-purple-600 text-white text-sm font-bold disabled:opacity-50"
+              >
+                {submittingSubcaste ? "..." : "Request"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSubcasteOtherOpen(false);
+                  setSubcasteOtherName("");
+                }}
+                className="px-3 rounded-2xl border border-white/10 text-slate-400 text-sm"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="space-y-3">

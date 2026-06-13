@@ -273,7 +273,7 @@ export default function UpgradeModal({
                 isPremium={true}
                 onSelect={() => handleUpgrade("Silver")}
                 loading={loadingTier === "Silver"}
-                highlight={duration === "6M"}
+                highlight={true}
               />
 
               {/* Gold Plan */}
@@ -298,9 +298,7 @@ export default function UpgradeModal({
                 ]}
                 status={getButtonProps("Gold")}
                 isPremium={true}
-                highlight={duration !== "6M"}
-                onSelect={() => handleUpgrade("Gold")}
-                loading={loadingTier === "Gold"}
+                comingSoon={true}
               />
             </div>
           </div>
@@ -329,6 +327,7 @@ interface PlanCardProps {
   loading?: boolean;
   badge?: string;
   eliteTheme?: boolean;
+  comingSoon?: boolean;
 }
 
 function PlanCard({
@@ -344,21 +343,30 @@ function PlanCard({
   loading,
   badge,
   eliteTheme,
+  comingSoon,
 }: PlanCardProps) {
   return (
     <div
       className={`relative p-8 rounded-[2.5rem] flex flex-col transition-all duration-500 group ${
-        eliteTheme
-          ? "bg-gradient-to-br from-slate-900 via-slate-950 to-[#D4AF37]/10 border-2 border-[#D4AF37] shadow-[0_20px_50px_rgba(212,175,55,0.2)] scale-105 z-10"
-          : highlight
-            ? "bg-slate-900 border-2 border-[#D4AF37] shadow-[0_20px_50px_rgba(212,175,55,0.1)] scale-105 z-10"
-            : "bg-slate-800/30 border border-white/5 hover:border-white/10"
+        comingSoon
+          ? "bg-slate-800/20 border border-white/5 opacity-75"
+          : eliteTheme
+            ? "bg-gradient-to-br from-slate-900 via-slate-950 to-[#D4AF37]/10 border-2 border-[#D4AF37] shadow-[0_20px_50px_rgba(212,175,55,0.2)] scale-105 z-10"
+            : highlight
+              ? "bg-slate-900 border-2 border-[#D4AF37] shadow-[0_20px_50px_rgba(212,175,55,0.1)] scale-105 z-10"
+              : "bg-slate-800/30 border border-white/5 hover:border-white/10"
       }`}
     >
-      {(highlight || eliteTheme) && (
-        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 px-4 py-1 rounded-full text-[10px] font-black tracking-widest uppercase shadow-xl whitespace-nowrap">
-          {badge || "Recommended"}
+      {comingSoon ? (
+        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-slate-700 text-white px-4 py-1 rounded-full text-[10px] font-black tracking-widest uppercase shadow-xl whitespace-nowrap">
+          Coming Soon
         </div>
+      ) : (
+        (highlight || eliteTheme) && (
+          <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 px-4 py-1 rounded-full text-[10px] font-black tracking-widest uppercase shadow-xl whitespace-nowrap">
+            {badge || "Recommended"}
+          </div>
+        )
       )}
 
       <div className="mb-6">
@@ -405,17 +413,19 @@ function PlanCard({
 
       <div className="relative">
         <button
-          onClick={onSelect}
-          disabled={status.type === "disabled" || loading}
+          onClick={comingSoon ? undefined : onSelect}
+          disabled={comingSoon || status.type === "disabled" || loading}
           className={`w-full py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all duration-500 ${
-            status.type === "primary"
-              ? highlight
-                ? "bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 hover:shadow-[0_10px_30px_rgba(212,175,55,0.4)]"
-                : "bg-white/5 hover:bg-white/10 text-white border border-white/10"
-              : "bg-slate-900 text-slate-600 border border-white/5 cursor-not-allowed"
+            comingSoon
+              ? "bg-slate-900 text-slate-500 border border-white/5 cursor-not-allowed"
+              : status.type === "primary"
+                ? highlight
+                  ? "bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 hover:shadow-[0_10px_30px_rgba(212,175,55,0.4)]"
+                  : "bg-white/5 hover:bg-white/10 text-white border border-white/10"
+                : "bg-slate-900 text-slate-600 border border-white/5 cursor-not-allowed"
           }`}
         >
-          {loading ? "Processing..." : status.label}
+          {comingSoon ? "Coming Soon" : loading ? "Processing..." : status.label}
         </button>
 
         {status.sub && (
