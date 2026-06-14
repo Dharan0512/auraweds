@@ -1,6 +1,7 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import path from "path";
 import logger from "../utils/logger";
+import { optimizeImage } from "../utils/imageOptimizer";
 
 /**
  * Supabase Storage configuration. Uploads happen server-side using the
@@ -42,7 +43,29 @@ export async function uploadBufferToStorage(
   buffer: Buffer,
   options: { folder: string; originalName: string; contentType: string },
 ): Promise<string> {
-  const ext = path.extname(options.originalName).toLowerCase();
+  let uploadBuffer = buffer;
+  let contentType = options.contentType;
+  let ext = path.extname(options.originalName).toLowerCase();
+
+  // Compress and resize raster images before upload. PDFs and any format sharp
+  // can't decode fall through to the original buffer, so horoscope PDFs and
+  // exotic image formats are still stored as-is.
+  if (contentType.startsWith("image/")) {
+    try {
+      const optimized = await optimizeImage(buffer);
+      logger.debug(
+        `Optimized ${options.originalName}: ${buffer.length} -> ${optimized.buffer.length} bytes`,
+      );
+      uploadBuffer = optimized.buffer;
+      contentType = optimized.contentType;
+      ext = optimized.ext;
+    } catch (err) {
+      logger.warn(
+        `Image optimization failed for ${options.originalName}; uploading original. ${(err as Error).message}`,
+      );
+    }
+  }
+
   const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
   const objectPath = `${options.folder}/${uniqueSuffix}${ext}`;
 
@@ -54,8 +77,8 @@ export async function uploadBufferToStorage(
   const client = getSupabaseClient();
   const { error } = await client.storage
     .from(STORAGE_BUCKET)
-    .upload(objectPath, buffer, {
-      contentType: options.contentType,
+    .upload(objectPath, uploadBuffer, {
+      contentType,
       upsert: true,
     });
 
@@ -68,6 +91,56 @@ export async function uploadBufferToStorage(
     .getPublicUrl(objectPath);
 
   return data.publicUrl;
+}
+
+/**
+ * Uploads a buffer to an explicit object path WITHOUT any optimization, and
+ * returns the object's public URL. Used by the backfill script, which has
+ * already optimized the buffer itself.
+ */
+export async function uploadObjectToStorage(
+  buffer: Buffer,
+  objectPath: string,
+  contentType: string,
+): Promise<string> {
+  if (!isSupabaseConfigured) {
+    logger.debug(`[LOCAL] Mock upload: ${objectPath}`);
+    return `http://localhost:5000/uploads/${objectPath}`;
+  }
+
+  const client = getSupabaseClient();
+  const { error } = await client.storage
+    .from(STORAGE_BUCKET)
+    .upload(objectPath, buffer, { contentType, upsert: true });
+
+  if (error) {
+    throw new Error(`Supabase Storage upload failed: ${error.message}`);
+  }
+
+  const { data } = client.storage.from(STORAGE_BUCKET).getPublicUrl(objectPath);
+  return data.publicUrl;
+}
+
+/**
+ * Downloads a previously uploaded object by its public URL. Returns null for
+ * URLs that don't belong to this bucket, when Supabase isn't configured, or on
+ * any download error (logged, never thrown).
+ */
+export async function downloadFromStorage(url: string): Promise<Buffer | null> {
+  const objectPath = getStoragePathFromUrl(url);
+  if (!objectPath || !isSupabaseConfigured) return null;
+
+  const client = getSupabaseClient();
+  const { data, error } = await client.storage
+    .from(STORAGE_BUCKET)
+    .download(objectPath);
+
+  if (error || !data) {
+    logger.warn(`Failed to download ${objectPath}: ${error?.message}`);
+    return null;
+  }
+
+  return Buffer.from(await data.arrayBuffer());
 }
 
 /**

@@ -11,6 +11,7 @@
     "migrate-db": "ts-node src/scripts/migrateData.ts",
     "migrate:self-mobile-index": "ts-node src/scripts/addSelfMobileUniqueIndex.ts",
     "seed": "ts-node src/scripts/seedPremiumProfiles.ts",
+    "backfill:images": "ts-node src/scripts/backfillOptimizeImages.ts",
     "vercel-build": "npm run build"
   },
   "keywords": [],
@@ -31,6 +32,7 @@
     "pg": "^8.19.0",
     "razorpay": "^2.9.6",
     "sequelize": "^6.37.7",
+    "sharp": "^0.35.1",
     "socket.io": "^4.7.5",
     "winston": "^3.19.0",
     "zod": "^4.4.3"
