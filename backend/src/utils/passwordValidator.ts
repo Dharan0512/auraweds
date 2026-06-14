@@ -1,15 +1,12 @@
 import { z } from "zod";
 
 /**
- * Shared password policy: min 8 chars, at least one uppercase letter,
- * one number, and one special character. Reused by Zod schemas.
+ * Shared password policy: minimum 4 characters. Complexity requirements
+ * (uppercase/number/special) are intentionally relaxed for now.
  */
 export const passwordSchema = z
   .string()
-  .min(8, "Password must be at least 8 characters")
-  .regex(/[A-Z]/, "Password must contain an uppercase letter")
-  .regex(/[0-9]/, "Password must contain a number")
-  .regex(/[^A-Za-z0-9]/, "Password must contain a special character");
+  .min(4, "Password must be at least 4 characters");
 
 export interface PasswordValidationResult {
   valid: boolean;

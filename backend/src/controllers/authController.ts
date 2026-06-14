@@ -31,6 +31,36 @@ export const register = async (
       return;
     }
 
+    const normalizedCreatedFor = [
+      "Self",
+      "Parent",
+      "Guardian",
+      "Friend",
+      "Sister",
+      "Brother",
+      "Daughter",
+      "Son",
+      "Relative",
+    ].includes(createdFor)
+      ? createdFor
+      : "Self";
+
+    // Only one "Self" profile is allowed per phone number. Profiles created
+    // on behalf of others (Daughter, Son, etc.) are exempt from this check.
+    if (normalizedCreatedFor === "Self" && mobile) {
+      const existingSelfProfile = await User.findOne({
+        where: { mobile, createdFor: "Self" },
+      });
+      if (existingSelfProfile) {
+        await transaction.rollback();
+        res.status(400).json({
+          message:
+            "A profile is already registered with this phone number",
+        });
+        return;
+      }
+    }
+
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
@@ -39,19 +69,7 @@ export const register = async (
         email,
         passwordHash,
         role: "user",
-        createdFor: [
-          "Self",
-          "Parent",
-          "Guardian",
-          "Friend",
-          "Sister",
-          "Brother",
-          "Daughter",
-          "Son",
-          "Relative",
-        ].includes(createdFor)
-          ? createdFor
-          : "Self",
+        createdFor: normalizedCreatedFor,
         firstName,
         lastName: lastName || null,
         gender: ["Male", "Female", "Other"].includes(gender) ? gender : "Other",
@@ -94,6 +112,21 @@ export const register = async (
     });
   } catch (error: any) {
     await transaction.rollback();
+
+    // Concurrent registrations can slip past the application-layer check and
+    // hit the partial unique index (uniq_users_self_mobile). Map that to the
+    // same friendly 400 instead of a generic server error.
+    if (
+      error?.name === "SequelizeUniqueConstraintError" &&
+      (error?.parent?.constraint === "uniq_users_self_mobile" ||
+        error?.original?.constraint === "uniq_users_self_mobile")
+    ) {
+      res.status(400).json({
+        message: "A profile is already registered with this phone number",
+      });
+      return;
+    }
+
     console.error("Register error DETAILED:", {
       message: error.message,
       stack: error.stack,

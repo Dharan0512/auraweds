@@ -159,6 +159,15 @@ User.init(
     indexes: [
       // Match discovery filters by gender + isActive; index speeds those scans.
       { fields: ["gender", "isActive"], name: "idx_users_gender_active" },
+      // Enforce one "Self" profile per phone number at the DB level. Partial
+      // index so profiles created for others (Daughter, Son, ...) are exempt,
+      // and multiple NULL mobiles remain allowed.
+      {
+        fields: ["mobile"],
+        name: "uniq_users_self_mobile",
+        unique: true,
+        where: { createdFor: "Self" },
+      },
     ],
   },
 );

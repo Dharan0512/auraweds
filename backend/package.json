@@ -9,6 +9,7 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "migrate-db": "ts-node src/scripts/migrateData.ts",
+    "migrate:self-mobile-index": "ts-node src/scripts/addSelfMobileUniqueIndex.ts",
     "seed": "ts-node src/scripts/seedPremiumProfiles.ts",
     "vercel-build": "npm run build"
   },
