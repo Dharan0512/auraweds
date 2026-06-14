@@ -12,6 +12,7 @@ import { fetchApi } from "@/lib/api";
 type MasterItem = {
   id: number;
   name: string;
+  taName?: string;
 };
 
 type MasterItemWithCode = MasterItem & {

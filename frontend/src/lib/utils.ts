@@ -27,6 +27,17 @@ export function getImageUrl(path?: string, fallbackName?: string): string {
 }
 
 /**
+ * Formats a master-data item as a bilingual label: "English (Tamil)".
+ * Falls back to just the English name when no Tamil name is present.
+ */
+export function formatMasterLabel(
+  item?: { name?: string; taName?: string | null } | null,
+): string {
+  if (!item?.name) return "";
+  return item.taName ? `${item.name} (${item.taName})` : item.name;
+}
+
+/**
  * Calculates age from a DOB string
  */
 export function calculateAge(dob?: string): number | string {

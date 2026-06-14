@@ -19,7 +19,7 @@ import {
 import SearchableDropdown from "@/components/ui/SearchableDropdown";
 import PremiumSelect from "@/components/ui/PremiumSelect";
 import { profileService } from "@/services/profileService";
-import { getImageUrl } from "@/lib/utils";
+import { getImageUrl, formatMasterLabel } from "@/lib/utils";
 import { Sparkles, Star, Upload, X, Camera } from "lucide-react";
 
 const religionSchema = z
@@ -504,12 +504,16 @@ export default function Step3Religion({ initialData, onNext, onBack }: Props) {
             <div className="space-y-3">
               <label>Star (Nakshatram)</label>
               <SearchableDropdown
-                options={stars || []}
-                value={
-                  stars?.find(
+                options={(stars || []).map((s: any) => ({
+                  ...s,
+                  name: formatMasterLabel(s),
+                }))}
+                value={(() => {
+                  const s = stars?.find(
                     (s: any) => s.id.toString() === watch("starId"),
-                  ) || null
-                }
+                  );
+                  return s ? { ...s, name: formatMasterLabel(s) } : null;
+                })()}
                 onChange={(option) =>
                   setValue("starId", option?.id.toString() || "")
                 }
@@ -526,7 +530,7 @@ export default function Step3Religion({ initialData, onNext, onBack }: Props) {
                   <PremiumSelect
                     options={(rasis || []).map((r: any) => ({
                       id: r.id.toString(),
-                      name: r.name,
+                      name: formatMasterLabel(r),
                     }))}
                     value={field.value ?? ""}
                     onChange={field.onChange}
@@ -549,7 +553,7 @@ export default function Step3Religion({ initialData, onNext, onBack }: Props) {
                   <PremiumSelect
                     options={(laknams || []).map((l: any) => ({
                       id: l.id.toString(),
-                      name: l.name,
+                      name: formatMasterLabel(l),
                     }))}
                     value={field.value ?? ""}
                     onChange={field.onChange}

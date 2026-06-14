@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useMasterData } from "@/context/MasterDataContext";
+import { formatMasterLabel } from "@/lib/utils";
 import { profileService } from "@/services/profileService";
 import {
   subscriptionService,
@@ -564,7 +565,7 @@ export default function SearchPage() {
                 <PremiumSelect
                   options={[
                     { id: "", name: "Any Star" },
-                    ...stars.map((s) => ({ id: s.id, name: s.name })),
+                    ...stars.map((s) => ({ id: s.id, name: formatMasterLabel(s) })),
                   ]}
                   value={filters.starId}
                   onChange={(val) => updateFilter("starId", val)}
@@ -578,7 +579,7 @@ export default function SearchPage() {
                 <PremiumSelect
                   options={[
                     { id: "", name: "Any Rasi" },
-                    ...rasis.map((r) => ({ id: r.id, name: r.name })),
+                    ...rasis.map((r) => ({ id: r.id, name: formatMasterLabel(r) })),
                   ]}
                   value={filters.rasiId}
                   onChange={(val) => updateFilter("rasiId", val)}

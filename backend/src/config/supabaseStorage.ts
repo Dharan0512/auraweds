@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import path from "path";
 import logger from "../utils/logger";
 
@@ -11,21 +11,32 @@ const SUPABASE_URL = process.env.SUPABASE_URL || "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 export const STORAGE_BUCKET = process.env.SUPABASE_STORAGE_BUCKET || "uploads";
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+const isSupabaseConfigured = !!(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY);
+
+if (!isSupabaseConfigured) {
   logger.warn(
     "Supabase Storage is not configured. Image uploads will fail until " +
       "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set.",
   );
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-  auth: { persistSession: false },
-});
+let supabase: SupabaseClient | null = null;
+
+const getSupabaseClient = (): SupabaseClient => {
+  if (!supabase && isSupabaseConfigured) {
+    supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false },
+    });
+  }
+  return supabase as SupabaseClient;
+};
 
 /**
  * Uploads an in-memory file buffer (from multer memoryStorage) to Supabase
  * Storage and returns the object's public URL. The target bucket must be
  * public for getPublicUrl() to resolve.
+ *
+ * If Supabase is not configured (local development), returns a mock URL.
  */
 export async function uploadBufferToStorage(
   buffer: Buffer,
@@ -35,7 +46,13 @@ export async function uploadBufferToStorage(
   const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
   const objectPath = `${options.folder}/${uniqueSuffix}${ext}`;
 
-  const { error } = await supabase.storage
+  if (!isSupabaseConfigured) {
+    logger.debug(`[LOCAL] Mock upload: ${objectPath}`);
+    return `http://localhost:5000/uploads/${objectPath}`;
+  }
+
+  const client = getSupabaseClient();
+  const { error } = await client.storage
     .from(STORAGE_BUCKET)
     .upload(objectPath, buffer, {
       contentType: options.contentType,
@@ -46,7 +63,7 @@ export async function uploadBufferToStorage(
     throw new Error(`Supabase Storage upload failed: ${error.message}`);
   }
 
-  const { data } = supabase.storage
+  const { data } = client.storage
     .from(STORAGE_BUCKET)
     .getPublicUrl(objectPath);
 
@@ -78,7 +95,13 @@ export async function deleteFromStorage(url: string): Promise<void> {
   const objectPath = getStoragePathFromUrl(url);
   if (!objectPath) return;
 
-  const { error } = await supabase.storage
+  if (!isSupabaseConfigured) {
+    logger.debug(`[LOCAL] Mock delete: ${objectPath}`);
+    return;
+  }
+
+  const client = getSupabaseClient();
+  const { error } = await client.storage
     .from(STORAGE_BUCKET)
     .remove([objectPath]);
 
@@ -86,5 +109,3 @@ export async function deleteFromStorage(url: string): Promise<void> {
     logger.warn(`Failed to delete Supabase asset ${objectPath}: ${error.message}`);
   }
 }
-
-export { supabase };

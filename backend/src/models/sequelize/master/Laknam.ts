@@ -4,12 +4,13 @@ import { sequelize } from "../../../config/db.postgres";
 interface LaknamAttributes {
   id: number;
   name: string;
+  taName: string | null;
   isActive: boolean;
 }
 
 interface LaknamCreationAttributes extends Optional<
   LaknamAttributes,
-  "id" | "isActive"
+  "id" | "taName" | "isActive"
 > {}
 
 export class Laknam
@@ -18,6 +19,7 @@ export class Laknam
 {
   public id!: number;
   public name!: string;
+  public taName!: string | null;
   public isActive!: boolean;
 }
 
@@ -33,14 +35,20 @@ Laknam.init(
       allowNull: false,
       unique: true,
     },
+    taName: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      field: "ta_name",
+    },
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
+      field: "isActive",
     },
   },
   {
     sequelize,
-    tableName: "laknams",
+    tableName: "lagnams",
     timestamps: false,
   },
 );

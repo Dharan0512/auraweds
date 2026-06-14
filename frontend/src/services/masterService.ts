@@ -34,9 +34,15 @@ export interface Currency extends MasterItem {
 export interface IncomeRange extends MasterItem {
   currencyId: string | number;
 }
-export interface Star extends MasterItem {}
-export interface Rasi extends MasterItem {}
-export interface Laknam extends MasterItem {}
+export interface Star extends MasterItem {
+  taName?: string;
+}
+export interface Rasi extends MasterItem {
+  taName?: string;
+}
+export interface Laknam extends MasterItem {
+  taName?: string;
+}
 export interface Gothram extends MasterItem {}
 
 export interface Height {

@@ -12,7 +12,7 @@ import * as z from "zod";
 import SearchableDropdown from "@/components/ui/SearchableDropdown";
 import MultiSearchableDropdown from "@/components/ui/MultiSearchableDropdown";
 import PremiumSelect from "@/components/ui/PremiumSelect";
-import { getImageUrl } from "@/lib/utils";
+import { getImageUrl, formatMasterLabel } from "@/lib/utils";
 import {
   masterService,
   Country,
@@ -20,6 +20,7 @@ import {
   Height,
   Religion,
   Caste,
+  Subcaste,
   State,
   City,
   Education,
@@ -115,6 +116,7 @@ const registerSchema = z
       .union([z.number(), z.string()])
       .refine((val) => val !== "", "Required"),
     casteId: z.union([z.number(), z.string()]).optional(),
+    subcasteId: z.union([z.number(), z.string()]).optional(),
     subCaste: z.string().optional(), // ← was subcaste
     // Family
     fatherName: z.string().optional(),
@@ -148,6 +150,7 @@ const registerSchema = z
     city: z.string().optional(),
 
     // Step 4: Lifestyle  (matches Step7Lifestyle)
+    includeLifestyle: z.boolean().default(true),
     diet: z.enum(["Veg", "Non-veg", "Eggetarian", "Vegan"]),
     drink: z.enum(["Yes", "No", "Occasionally"]),
     smoke: z.enum(["Yes", "No", "Occasionally"]),
@@ -248,6 +251,13 @@ export default function RegisterPage() {
   const [gothrams, setGothrams] = useState<Gothram[]>([]);
   const [birthCitiesList, setBirthCitiesList] = useState<City[]>([]);
   const [partnerCastesList, setPartnerCastesList] = useState<Caste[]>([]);
+  const [subcastes, setSubcastes] = useState<Subcaste[]>([]);
+
+  // "Other → request new sub-caste" flow (admin-moderated).
+  const SUBCASTE_OTHER_ID = "__other__";
+  const [subcasteOtherOpen, setSubcasteOtherOpen] = useState(false);
+  const [subcasteOtherName, setSubcasteOtherName] = useState("");
+  const [submittingSubcaste, setSubmittingSubcaste] = useState(false);
 
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
   const [otpInput, setOtpInput] = useState("");
@@ -381,6 +391,7 @@ export default function RegisterPage() {
       motherTongue: "", // ← aligned
       religionId: "",
       casteId: "",
+      subcasteId: "",
       subCaste: "", // ← aligned
       fatherName: "",
       fatherOccupation: "",
@@ -408,6 +419,7 @@ export default function RegisterPage() {
       countryId: "",
       stateId: "",
       cityId: "",
+      includeLifestyle: true,
       diet: "Veg",
       drink: "No",
       smoke: "No",
@@ -460,8 +472,13 @@ export default function RegisterPage() {
   const watchedCurrencyId = useWatch({ control, name: "incomeCurrencyId" });
   const watchedGender = useWatch({ control, name: "gender" });
   const watchedShowHoroscope = useWatch({ control, name: "showHoroscope" });
+  const watchedIncludeLifestyle = useWatch({
+    control,
+    name: "includeLifestyle",
+  });
   const watchedPartnerReligion = useWatch({ control, name: "partnerReligion" });
   const watchedCasteId = useWatch({ control, name: "casteId" });
+  const watchedSubcasteId = useWatch({ control, name: "subcasteId" });
 
   // Auto-sync Partner Religion to User's Religion
   useEffect(() => {
@@ -572,6 +589,51 @@ export default function RegisterPage() {
       (setValue as any)("casteId", "0");
     }
   }, [watchedReligionId, setValue]);
+
+  // Load sub-castes for the selected caste; reset selection when caste changes.
+  useEffect(() => {
+    if (watchedCasteId && watchedCasteId !== "0" && watchedCasteId !== "") {
+      masterService
+        .getSubcastesByCaste(watchedCasteId)
+        .then(setSubcastes)
+        .catch(console.error);
+    } else {
+      setSubcastes([]);
+    }
+    (setValue as any)("subcasteId", "");
+    (setValue as any)("subCaste", "");
+    setSubcasteOtherOpen(false);
+    setSubcasteOtherName("");
+  }, [watchedCasteId, setValue]);
+
+  const handleRequestSubcaste = async () => {
+    const name = subcasteOtherName.trim();
+    if (!name) {
+      toast.error("Please enter a sub-caste name");
+      return;
+    }
+    if (!watchedCasteId || watchedCasteId === "0" || watchedCasteId === "") {
+      toast.error("Please select a caste first");
+      return;
+    }
+    try {
+      setSubmittingSubcaste(true);
+      const res = await profileService.requestSubcaste({
+        casteId: watchedCasteId,
+        name,
+      });
+      // Admin is notified via the Caste/Sub-caste Requests moderation queue.
+      toast.success(res.message || "Sub-caste sent to admin for review");
+      // Keep the typed value on the profile so it isn't lost while pending.
+      (setValue as any)("subCaste", name);
+      setSubcasteOtherName("");
+      setSubcasteOtherOpen(false);
+    } catch {
+      toast.error("Could not submit request. Please try again.");
+    } finally {
+      setSubmittingSubcaste(false);
+    }
+  };
 
   useEffect(() => {
     if (watchedCountryId) {
@@ -727,8 +789,27 @@ export default function RegisterPage() {
   // ── Final submit — field names already aligned, just assemble dob ──
   const onSubmit = async (data: RegisterFormData) => {
     try {
+      // `includeLifestyle` is a UI-only toggle. When the user skips the
+      // lifestyle section, omit those fields entirely so the backend keeps
+      // its defaults instead of storing the placeholder selections.
+      const { includeLifestyle, ...rest } = data;
+      let cleaned: any = rest;
+      if (!includeLifestyle) {
+        const {
+          diet,
+          drink,
+          smoke,
+          fitness,
+          relocation,
+          careerAfterMarriage,
+          spirituality,
+          ...withoutLifestyle
+        } = rest;
+        cleaned = withoutLifestyle;
+      }
+
       const payload = {
-        ...data,
+        ...cleaned,
         dob:
           data.dobYear && data.dobMonth && data.dobDay
             ? `${data.dobYear}-${data.dobMonth.padStart(2, "0")}-${data.dobDay.padStart(2, "0")}`
@@ -738,6 +819,10 @@ export default function RegisterPage() {
         casteId:
           data.casteId && data.casteId !== "0" && data.casteId !== ""
             ? Number(data.casteId)
+            : null,
+        subcasteId:
+          data.subcasteId && data.subcasteId !== ""
+            ? Number(data.subcasteId)
             : null,
         height: Number(data.height), // aligned key
         partnerAgeMin: Number(data.partnerAgeMin),
@@ -1576,17 +1661,75 @@ export default function RegisterPage() {
                       )}
                     />
                   </div>
-                  {/* subCaste — aligned field name */}
+                  {/* subCaste — searchable dropdown with "Other → request" flow */}
                   <div>
                     <label className="block text-sm font-bold text-slate-300 mb-2">
                       Sub-caste
                     </label>
-                    <input
-                      type="text"
-                      {...register("subCaste")}
-                      placeholder="e.g. Kongu, Iyer"
-                      className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none"
+                    <SearchableDropdown
+                      options={[
+                        ...subcastes,
+                        { id: SUBCASTE_OTHER_ID, name: "➕ Other (request new)" },
+                      ]}
+                      value={
+                        subcastes.find(
+                          (s) => String(s.id) === String(watchedSubcasteId),
+                        ) || null
+                      }
+                      onChange={(option: any) => {
+                        if (option?.id === SUBCASTE_OTHER_ID) {
+                          setSubcasteOtherOpen(true);
+                          return;
+                        }
+                        setSubcasteOtherOpen(false);
+                        (setValue as any)(
+                          "subcasteId",
+                          option ? String(option.id) : "",
+                        );
+                        (setValue as any)("subCaste", option?.name || "");
+                      }}
+                      placeholder={
+                        !watchedCasteId ||
+                        watchedCasteId === "0" ||
+                        watchedCasteId === ""
+                          ? "Select a caste first"
+                          : "Search Sub-caste..."
+                      }
+                      disabled={
+                        !watchedCasteId ||
+                        watchedCasteId === "0" ||
+                        watchedCasteId === ""
+                      }
                     />
+                    {subcasteOtherOpen && (
+                      <div className="flex gap-2 mt-2">
+                        <input
+                          type="text"
+                          value={subcasteOtherName}
+                          onChange={(e) => setSubcasteOtherName(e.target.value)}
+                          placeholder="Enter your sub-caste"
+                          className="flex-1 bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none placeholder:text-slate-600"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleRequestSubcaste}
+                          disabled={submittingSubcaste}
+                          className="px-4 rounded-2xl bg-purple-600 text-white text-sm font-bold disabled:opacity-50"
+                        >
+                          {submittingSubcaste ? "..." : "Request"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSubcasteOtherOpen(false);
+                            setSubcasteOtherName("");
+                          }}
+                          className="px-3 rounded-2xl border border-white/10 text-slate-400 text-sm"
+                        >
+                          <XMarkIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-slate-300 mb-2">
@@ -1718,12 +1861,18 @@ export default function RegisterPage() {
                         name="starId"
                         render={({ field }) => (
                           <SearchableDropdown
-                            options={stars}
-                            value={
-                              stars.find(
+                            options={stars.map((s) => ({
+                              ...s,
+                              name: formatMasterLabel(s),
+                            }))}
+                            value={(() => {
+                              const s = stars.find(
                                 (s) => String(s.id) === String(field.value),
-                              ) || null
-                            }
+                              );
+                              return s
+                                ? { ...s, name: formatMasterLabel(s) }
+                                : null;
+                            })()}
                             onChange={(val) => field.onChange(val?.id || "")}
                             placeholder="Select star"
                           />
@@ -1741,7 +1890,7 @@ export default function RegisterPage() {
                           <PremiumSelect
                             options={rasis.map((r) => ({
                               id: String(r.id),
-                              name: r.name,
+                              name: formatMasterLabel(r),
                             }))}
                             value={String(field.value)}
                             onChange={field.onChange}
@@ -1765,7 +1914,7 @@ export default function RegisterPage() {
                           <PremiumSelect
                             options={laknams.map((l) => ({
                               id: String(l.id),
-                              name: l.name,
+                              name: formatMasterLabel(l),
                             }))}
                             value={String(field.value)}
                             onChange={field.onChange}
@@ -1953,24 +2102,61 @@ export default function RegisterPage() {
             {/* ═══════════════ STEP 4: Location & Lifestyle ═══════════════ */}
             {step === 4 && (
               <div className="space-y-8 animate-in fade-in slide-in-from-right-10 duration-500">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="col-span-full grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {["country", "state", "city"].map((f) => (
-                      <div key={f}>
-                        <label className="block text-sm font-bold text-slate-300 mb-2 capitalize">
-                          {f}
-                        </label>
-                        <input
-                          type="text"
-                          {...register(f as any)}
-                          className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none"
-                        />
-                      </div>
-                    ))}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {["country", "state", "city"].map((f) => (
+                    <div key={f}>
+                      <label className="block text-sm font-bold text-slate-300 mb-2 capitalize">
+                        {f}
+                      </label>
+                      <input
+                        type="text"
+                        {...register(f as any)}
+                        className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Lifestyle & Values — optional; user can skip these details */}
+                <div className="pt-6 pb-4 border-b border-purple-500/20 flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <SparklesIcon className="w-5 h-5 text-purple-400" />
+                    Lifestyle & Values
+                  </h3>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-slate-300">
+                      Add Lifestyle Details
+                    </span>
+                    <Controller
+                      control={control}
+                      name="includeLifestyle"
+                      render={({ field }) => (
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={field.value}
+                          onClick={() => field.onChange(!field.value)}
+                          className={`${field.value ? "bg-purple-500" : "bg-slate-700"} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-slate-900`}
+                        >
+                          <span
+                            aria-hidden="true"
+                            className={`${field.value ? "translate-x-5" : "translate-x-0"} pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+                          />
+                        </button>
+                      )}
+                    />
                   </div>
+                </div>
 
-                  <div className="pt-4 col-span-full border-t border-white/5"></div>
+                {!watchedIncludeLifestyle && (
+                  <p className="text-sm text-slate-500 italic">
+                    Lifestyle details skipped — you can add them later from your
+                    profile.
+                  </p>
+                )}
 
+                {watchedIncludeLifestyle && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div>
                     <label className="block text-sm font-bold text-slate-300 mb-2">
                       Dietary Choice
@@ -2116,6 +2302,7 @@ export default function RegisterPage() {
                     />
                   </div>
                 </div>
+                )}
 
                 <div className="flex justify-between pt-6">
                   <button
@@ -2129,17 +2316,21 @@ export default function RegisterPage() {
                   <button
                     type="button"
                     onClick={() =>
-                      nextStep([
-                        "country",
-                        "state",
-                        "city",
-                        "diet",
-                        "fitness",
-                        "smoke",
-                        "drink",
-                        "relocation",
-                        "careerAfterMarriage",
-                      ])
+                      nextStep(
+                        watchedIncludeLifestyle
+                          ? [
+                              "country",
+                              "state",
+                              "city",
+                              "diet",
+                              "fitness",
+                              "smoke",
+                              "drink",
+                              "relocation",
+                              "careerAfterMarriage",
+                            ]
+                          : ["country", "state", "city"],
+                      )
                     }
                     className="group px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl font-black shadow-[0_10px_20px_rgba(168,85,247,0.3)] hover:scale-[1.05] active:scale-95 transition-all flex items-center space-x-2"
                   >

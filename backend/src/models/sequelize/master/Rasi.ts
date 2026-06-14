@@ -4,12 +4,13 @@ import { sequelize } from "../../../config/db.postgres";
 interface RasiAttributes {
   id: number;
   name: string;
+  taName: string | null;
   isActive: boolean;
 }
 
 interface RasiCreationAttributes extends Optional<
   RasiAttributes,
-  "id" | "isActive"
+  "id" | "taName" | "isActive"
 > {}
 
 export class Rasi
@@ -18,6 +19,7 @@ export class Rasi
 {
   public id!: number;
   public name!: string;
+  public taName!: string | null;
   public isActive!: boolean;
 }
 
@@ -33,9 +35,15 @@ Rasi.init(
       allowNull: false,
       unique: true,
     },
+    taName: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      field: "ta_name",
+    },
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
+      field: "isActive",
     },
   },
   {
