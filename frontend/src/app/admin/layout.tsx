@@ -25,7 +25,7 @@ export default function AdminLayout({
       typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (!token) return;
     fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/stats`,
+      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/admin/stats`,
       { headers: { Authorization: `Bearer ${token}` } },
     )
       .then((res) => (res.ok ? res.json() : null))

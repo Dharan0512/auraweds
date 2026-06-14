@@ -19,7 +19,7 @@ export default function AdminReportsPage() {
         if (!token) return router.push("/login");
 
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/reports?page=${page}&limit=${limit}`,
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/admin/reports?page=${page}&limit=${limit}`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
         if (res.status === 401 || res.status === 403) return router.push("/");

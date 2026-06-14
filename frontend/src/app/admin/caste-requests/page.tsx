@@ -21,7 +21,7 @@ interface Candidate {
 }
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export default function AdminCasteRequestsPage() {
   const router = useRouter();
@@ -50,7 +50,7 @@ export default function AdminCasteRequestsPage() {
         return;
       }
       const res = await fetch(
-        `${API_BASE}/api/admin/${tab}-requests?status=Pending`,
+        `${API_BASE}/admin/${tab}-requests?status=Pending`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
       if (res.status === 401 || res.status === 403) {
@@ -77,7 +77,7 @@ export default function AdminCasteRequestsPage() {
   ) => {
     try {
       const res = await fetch(
-        `${API_BASE}/api/admin/${tab}-requests/${id}/${action}`,
+        `${API_BASE}/admin/${tab}-requests/${id}/${action}`,
         { method: "PATCH", headers: authHeaders() },
       );
       if (!res.ok) throw new Error("Action failed");
@@ -95,8 +95,8 @@ export default function AdminCasteRequestsPage() {
     try {
       const url =
         tab === "caste"
-          ? `${API_BASE}/api/master/castes?religion_id=${row.Religion?.id}`
-          : `${API_BASE}/api/master/subcastes?caste_id=${row.Caste?.id}`;
+          ? `${API_BASE}/master/castes?religion_id=${row.Religion?.id}`
+          : `${API_BASE}/master/subcastes?caste_id=${row.Caste?.id}`;
       const res = await fetch(url);
       const data = await res.json();
       setCandidates(data || []);
@@ -116,7 +116,7 @@ export default function AdminCasteRequestsPage() {
           ? { casteId: Number(mergeTargetId) }
           : { subcasteId: Number(mergeTargetId) };
       const res = await fetch(
-        `${API_BASE}/api/admin/${tab}-requests/${id}/merge`,
+        `${API_BASE}/admin/${tab}-requests/${id}/merge`,
         {
           method: "PATCH",
           headers: authHeaders(),

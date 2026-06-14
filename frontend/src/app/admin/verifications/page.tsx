@@ -18,7 +18,7 @@ export default function AdminVerificationsPage() {
       if (!token) return router.push("/login");
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/moderation/pending`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/admin/moderation/pending`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
       if (res.status === 401 || res.status === 403) return router.push("/");
@@ -47,7 +47,7 @@ export default function AdminVerificationsPage() {
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/moderation/${type}/${id}/${action}`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/admin/moderation/${type}/${id}/${action}`,
         {
           method: "PATCH",
           headers: {

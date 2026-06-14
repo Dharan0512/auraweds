@@ -41,7 +41,7 @@ export default function AdminUsersPage() {
       }
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/users?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/admin/users?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -83,7 +83,7 @@ export default function AdminUsersPage() {
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/users/${userId}/status`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/admin/users/${userId}/status`,
         {
           method: "PATCH",
           headers: {

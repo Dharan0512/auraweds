@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 interface ColumnMeta {
   name: string;
@@ -83,7 +83,7 @@ export default function AdminDbPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(`${API}/api/admin/db/tables`, {
+        const res = await fetch(`${API}/admin/db/tables`, {
           headers: authHeaders(),
         });
         if (handleAuthError(res.status)) return;
@@ -110,7 +110,7 @@ export default function AdminDbPage() {
       setError("");
       try {
         const res = await fetch(
-          `${API}/api/admin/db/tables/${encodeURIComponent(table)}?page=${p}&limit=25&search=${encodeURIComponent(q)}`,
+          `${API}/admin/db/tables/${encodeURIComponent(table)}?page=${p}&limit=25&search=${encodeURIComponent(q)}`,
           { headers: authHeaders() },
         );
         if (handleAuthError(res.status)) return;
@@ -213,7 +213,7 @@ export default function AdminDbPage() {
           }
         });
         const res = await fetch(
-          `${API}/api/admin/db/tables/${encodeURIComponent(selected)}`,
+          `${API}/admin/db/tables/${encodeURIComponent(selected)}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json", ...authHeaders() },
@@ -232,7 +232,7 @@ export default function AdminDbPage() {
           values[c.name] = parseValue(c, form[c.name] ?? "");
         });
         const res = await fetch(
-          `${API}/api/admin/db/tables/${encodeURIComponent(selected)}`,
+          `${API}/admin/db/tables/${encodeURIComponent(selected)}`,
           {
             method: "PUT",
             headers: { "Content-Type": "application/json", ...authHeaders() },
@@ -260,7 +260,7 @@ export default function AdminDbPage() {
     setError("");
     try {
       const res = await fetch(
-        `${API}/api/admin/db/tables/${encodeURIComponent(selected)}`,
+        `${API}/admin/db/tables/${encodeURIComponent(selected)}`,
         {
           method: "DELETE",
           headers: { "Content-Type": "application/json", ...authHeaders() },

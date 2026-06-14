@@ -35,15 +35,15 @@ export default function AdminDashboardPage() {
         };
 
         const baseUrl =
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
         // Use allSettled so a network failure in one request doesn't reject the
         // whole batch and blank out the cards that did succeed.
         const [statsResult, modResult, reportsResult] = await Promise.allSettled(
           [
-            fetch(`${baseUrl}/api/admin/stats`, { headers }),
-            fetch(`${baseUrl}/api/admin/moderation/pending`, { headers }),
-            fetch(`${baseUrl}/api/admin/reports?page=1&limit=5`, { headers }),
+            fetch(`${baseUrl}/admin/stats`, { headers }),
+            fetch(`${baseUrl}/admin/moderation/pending`, { headers }),
+            fetch(`${baseUrl}/admin/reports?page=1&limit=5`, { headers }),
           ],
         );
 

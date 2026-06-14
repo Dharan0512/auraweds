@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect, useRef, Fragment } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
@@ -247,6 +247,9 @@ export default function RegisterPage() {
   const [birthCitiesList, setBirthCitiesList] = useState<City[]>([]);
   const [partnerCastesList, setPartnerCastesList] = useState<Caste[]>([]);
   const [subcastes, setSubcastes] = useState<Subcaste[]>([]);
+
+  // Auto-select the default state (Tamil Nadu) only once, after states load.
+  const tnPrefilledRef = useRef(false);
 
   // "Other → request new sub-caste" flow (admin-moderated).
   const SUBCASTE_OTHER_ID = "__other__";
@@ -506,7 +509,12 @@ export default function RegisterPage() {
       .then((data) => {
         setCountries(data);
         const india = data.find((c) => c.phoneCode === "+91");
-        if (india) (setValue as any)("countryCodeId", india.id);
+        if (india) {
+          (setValue as any)("countryCodeId", india.id);
+          // Prefill the location country dropdown to match the default text.
+          (setValue as any)("countryId", india.id);
+          (setValue as any)("country", india.name);
+        }
       })
       .catch(console.error);
   }, [setValue]);
@@ -548,6 +556,25 @@ export default function RegisterPage() {
         .catch(console.error);
     }
   }, [step]);
+
+  // Load step 4 (location) data — (re)fetch the country list when the user
+  // reaches the location/lifestyle step so the Country dropdown is reliably
+  // populated even if the initial mount fetch raced or was skipped.
+  useEffect(() => {
+    if (step !== 4) return;
+    masterService
+      .getCountries()
+      .then((data) => {
+        setCountries(data);
+        // Default to India, but never clobber a country the user already chose.
+        const india = data.find((c) => c.phoneCode === "+91");
+        if (india && !control._formValues.countryId) {
+          (setValue as any)("countryId", india.id);
+          (setValue as any)("country", india.name);
+        }
+      })
+      .catch(console.error);
+  }, [step, control, setValue]);
 
   // Load step 5 data
   useEffect(() => {
@@ -650,6 +677,19 @@ export default function RegisterPage() {
       (setValue as any)("cityId", "");
     }
   }, [watchedStateId, setValue]);
+
+  // Once the (India) states have loaded, prefill the default state — Tamil
+  // Nadu — to match the previous text defaults. Runs only once.
+  useEffect(() => {
+    if (!tnPrefilledRef.current && statesList.length > 0) {
+      const tn = statesList.find((s) => s.name === "Tamil Nadu");
+      if (tn) {
+        (setValue as any)("stateId", tn.id);
+        (setValue as any)("state", tn.name);
+      }
+      tnPrefilledRef.current = true;
+    }
+  }, [statesList, setValue]);
 
   useEffect(() => {
     if (watchedEmploymentTypeId) {
@@ -2098,18 +2138,80 @@ export default function RegisterPage() {
             {step === 4 && (
               <div className="space-y-8 animate-in fade-in slide-in-from-right-10 duration-500">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {["country", "state", "city"].map((f) => (
-                    <div key={f}>
-                      <label className="block text-sm font-bold text-slate-300 mb-2 capitalize">
-                        {f}
-                      </label>
-                      <input
-                        type="text"
-                        {...register(f as any)}
-                        className="w-full bg-slate-900/50 border border-white/10 text-white rounded-2xl py-4 px-4 focus:ring-2 focus:ring-purple-500/50 outline-none"
-                      />
-                    </div>
-                  ))}
+                  <div>
+                    <label className="block text-sm font-bold text-slate-300 mb-2">
+                      Country
+                    </label>
+                    <Controller
+                      control={control}
+                      name="countryId"
+                      render={({ field }) => (
+                        <SearchableDropdown
+                          options={countries}
+                          value={
+                            countries.find(
+                              (c) => String(c.id) === String(field.value),
+                            ) || null
+                          }
+                          onChange={(val) => {
+                            field.onChange(val?.id || "");
+                            setValue("country", val?.name || "");
+                          }}
+                          placeholder="Search country..."
+                        />
+                      )}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-300 mb-2">
+                      State
+                    </label>
+                    <Controller
+                      control={control}
+                      name="stateId"
+                      render={({ field }) => (
+                        <SearchableDropdown
+                          options={statesList}
+                          value={
+                            statesList.find(
+                              (s) => String(s.id) === String(field.value),
+                            ) || null
+                          }
+                          onChange={(val) => {
+                            field.onChange(val?.id || "");
+                            setValue("state", val?.name || "");
+                          }}
+                          placeholder="Search state..."
+                          disabled={!watchedCountryId}
+                        />
+                      )}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-300 mb-2">
+                      City
+                    </label>
+                    <Controller
+                      control={control}
+                      name="cityId"
+                      render={({ field }) => (
+                        <SearchableDropdown
+                          options={citiesList}
+                          value={
+                            citiesList.find(
+                              (c) => String(c.id) === String(field.value),
+                            ) || null
+                          }
+                          onChange={(val) => {
+                            field.onChange(val?.id || "");
+                            setValue("city", val?.name || "");
+                          }}
+                          placeholder="Search city..."
+                          disabled={!watchedStateId}
+                        />
+                      )}
+                    />
+                  </div>
                 </div>
 
                 {/* Lifestyle & Values — optional; user can skip these details */}
