@@ -19,6 +19,7 @@ import { globalErrorHandler, notFound } from "./middlewares/errorHandler";
 dotenv.config();
 
 const app = express();
+app.set("trust proxy", 1); // Trust Vercel's proxy for express-rate-limit to read client IP address
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {

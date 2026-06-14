@@ -63,6 +63,7 @@ export const authLimiter = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { trustProxy: false },
   message: { success: false, message: "Too many attempts, please try again later." },
 });
 
@@ -72,6 +73,7 @@ export const apiLimiter = rateLimit({
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { trustProxy: false },
   message: { success: false, message: "Too many requests, please slow down." },
 });
 
