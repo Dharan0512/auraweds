@@ -1,4 +1,4 @@
-import sharp from "sharp";
+import type sharpType from "sharp";
 
 /**
  * Result of optimizing a raster image. The output is always WebP, which is
@@ -10,6 +10,21 @@ export interface OptimizedImage {
   contentType: string;
   ext: string;
 }
+
+/**
+ * Lazily load sharp. Its native binary can fail to load on some serverless
+ * runtimes; importing it at module top-level would crash the entire API on
+ * startup. Loading it on first use keeps a sharp failure scoped to image
+ * optimization, where callers already fall back to the original buffer.
+ */
+let sharp: typeof sharpType | null = null;
+const getSharp = (): typeof sharpType => {
+  if (!sharp) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    sharp = require("sharp") as typeof sharpType;
+  }
+  return sharp;
+};
 
 // Cap the longest edge. Matrimony photos are displayed at modest sizes, so
 // anything larger than this is wasted bytes. Aspect ratio is preserved and
@@ -30,7 +45,7 @@ export async function optimizeImage(
   const maxDimension = opts.maxDimension ?? MAX_DIMENSION;
   const quality = opts.quality ?? DEFAULT_QUALITY;
 
-  const output = await sharp(buffer)
+  const output = await getSharp()(buffer)
     .rotate() // apply EXIF orientation before metadata is dropped
     .resize(maxDimension, maxDimension, {
       fit: "inside",
