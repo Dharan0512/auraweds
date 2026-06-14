@@ -34,40 +34,55 @@ export default function AdminDashboardPage() {
           "Content-Type": "application/json",
         };
 
-        const [statsRes, modRes, reportsRes] = await Promise.all([
-          fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/stats`,
-            { headers },
-          ),
-          fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/moderation/pending`,
-            { headers },
-          ),
-          fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/admin/reports?page=1&limit=5`,
-            { headers },
-          ),
-        ]);
+        const baseUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-        if (statsRes.status === 401 || statsRes.status === 403) {
+        // Use allSettled so a network failure in one request doesn't reject the
+        // whole batch and blank out the cards that did succeed.
+        const [statsResult, modResult, reportsResult] = await Promise.allSettled(
+          [
+            fetch(`${baseUrl}/api/admin/stats`, { headers }),
+            fetch(`${baseUrl}/api/admin/moderation/pending`, { headers }),
+            fetch(`${baseUrl}/api/admin/reports?page=1&limit=5`, { headers }),
+          ],
+        );
+
+        const statsRes =
+          statsResult.status === "fulfilled" ? statsResult.value : null;
+        const modRes =
+          modResult.status === "fulfilled" ? modResult.value : null;
+        const reportsRes =
+          reportsResult.status === "fulfilled" ? reportsResult.value : null;
+
+        if (statsRes?.status === 401 || statsRes?.status === 403) {
           router.push("/");
           return;
         }
 
-        if (!statsRes.ok) throw new Error("Failed to fetch stats");
-        if (!modRes.ok) throw new Error("Failed to fetch moderation data");
-        if (!reportsRes.ok) throw new Error("Failed to fetch reports");
+        // Handle each response independently so that a failure in one section
+        // (e.g. reports or moderation) does not blank out the others.
+        if (statsRes?.ok) {
+          const statsData = await statsRes.json();
+          setStats(statsData.stats);
+        } else {
+          console.error("Failed to fetch stats:", statsRes?.status ?? statsResult);
+        }
 
-        const statsData = await statsRes.json();
-        const modData = await modRes.json();
-        const reportsData = await reportsRes.json();
+        if (modRes?.ok) {
+          const modData = await modRes.json();
+          const totalProfiles = modData.profiles?.length || 0;
+          const totalPhotos = modData.photos?.length || 0;
+          setPendingApprovals(totalProfiles + totalPhotos);
+        } else {
+          console.error("Failed to fetch moderation data:", modRes?.status ?? modResult);
+        }
 
-        setStats(statsData.stats);
-        setRecentReports(reportsData.reports || []);
-
-        const totalProfiles = modData.profiles?.length || 0;
-        const totalPhotos = modData.photos?.length || 0;
-        setPendingApprovals(totalProfiles + totalPhotos);
+        if (reportsRes?.ok) {
+          const reportsData = await reportsRes.json();
+          setRecentReports(reportsData.reports || []);
+        } else {
+          console.error("Failed to fetch reports:", reportsRes?.status ?? reportsResult);
+        }
       } catch (error) {
         console.error("Dashboard error:", error);
       } finally {

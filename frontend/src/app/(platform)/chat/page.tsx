@@ -10,39 +10,74 @@ export default function ChatComingSoon() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-purple-500/20 rounded-full blur-[100px] animate-pulse" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-[#D4AF37]/10 rounded-full blur-[80px] animate-pulse delay-700" />
 
-        <div className="relative bg-slate-900/40 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-8 sm:p-16 text-center shadow-2xl overflow-hidden">
+        <div
+          className="relative backdrop-blur-2xl rounded-[2.5rem] p-8 sm:p-16 text-center overflow-hidden"
+          style={{
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            boxShadow: "var(--card-shadow)",
+          }}
+        >
           {/* Subtle Inner Gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-[#D4AF37]/5 pointer-events-none" />
 
           <div className="relative z-10">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-purple-500/10 to-[#D4AF37]/10 border border-white/10 mb-8 animate-bounce-subtle">
-              <MessageSquare className="w-10 h-10 text-[#D4AF37]" />
+            <div
+              className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-purple-500/10 to-[#D4AF37]/10 mb-8 animate-bounce-subtle"
+              style={{ border: "1px solid var(--border)" }}
+            >
+              <MessageSquare
+                className="w-10 h-10"
+                style={{ color: "var(--accent-2)" }}
+              />
             </div>
 
-            <h1 className="text-4xl sm:text-5xl font-serif font-bold text-white mb-6 tracking-tight">
+            <h1
+              className="text-4xl sm:text-5xl font-serif font-bold mb-6 tracking-tight"
+              style={{ color: "var(--text)" }}
+            >
               The Future of{" "}
-              <span className="bg-gradient-to-r from-purple-400 to-[#D4AF37] bg-clip-text text-transparent">
+              <span
+                className="bg-clip-text text-transparent"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(to right, var(--accent), var(--accent-2))",
+                }}
+              >
                 Connection
               </span>
             </h1>
 
-            <p className="text-slate-400 text-lg sm:text-xl max-w-md mx-auto mb-10 leading-relaxed font-medium">
+            <p
+              className="text-lg sm:text-xl max-w-md mx-auto mb-10 leading-relaxed font-medium"
+              style={{ color: "var(--text-muted)" }}
+            >
               We are crafting an emotionally intelligent messaging experience
               that transcends words.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <div className="px-6 py-3 rounded-full bg-white/5 border border-white/10 text-[#D4AF37] text-sm font-bold flex items-center gap-2">
+              <div
+                className="px-6 py-3 rounded-full text-sm font-bold flex items-center gap-2"
+                style={{
+                  background: "var(--surface-2)",
+                  border: "1px solid var(--border)",
+                  color: "var(--accent-2)",
+                }}
+              >
                 <Sparkles className="w-4 h-4" />
                 Coming Soon
               </div>
-              <div className="text-slate-500 text-sm font-medium">
+              <div
+                className="text-sm font-medium"
+                style={{ color: "var(--text-subtle)" }}
+              >
                 Phase 2 Integration
               </div>
             </div>
 
             {/* Premium Infinity Symbol Decoration */}
-            <div className="mt-16 opacity-20">
+            <div className="mt-16 opacity-30">
               <svg
                 width="80"
                 height="40"
