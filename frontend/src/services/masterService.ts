@@ -33,6 +33,10 @@ export interface Currency extends MasterItem {
 }
 export interface IncomeRange extends MasterItem {
   currencyId: string | number;
+  minValue?: number;
+  maxValue?: number;
+  displayLabel: string;
+  sortOrder?: number;
 }
 export interface Star extends MasterItem {
   taName?: string;

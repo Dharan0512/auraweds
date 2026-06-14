@@ -7,6 +7,8 @@ import * as z from "zod";
 import {
   useEducations,
   useEmploymentTypes,
+  useCurrencies,
+  useIncomeRanges,
 } from "@/hooks/useMasterData";
 import SearchableDropdown from "@/components/ui/SearchableDropdown";
 import PremiumSelect from "@/components/ui/PremiumSelect";
@@ -46,6 +48,9 @@ export default function Step4Education({ initialData, onNext, onBack }: Props) {
 
   const { data: educations } = useEducations();
   const { data: employmentTypes } = useEmploymentTypes();
+  const { data: currencies } = useCurrencies();
+  const currencyId = currencies?.[0]?.id ?? null;
+  const { data: incomeRanges } = useIncomeRanges(currencyId);
 
   return (
     <form onSubmit={handleSubmit(onNext)} className="space-y-10">
@@ -113,20 +118,15 @@ export default function Step4Education({ initialData, onNext, onBack }: Props) {
             control={control}
             name="incomeRange"
             render={({ field }) => (
-               <PremiumSelect
-                  options={[
-                    "Under 3L",
-                    "3L - 6L",
-                    "6L - 10L",
-                    "10L - 15L",
-                    "15L - 25L",
-                    "25L - 50L",
-                    "50L+",
-                  ].map((opt) => ({ id: opt, name: opt }))}
-                  value={field.value ?? ""}
-                  onChange={field.onChange}
-                  placeholder="Select Personal Annual Income..."
-                />
+              <PremiumSelect
+                options={(incomeRanges || []).map((r) => ({
+                  id: r.displayLabel,
+                  name: r.displayLabel,
+                }))}
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                placeholder="Select Personal Annual Income..."
+              />
             )}
           />
         </div>

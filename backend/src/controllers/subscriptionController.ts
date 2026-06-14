@@ -42,6 +42,18 @@ export const seedPlans = async () => {
       },
     });
   }
+
+  // Guest plan: manually-approved, grants Silver-tier privileges.
+  // Not purchasable on the frontend; admins activate it via direct DB management.
+  await Plan.findOrCreate({
+    where: { id: 13 },
+    defaults: {
+      id: 13,
+      name: "Guest",
+      monthlyPrice: 0,
+      isActive: true,
+    },
+  });
 };
 
 /**
@@ -72,7 +84,11 @@ export const getSubscriptionStatus = async (
     });
 
     if (activeSub) {
-      const planName = (activeSub as any).Plan?.name?.toUpperCase() || "FREE";
+      let planName = (activeSub as any).Plan?.name?.toUpperCase() || "FREE";
+      // Guest plan grants Silver-tier privileges; surface it as Silver.
+      if (planName === "GUEST") {
+        planName = "SILVER";
+      }
       let state = `${planName}_ACTIVE`;
 
       if (activeSub.status === "cancelled_pending") {
@@ -92,7 +108,7 @@ export const getSubscriptionStatus = async (
       );
 
       res.status(200).json({
-        tier: activeSub.Plan?.name,
+        tier: activeSub.Plan?.name === "Guest" ? "Silver" : activeSub.Plan?.name,
         state,
         endDate: activeSub.endDate,
         remainingValue: Math.round(remainingValue),
@@ -108,10 +124,14 @@ export const getSubscriptionStatus = async (
     });
 
     if (lastSub && lastSub.endDate < now) {
+      let lastTier = (lastSub as any).Plan?.name;
+      if (lastTier === "Guest") {
+        lastTier = "Silver";
+      }
       res.status(200).json({
         tier: "Basic Member",
         state: "EXPIRED",
-        lastTier: (lastSub as any).Plan?.name,
+        lastTier: lastTier,
         endDate: lastSub.endDate,
       });
       return;

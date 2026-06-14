@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   getDashboardStats,
   getUsers,
+  getPayments,
   updateUserStatus,
 } from "../controllers/adminController";
 import {
@@ -38,6 +39,7 @@ router.use(protect, isAdmin);
 
 router.get("/stats", getDashboardStats);
 router.get("/users", getUsers);
+router.get("/payments", getPayments);
 router.patch("/users/:userId/status", updateUserStatus);
 
 // Moderation

@@ -87,6 +87,14 @@ export const useOccupations = (employmentTypeId: string | null) => {
   });
 };
 
+export const useCurrencies = () => {
+  return useQuery({
+    queryKey: ["currencies"],
+    queryFn: masterService.getCurrencies,
+    staleTime: 1000 * 60 * 60 * 24,
+  });
+};
+
 export const useIncomeRanges = (currencyId: string | number | null) => {
   return useQuery({
     queryKey: ["income-ranges", currencyId],

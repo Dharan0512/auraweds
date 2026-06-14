@@ -23,10 +23,10 @@ export const getUserTier = async (
 
     const planName = (activeSub as any).Plan?.name || "Basic Member";
 
-    // Normalize names to our 3 tiers
+    // Normalize names to our 3 tiers ("Guest" grants Silver-tier access)
     if (planName === "Gold" || planName === "Elite Gold")
       return { tier: "Gold", subscriptionId: activeSub.id };
-    if (planName === "Silver")
+    if (planName === "Silver" || planName === "Guest")
       return { tier: "Silver", subscriptionId: activeSub.id };
 
     return { tier: "Basic Member", subscriptionId: activeSub.id };

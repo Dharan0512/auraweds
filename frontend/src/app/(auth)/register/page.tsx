@@ -361,6 +361,7 @@ export default function RegisterPage() {
     control,
     trigger,
     setValue,
+    getValues,
     setError,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
@@ -588,6 +589,11 @@ export default function RegisterPage() {
           setEducations(edu);
           setEmploymentTypes(emp);
           setCurrencies(cur);
+          // Default to the first currency so income ranges load from the
+          // income_ranges table (only set if the user hasn't picked one).
+          if (cur.length > 0 && !getValues("incomeCurrencyId")) {
+            (setValue as any)("incomeCurrencyId", cur[0].id);
+          }
         })
         .catch(console.error);
     }
@@ -2510,17 +2516,13 @@ export default function RegisterPage() {
                       name="incomeRange"
                       render={({ field }) => (
                         <PremiumSelect
-                          options={[
-                            "Under 3L",
-                            "3L - 6L",
-                            "6L - 10L",
-                            "10L - 15L",
-                            "15L - 25L",
-                            "25L - 50L",
-                            "50L+",
-                          ].map((opt) => ({ id: opt, name: opt }))}
+                          options={incomeRanges.map((r) => ({
+                            id: r.displayLabel,
+                            name: r.displayLabel,
+                          }))}
                           value={field.value ?? ""}
                           onChange={field.onChange}
+                          placeholder="Select Annual Income..."
                         />
                       )}
                     />

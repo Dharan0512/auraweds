@@ -35,7 +35,11 @@ export const requirePlan = (minTier: string) => {
         include: [{ model: Plan }],
       });
 
-      const userTier = (activeSub as any)?.Plan?.name || "Free";
+      let userTier = (activeSub as any)?.Plan?.name || "Free";
+      // Guest plan maps to Silver for tier-level comparison.
+      if (userTier === "Guest") {
+        userTier = "Silver";
+      }
 
       const requiredLevel = TIER_HIERARCHY[minTier] || 0;
       const userLevel = TIER_HIERARCHY[userTier] || 0;

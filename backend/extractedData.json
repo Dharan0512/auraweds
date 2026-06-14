@@ -386,6 +386,13 @@
       "monthlyPrice": "150000.00",
       "features": null,
       "isActive": true
+    },
+    {
+      "id": 13,
+      "name": "Guest",
+      "monthlyPrice": "0.00",
+      "features": null,
+      "isActive": true
     }
   ],
   "stars": [

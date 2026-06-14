@@ -40,8 +40,11 @@ export const requireTier = (minTier: "Silver" | "Gold" | "Elite Gold") => {
         order: [["endDate", "DESC"]],
       });
 
-      // Default to Free if no active sub
-      const currentTierName = (activeSubscription as any)?.Plan?.name || "Free";
+      // Default to Free if no active sub ("Guest" maps to Silver)
+      let currentTierName = (activeSubscription as any)?.Plan?.name || "Free";
+      if (currentTierName === "Guest") {
+        currentTierName = "Silver";
+      }
       const currentLevel = TIER_LEVELS[currentTierName] || 0;
       const requiredLevel = TIER_LEVELS[minTier] || 1;
 
@@ -84,7 +87,10 @@ export const searchFilterGating = async (
       include: [{ model: Plan, attributes: ["name"] }],
     });
 
-    const currentTier = (activeSubscription as any)?.Plan?.name || "Free";
+    let currentTier = (activeSubscription as any)?.Plan?.name || "Free";
+    if (currentTier === "Guest") {
+      currentTier = "Silver";
+    }
     const currentLevel = TIER_LEVELS[currentTier] || 0;
 
     const queryFilters = Object.keys(req.query);

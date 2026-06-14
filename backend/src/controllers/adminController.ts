@@ -100,8 +100,9 @@ export const getUsers = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const { search, page = 1, limit = 20 } = req.query;
+    const { search, page = 1, limit = 20, premium } = req.query;
     const offset = (Number(page) - 1) * Number(limit);
+    const premiumOnly = premium === "true" || premium === "1";
 
     const where: any = { role: "user" };
     if (search) {
@@ -118,6 +119,10 @@ export const getUsers = async (
       limit: Number(limit),
       offset,
       order: [["createdAt", "DESC"]],
+      // When filtering premium users we constrain the subscription join to
+      // active subscriptions and make it required, so only paying users return.
+      subQuery: false,
+      distinct: true,
       include: [
         {
           model: UserProfile,
@@ -125,6 +130,8 @@ export const getUsers = async (
         },
         {
           model: Subscription,
+          required: premiumOnly,
+          where: premiumOnly ? { status: "active" } : undefined,
           limit: 1,
           order: [["createdAt", "DESC"]],
           include: [Plan],
@@ -141,6 +148,52 @@ export const getUsers = async (
   } catch (error) {
     console.error("Get users error:", error);
     res.status(500).json({ message: "Error fetching users" });
+  }
+};
+
+export const getPayments = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+    const offset = (Number(page) - 1) * Number(limit);
+
+    // Successful payments for the current calendar month (matches the
+    // "Monthly Revenue" dashboard card).
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+
+    const { count, rows: payments } = await Payment.findAndCountAll({
+      where: {
+        paymentStatus: "success",
+        createdAt: { [Op.gte]: monthStart },
+      },
+      limit: Number(limit),
+      offset,
+      order: [["createdAt", "DESC"]],
+      include: [
+        {
+          model: User,
+          attributes: ["id", "firstName", "lastName", "email"],
+        },
+        {
+          model: Subscription,
+          include: [{ model: Plan, attributes: ["name"] }],
+        },
+      ],
+    });
+
+    res.status(200).json({
+      total: count,
+      payments,
+      currentPage: Number(page),
+      totalPages: Math.ceil(count / Number(limit)),
+    });
+  } catch (error) {
+    console.error("Get payments error:", error);
+    res.status(500).json({ message: "Error fetching payments" });
   }
 };
 

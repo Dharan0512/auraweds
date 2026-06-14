@@ -68,14 +68,14 @@ export default function ImagePreviewModal({
       </div>
 
       <div
-        className="relative max-w-[95%] max-h-[90%] flex flex-col items-center gap-4 mt-8"
+        className="relative flex flex-col items-center gap-4 mt-8 w-auto max-w-[min(92vw,900px)] max-h-[88vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative group overflow-hidden rounded-2xl border border-white/10 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)]">
+        <div className="relative group inline-flex overflow-hidden rounded-2xl border border-white/10 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)]">
           <img
             src={imageUrl}
             alt={title || "Preview"}
-            className="max-w-full max-h-[80vh] object-contain transition-transform duration-700 group-hover:scale-[1.02]"
+            className="w-auto h-auto max-w-full max-h-[80vh] object-contain transition-transform duration-700 group-hover:scale-[1.02]"
           />
         </div>
         {title && (
