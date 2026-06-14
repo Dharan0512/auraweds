@@ -1,22 +1,23 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
+import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
   useEducations,
   useEmploymentTypes,
-  useOccupations,
+  useCurrencies,
   useIncomeRanges,
 } from "@/hooks/useMasterData";
 import SearchableDropdown from "@/components/ui/SearchableDropdown";
+import PremiumSelect from "@/components/ui/PremiumSelect";
 
 const educationSchema = z.object({
-  educationId: z.string().min(1, "Education is required"),
-  educationDetail: z.string().optional(),
-  employmentTypeId: z.string().min(1, "Employment sector is required"),
-  occupationId: z.string().optional(),
-  incomeRangeId: z.string().optional(),
+  highestEducation: z.string().min(1, "Education is required"),
+  employmentType: z.string().min(1, "Employment sector is required"),
+  designation: z.string().optional(),
+  incomeRange: z.string().optional(),
 });
 
 type EducationData = z.infer<typeof educationSchema>;
@@ -31,133 +32,104 @@ export default function Step4Education({ initialData, onNext, onBack }: Props) {
   const {
     register,
     handleSubmit,
-    watch,
-    setValue,
+    control,
+    reset,
     formState: { errors },
   } = useForm<EducationData>({
     resolver: zodResolver(educationSchema),
-    defaultValues: initialData || { employmentTypeId: "1" },
+    defaultValues: initialData || {},
   });
 
-  const selectedEmploymentType = watch("employmentTypeId");
-  const selectedEducation = watch("educationId");
-  const selectedOccupation = watch("occupationId");
-  const selectedIncome = watch("incomeRangeId");
+  useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 0) {
+      reset(initialData);
+    }
+  }, [initialData, reset]);
 
-  const { data: educations, isLoading: loadingEducations } = useEducations();
-  const { data: employmentTypes, isLoading: loadingEmploymentTypes } =
-    useEmploymentTypes();
-  const { data: occupations, isLoading: loadingOccupations } = useOccupations(
-    selectedEmploymentType,
-  );
-  const { data: incomeRanges, isLoading: loadingIncomeRanges } =
-    useIncomeRanges(1); // Defaulting to currency 1 for now
+  const { data: educations } = useEducations();
+  const { data: employmentTypes } = useEmploymentTypes();
+  const { data: currencies } = useCurrencies();
+  const currencyId = currencies?.[0]?.id ?? null;
+  const { data: incomeRanges } = useIncomeRanges(currencyId);
 
   return (
     <form onSubmit={handleSubmit(onNext)} className="space-y-10">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
         <div className="space-y-3 sm:col-span-2">
           <label>Highest Education</label>
-          <SearchableDropdown
-            options={educations || []}
-            value={
-              educations?.find((e) => e.id.toString() === selectedEducation) ||
-              null
-            }
-            onChange={(option) =>
-              setValue("educationId", option?.id.toString() || "")
-            }
-            placeholder="Search Education..."
+          <Controller
+            control={control}
+            name="highestEducation"
+            render={({ field }) => (
+              <SearchableDropdown
+                options={educations || []}
+                value={
+                  (educations || []).find((e) => e.name === field.value) ||
+                  null
+                }
+                onChange={(option) => field.onChange(option?.name || "")}
+                placeholder="Search Education..."
+              />
+            )}
           />
-          {errors.educationId && (
+          {errors.highestEducation && (
             <p className="text-xs text-rose-400 font-bold mt-2">
-              {errors.educationId.message}
+              {errors.highestEducation.message}
             </p>
           )}
-        </div>
-
-        <div className="space-y-3 sm:col-span-2">
-          <label>Education Details (Optional)</label>
-          <input
-            {...register("educationDetail")}
-            type="text"
-            placeholder="e.g. Master of Business Administration in Digital Arts"
-          />
         </div>
 
         <div className="space-y-3">
-          <label>Employment Sector</label>
-          <SearchableDropdown
-            options={employmentTypes || []}
-            value={
-              employmentTypes?.find(
-                (et) => et.id.toString() === selectedEmploymentType,
-              ) || null
-            }
-            onChange={(option) => {
-              setValue("employmentTypeId", option?.id.toString() || "");
-              setValue("occupationId", "");
-            }}
-            placeholder="Search Employment Sector..."
+          <label>Employment Type</label>
+          <Controller
+            control={control}
+            name="employmentType"
+            render={({ field }) => (
+              <PremiumSelect
+                options={(employmentTypes || []).map((et) => ({
+                  id: et.name,
+                  name: et.name,
+                }))}
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                placeholder="Select Employment Sector"
+              />
+            )}
           />
-          {errors.employmentTypeId && (
+          {errors.employmentType && (
             <p className="text-xs text-rose-400 font-bold mt-2">
-              {errors.employmentTypeId.message}
+              {errors.employmentType.message}
             </p>
           )}
         </div>
 
-        {selectedEmploymentType !== "5" && (
-          <>
-            <div className="space-y-3">
-              <label>Occupation</label>
-              <SearchableDropdown
-                options={occupations || []}
-                value={
-                  occupations?.find(
-                    (o) => o.id.toString() === selectedOccupation,
-                  ) || null
-                }
-                onChange={(option) =>
-                  setValue("occupationId", option?.id.toString() || "")
-                }
-                placeholder={
-                  loadingOccupations ? "Loading..." : "Search Occupation..."
-                }
-                disabled={!selectedEmploymentType}
-              />
-            </div>
+        <div className="space-y-3">
+          <label>Designation</label>
+          <input
+            {...register("designation")}
+            type="text"
+            placeholder="e.g. Software Engineer"
+          />
+        </div>
 
-            <div className="space-y-3 sm:col-span-2">
-              <label>Annual Income</label>
-              <SearchableDropdown
-                options={
-                  incomeRanges?.map((ir) => ({
-                    id: ir.id,
-                    name: (ir as any).displayLabel || ir.name,
-                  })) || []
-                }
-                value={
-                  incomeRanges
-                    ?.map((ir) => ({
-                      id: ir.id,
-                      name: (ir as any).displayLabel || ir.name,
-                    }))
-                    .find((ir) => ir.id.toString() === selectedIncome) || null
-                }
-                onChange={(option) =>
-                  setValue("incomeRangeId", option?.id.toString() || "")
-                }
+        <div className="space-y-3 sm:col-span-2">
+          <label>Annual Income Range</label>
+          <Controller
+            control={control}
+            name="incomeRange"
+            render={({ field }) => (
+              <PremiumSelect
+                options={(incomeRanges || []).map((r) => ({
+                  id: r.displayLabel,
+                  name: r.displayLabel,
+                }))}
+                value={field.value ?? ""}
+                onChange={field.onChange}
                 placeholder="Select Personal Annual Income..."
               />
-              {errors.incomeRangeId && (
-                <p className="text-xs text-rose-400 font-bold mt-2">
-                  {errors.incomeRangeId.message}
-                </p>
-              )}
-            </div>
-          </>
-        )}
+            )}
+          />
+        </div>
       </div>
 
       <div className="flex justify-between items-center pt-10">

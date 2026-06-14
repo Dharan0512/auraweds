@@ -8,13 +8,14 @@ interface UserPhotoAttributes {
   url: string;
   isMain: boolean;
   order: number;
+  approvalStatus: "pending" | "approved" | "rejected";
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 interface UserPhotoCreationAttributes extends Optional<
   UserPhotoAttributes,
-  "id" | "isMain" | "order"
+  "id" | "isMain" | "order" | "approvalStatus"
 > {}
 
 export class UserPhoto
@@ -26,6 +27,7 @@ export class UserPhoto
   public url!: string;
   public isMain!: boolean;
   public order!: number;
+  public approvalStatus!: "pending" | "approved" | "rejected";
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -34,12 +36,12 @@ export class UserPhoto
 UserPhoto.init(
   {
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
     userId: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       allowNull: false,
       references: { model: User, key: "id" },
       onDelete: "CASCADE",
@@ -55,6 +57,10 @@ UserPhoto.init(
     order: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
+    },
+    approvalStatus: {
+      type: DataTypes.ENUM("pending", "approved", "rejected"),
+      defaultValue: "pending",
     },
   },
   {

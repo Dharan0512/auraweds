@@ -1,11 +1,13 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import { useSearchFilters } from "@/hooks/useSearchFilters";
 import { searchService } from "@/services/searchService";
 import {
   useReligions,
   useCastes,
+  useSubcastes,
   useCountries,
   useStates,
 } from "@/hooks/useMasterData";
@@ -19,6 +21,7 @@ export default function SearchFeature() {
   // Master Data API hooks
   const { data: religions } = useReligions();
   const { data: castes } = useCastes(filters.religionId || null);
+  const { data: subcastes } = useSubcastes(filters.casteId || null);
   const { data: countries } = useCountries();
   const { data: states } = useStates(filters.countryId || null);
 
@@ -34,11 +37,11 @@ export default function SearchFeature() {
     try {
       // NOTE: Send interest API call
       // await interestService.sendInterest(profileId);
-      alert(
+      toast.success(
         `Interest sent successfully to AW${profileId.substring(0, 6).toUpperCase()}`,
       );
     } catch (e) {
-      alert("Failed to send interest. Please try again.");
+      toast.error("Failed to send interest. Please try again.");
     }
   };
 
@@ -66,6 +69,7 @@ export default function SearchFeature() {
                 onClear={clearFilters}
                 religions={religions}
                 castes={castes}
+                subcastes={subcastes}
                 countries={countries}
                 states={states}
               />

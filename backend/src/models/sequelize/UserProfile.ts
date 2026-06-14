@@ -4,6 +4,7 @@ import { User } from "./User";
 import { MotherTongue } from "./master/MotherTongue";
 import { Religion } from "./master/Religion";
 import { Caste } from "./master/Caste";
+import { Subcaste } from "./master/Subcaste";
 import { Country } from "./master/Country";
 import { State } from "./master/State";
 import { City } from "./master/City";
@@ -25,37 +26,29 @@ interface UserProfileAttributes {
   motherTongueId: number | null;
   religionId: number | null;
   casteId: number | null;
+  subcasteId: number | null;
   subcaste: string | null;
+  citizenship: string | null;
+  complexion: string | null;
+  shortBio: string | null;
+  profileStrength: number;
+  convenientTimeToCall: string | null;
+  linkedInUrl: string | null;
+  instagramUrl: string | null;
+  facebookUrl: string | null;
   countryId: number | null;
   stateId: number | null;
   cityId: number | null;
   educationId: number | null;
   employmentTypeId: number | null;
   occupationId: number | null;
-  incomeCurrencyId: number | null;
   incomeRangeId: number | null;
-  familyStatus:
-    | "Middle Class"
-    | "Upper Middle Class"
-    | "Rich"
-    | "Affluent"
-    | null;
-  familyWealth: string | null;
-  aboutMe: string | null;
-  // Lifestyle & Personality
-  diet: "Veg" | "Non-veg" | "Eggetarian" | "Vegan" | null;
-  drink: "Yes" | "No" | "Occasionally" | null;
-  smoke: "Yes" | "No" | "Occasionally" | null;
-  fitness: "Regular" | "Occasional" | "Not at all" | null;
-  spirituality:
-    | "Very Spiritual"
-    | "Moderately Spiritual"
-    | "Not Spiritual"
-    | null;
-  ambition: "High" | "Moderate" | "Low" | null;
-  childrenPreference: "Yes" | "No" | "Flexible" | null;
-  careerAfterMarriage: "Yes" | "No" | "Flexible" | null;
-  relocation: "Yes" | "No" | "Flexible" | null;
+  familyStatus: string | null;
+  incomeCurrencyId: number | null;
+  profileVisibility: "Public" | "Members Only" | "Hidden";
+  approvalStatus: "pending" | "approved" | "rejected";
+  moderationReason: string | null;
+  privacySettings: any | null; // JSONB
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -72,18 +65,25 @@ interface UserProfileCreationAttributes extends Optional<
   | "motherTongueId"
   | "religionId"
   | "casteId"
+  | "subcasteId"
   | "subcaste"
+  | "citizenship"
+  | "complexion"
+  | "shortBio"
+  | "profileStrength"
   | "countryId"
   | "stateId"
   | "cityId"
   | "educationId"
   | "employmentTypeId"
   | "occupationId"
-  | "incomeCurrencyId"
   | "incomeRangeId"
   | "familyStatus"
-  | "familyWealth"
-  | "aboutMe"
+  | "incomeCurrencyId"
+  | "profileVisibility"
+  | "privacySettings"
+  | "approvalStatus"
+  | "moderationReason"
 > {}
 
 export class UserProfile
@@ -105,36 +105,29 @@ export class UserProfile
   public motherTongueId!: number | null;
   public religionId!: number | null;
   public casteId!: number | null;
+  public subcasteId!: number | null;
   public subcaste!: string | null;
+  public citizenship!: string | null;
+  public complexion!: string | null;
+  public shortBio!: string | null;
+  public convenientTimeToCall!: string | null;
+  public linkedInUrl!: string | null;
+  public instagramUrl!: string | null;
+  public facebookUrl!: string | null;
   public countryId!: number | null;
   public stateId!: number | null;
   public cityId!: number | null;
   public educationId!: number | null;
   public employmentTypeId!: number | null;
   public occupationId!: number | null;
-  public incomeCurrencyId!: number | null;
   public incomeRangeId!: number | null;
-  public familyStatus!:
-    | "Middle Class"
-    | "Upper Middle Class"
-    | "Rich"
-    | "Affluent"
-    | null;
-  public familyWealth!: string | null;
-  public aboutMe!: string | null;
-  public diet!: "Veg" | "Non-veg" | "Eggetarian" | "Vegan" | null;
-  public drink!: "Yes" | "No" | "Occasionally" | null;
-  public smoke!: "Yes" | "No" | "Occasionally" | null;
-  public fitness!: "Regular" | "Occasional" | "Not at all" | null;
-  public spirituality!:
-    | "Very Spiritual"
-    | "Moderately Spiritual"
-    | "Not Spiritual"
-    | null;
-  public ambition!: "High" | "Moderate" | "Low" | null;
-  public childrenPreference!: "Yes" | "No" | "Flexible" | null;
-  public careerAfterMarriage!: "Yes" | "No" | "Flexible" | null;
-  public relocation!: "Yes" | "No" | "Flexible" | null;
+  public familyStatus!: string | null;
+  public incomeCurrencyId!: number | null;
+  public profileVisibility!: "Public" | "Members Only" | "Hidden";
+  public profileStrength!: number;
+  public approvalStatus!: "pending" | "approved" | "rejected";
+  public moderationReason!: string | null;
+  public privacySettings!: any | null;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -143,12 +136,12 @@ export class UserProfile
 UserProfile.init(
   {
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
     userId: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       allowNull: false,
       unique: true,
       references: { model: User, key: "id" },
@@ -157,17 +150,18 @@ UserProfile.init(
     dob: { type: DataTypes.DATEONLY, allowNull: true },
     heightCm: { type: DataTypes.INTEGER, allowNull: true },
     physicalStatus: {
-      type: DataTypes.ENUM("Normal", "Physically Challenged"),
+      type: DataTypes.STRING(50),
       defaultValue: "Normal",
+      validate: {
+        isIn: [["Normal", "Physically Challenged"]],
+      },
     },
     maritalStatus: {
-      type: DataTypes.ENUM(
-        "Never Married",
-        "Divorced",
-        "Widowed",
-        "Awaiting Divorce",
-      ),
+      type: DataTypes.STRING(50),
       defaultValue: "Never Married",
+      validate: {
+        isIn: [["Never Married", "Divorced", "Widowed", "Awaiting Divorce"]],
+      },
     },
     childrenCount: { type: DataTypes.INTEGER, defaultValue: 0 },
     childrenLivingWith: { type: DataTypes.BOOLEAN, defaultValue: false },
@@ -191,7 +185,20 @@ UserProfile.init(
       references: { model: Caste, key: "id" },
       onDelete: "SET NULL",
     },
+    subcasteId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: { model: Subcaste, key: "id" },
+      onDelete: "SET NULL",
+    },
     subcaste: { type: DataTypes.STRING(100), allowNull: true },
+    citizenship: { type: DataTypes.STRING(100), allowNull: true },
+    complexion: { type: DataTypes.STRING(50), allowNull: true },
+    shortBio: { type: DataTypes.TEXT, allowNull: true },
+    convenientTimeToCall: { type: DataTypes.STRING(100), allowNull: true },
+    linkedInUrl: { type: DataTypes.STRING(255), allowNull: true },
+    instagramUrl: { type: DataTypes.STRING(255), allowNull: true },
+    facebookUrl: { type: DataTypes.STRING(255), allowNull: true },
     countryId: {
       type: DataTypes.INTEGER,
       allowNull: true,
@@ -228,69 +235,53 @@ UserProfile.init(
       references: { model: Occupation, key: "id" },
       onDelete: "SET NULL",
     },
-    incomeCurrencyId: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      references: { model: Currency, key: "id" },
-      onDelete: "SET NULL",
-    },
     incomeRangeId: {
       type: DataTypes.INTEGER,
       allowNull: true,
       references: { model: IncomeRange, key: "id" },
       onDelete: "SET NULL",
     },
-
     familyStatus: {
-      type: DataTypes.ENUM(
-        "Middle Class",
-        "Upper Middle Class",
-        "Rich",
-        "Affluent",
-      ),
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      validate: {
+        isIn: [["Middle Class", "Upper Middle Class", "Rich", "Affluent"]],
+      },
+    },
+    incomeCurrencyId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: { model: Currency, key: "id" },
+      onDelete: "SET NULL",
+    },
+    profileVisibility: {
+      type: DataTypes.STRING(50),
+      defaultValue: "Public",
+      validate: {
+        isIn: [["Public", "Members Only", "Hidden"]],
+      },
+    },
+    approvalStatus: {
+      type: DataTypes.ENUM("pending", "approved", "rejected"),
+      defaultValue: "pending",
+    },
+    moderationReason: {
+      type: DataTypes.TEXT,
       allowNull: true,
     },
-    familyWealth: { type: DataTypes.STRING(255), allowNull: true },
-    aboutMe: { type: DataTypes.TEXT, allowNull: true },
-    diet: {
-      type: DataTypes.ENUM("Veg", "Non-veg", "Eggetarian", "Vegan"),
+    profileStrength: { type: DataTypes.INTEGER, defaultValue: 0 },
+    privacySettings: {
+      type: DataTypes.JSONB,
       allowNull: true,
-    },
-    drink: {
-      type: DataTypes.ENUM("Yes", "No", "Occasionally"),
-      allowNull: true,
-    },
-    smoke: {
-      type: DataTypes.ENUM("Yes", "No", "Occasionally"),
-      allowNull: true,
-    },
-    fitness: {
-      type: DataTypes.ENUM("Regular", "Occasional", "Not at all"),
-      allowNull: true,
-    },
-    spirituality: {
-      type: DataTypes.ENUM(
-        "Very Spiritual",
-        "Moderately Spiritual",
-        "Not Spiritual",
-      ),
-      allowNull: true,
-    },
-    ambition: {
-      type: DataTypes.ENUM("High", "Moderate", "Low"),
-      allowNull: true,
-    },
-    childrenPreference: {
-      type: DataTypes.ENUM("Yes", "No", "Flexible"),
-      allowNull: true,
-    },
-    careerAfterMarriage: {
-      type: DataTypes.ENUM("Yes", "No", "Flexible"),
-      allowNull: true,
-    },
-    relocation: {
-      type: DataTypes.ENUM("Yes", "No", "Flexible"),
-      allowNull: true,
+      defaultValue: {
+        showExactIncome: false,
+        showFamilyDetails: true,
+        showBirthDetails: true,
+        showSocialLinks: true,
+        showValues: true,
+        showHoroscope: true,
+        showAstroMatch: true,
+      },
     },
   },
   {
@@ -313,6 +304,9 @@ Religion.hasMany(UserProfile, { foreignKey: "religionId" });
 UserProfile.belongsTo(Caste, { foreignKey: "casteId" });
 Caste.hasMany(UserProfile, { foreignKey: "casteId" });
 
+UserProfile.belongsTo(Subcaste, { foreignKey: "subcasteId" });
+Subcaste.hasMany(UserProfile, { foreignKey: "subcasteId" });
+
 UserProfile.belongsTo(Country, { foreignKey: "countryId" });
 Country.hasMany(UserProfile, { foreignKey: "countryId" });
 
@@ -331,8 +325,8 @@ EmploymentType.hasMany(UserProfile, { foreignKey: "employmentTypeId" });
 UserProfile.belongsTo(Occupation, { foreignKey: "occupationId" });
 Occupation.hasMany(UserProfile, { foreignKey: "occupationId" });
 
-UserProfile.belongsTo(Currency, { foreignKey: "incomeCurrencyId" });
-Currency.hasMany(UserProfile, { foreignKey: "incomeCurrencyId" });
-
 UserProfile.belongsTo(IncomeRange, { foreignKey: "incomeRangeId" });
 IncomeRange.hasMany(UserProfile, { foreignKey: "incomeRangeId" });
+
+UserProfile.belongsTo(Currency, { foreignKey: "incomeCurrencyId" });
+Currency.hasMany(UserProfile, { foreignKey: "incomeCurrencyId" });

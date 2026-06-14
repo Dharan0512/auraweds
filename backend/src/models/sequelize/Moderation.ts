@@ -22,17 +22,17 @@ export class Block
 Block.init(
   {
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
     blockerId: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       allowNull: false,
       references: { model: User, key: "id" },
     },
     blockedId: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       allowNull: false,
       references: { model: User, key: "id" },
     },
@@ -66,17 +66,17 @@ export class Report
 Report.init(
   {
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
     reporterId: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       allowNull: false,
       references: { model: User, key: "id" },
     },
     reportedId: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       allowNull: false,
       references: { model: User, key: "id" },
     },
@@ -88,3 +88,9 @@ Report.init(
     timestamps: true,
   },
 );
+
+User.hasMany(Report, { foreignKey: "reporterId", as: "SubmittedReports" });
+Report.belongsTo(User, { foreignKey: "reporterId", as: "Reporter" });
+
+User.hasMany(Report, { foreignKey: "reportedId", as: "ReceivedReports" });
+Report.belongsTo(User, { foreignKey: "reportedId", as: "Reported" });

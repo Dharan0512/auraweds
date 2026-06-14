@@ -2,24 +2,389 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #fdf7f0;
-  --foreground: #171717;
-  --primary: #6a0dad;
-  --primary-hover: #520987;
-  --secondary: #d4af37;
-  --secondary-hover: #b8962c;
+/* ============================================================
+   THEME SYSTEM
+   .theme-violet  → VIOLET TECH  (dark)
+   .theme-gold    → ROYAL GOLD   (light)
+   Both expose the same semantic tokens so app surfaces adapt.
+   ============================================================ */
+:root,
+.theme-violet {
+  --background: #07060f;
+  --foreground: #f5f3ff;
+
+  --primary: #8b5cf6;
+  --primary-hover: #7c3aed;
+
+  --secondary: #a855f7;
+  --secondary-hover: #9333ea;
+
+  /* Accent aligned to CONNECT button */
+  --accent-color: #c084fc; /* Purple 600 */
+  --accent-hover: #7e22ce; /* Purple 700 */
+  --accent-border: rgba(147, 51, 234, 0.45);
+  --accent-soft-bg: rgba(147, 51, 234, 0.12);
+  --accent-shadow: rgba(147, 51, 234, 0.35);
+  --accent-gradient: linear-gradient(135deg, #c084fc 0%, #4f46e5 100%);
+
+  /* ---- App semantic tokens (dark) ---- */
+  --app-bg: #07060f;
+  --app-grad-1: rgba(124, 58, 237, 0.22);
+  --app-grad-2: rgba(79, 70, 229, 0.16);
+  --app-grad-3: rgba(212, 175, 55, 0.08);
+
+  --surface: rgba(255, 255, 255, 0.045);
+  --surface-solid: #100c20;
+  --surface-2: rgba(255, 255, 255, 0.07);
+  --surface-hover: rgba(255, 255, 255, 0.09);
+
+  --border: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.16);
+
+  --text: #f5f3ff;
+  --text-muted: #a8a6c4;
+  --text-subtle: #6f6c89;
+
+  --accent: #a855f7;
+  --accent-2: #d4af37;
+  --accent-contrast: #ffffff;
+  --accent-2-contrast: #1a1206;
+  --ring: rgba(168, 85, 247, 0.55);
+
+  --nav-bg: rgba(10, 8, 20, 0.72);
+  --card-shadow: 0 24px 60px -28px rgba(0, 0, 0, 0.75);
+  --glow: 0 0 40px rgba(168, 85, 247, 0.18);
+
+  --positive: #4ade80;
+  --positive-soft: rgba(74, 222, 128, 0.14);
+  --warning: #fbbf24;
+  --danger: #fb7185;
+
+  --form-bg: rgba(255, 255, 255, 0.03);
+  --form-border: rgba(255, 255, 255, 0.1);
+  --form-label: #a8a6c4;
+  --form-text: #e2e8f0;
+
+  color-scheme: dark;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.theme-gold {
+  --background: #fbf7f0;
+  --foreground: #1c1330;
+
+  --primary: #c9a227;
+  --primary-hover: #b08a20;
+  --secondary: #6d28d9;
+  --secondary-hover: #5b21b6;
+
+  /* Premium Accent Variables (Royal Gold Elite) */
+  --accent-color: #c9a227;
+  --accent-hover: #b08a20;
+  --accent-border: rgba(201, 162, 39, 0.45);
+  --accent-soft-bg: rgba(201, 162, 39, 0.12);
+  --accent-shadow: rgba(201, 162, 39, 0.3);
+  --accent-gradient: linear-gradient(135deg, #ead08a 0%, #c9a227 50%, #b08a20 100%);
+
+  /* ---- App semantic tokens (light) ---- */
+  --app-bg: #fbf7f0;
+  --app-grad-1: rgba(124, 58, 237, 0.10);
+  --app-grad-2: rgba(201, 162, 39, 0.14);
+  --app-grad-3: rgba(244, 114, 182, 0.08);
+
+  --surface: #ffffff;
+  --surface-solid: #ffffff;
+  --surface-2: #fdfbf6;
+  --surface-hover: #faf4e6;
+
+  --border: rgba(76, 29, 149, 0.10);
+  --border-strong: rgba(76, 29, 149, 0.20);
+
+  --text: #1c1330;
+  --text-muted: #6b6280;
+  --text-subtle: #9a93ad;
+
+  --accent: #6d28d9;
+  --accent-2: #c9a227;
+  --accent-contrast: #ffffff;
+  --accent-2-contrast: #2e1065;
+  --ring: rgba(124, 58, 237, 0.4);
+
+  --nav-bg: rgba(251, 247, 240, 0.82);
+  --card-shadow: 0 4px 16px -4px rgba(76, 29, 149, 0.10),
+    0 24px 48px -16px rgba(76, 29, 149, 0.16);
+  --glow: 0 0 40px rgba(201, 162, 39, 0.18);
+
+  --positive: #16a34a;
+  --positive-soft: rgba(22, 163, 74, 0.10);
+  --warning: #d97706;
+  --danger: #e11d48;
+
+  --form-bg: #ffffff;
+  --form-border: rgba(76, 29, 149, 0.16);
+  --form-label: #6b6280;
+  --form-text: #1c1330;
+
+  color-scheme: light;
 }
 
 body {
-  background: var(--background);
+  background: var(--app-bg);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  zoom: 0.8;
+  transition: background-color 0.45s ease, color 0.3s ease;
+}
+
+/* App theming helpers (used across platform surfaces) */
+.app-surface {
+  background-color: var(--surface);
+  border-color: var(--border);
+  transition: background-color 0.35s ease, border-color 0.35s ease,
+    box-shadow 0.35s ease;
+}
+.theme-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--card-shadow);
+  transition: background-color 0.35s ease, border-color 0.35s ease,
+    transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+/* Admin section paints the body canvas to match its light surface,
+   so the body { zoom: 0.8 } height gap never shows the dark canvas. */
+.admin-surface {
+  background: #f9fafb !important;
+  /* The platform default theme uses color-scheme: dark, which makes native
+     form controls (input/select/textarea) render with a dark UA background.
+     The admin panel is a light surface, so force light controls to keep field
+     text legible. */
+  color-scheme: light;
+}
+
+/* ============================================================
+   Admin panel dark mode
+   The admin UI is built with hardcoded light Tailwind utilities.
+   When `.admin-dark` is added to <body> we remap those utilities to a
+   slate dark palette. Everything is scoped under `.admin-dark`, so the
+   rest of the app (and the light admin theme) is untouched. !important
+   is used deliberately to override the single-class Tailwind utilities
+   regardless of source order / variant specificity.
+   ============================================================ */
+.admin-surface.admin-dark {
+  background: #0b1220 !important;
+  color-scheme: dark;
+}
+
+/* Surfaces */
+.admin-dark .bg-white { background-color: #131c2e !important; }
+.admin-dark .bg-gray-50 { background-color: #0b1220 !important; }
+.admin-dark .bg-gray-100 { background-color: #1e293b !important; }
+.admin-dark .bg-gray-200 { background-color: #334155 !important; }
+
+/* Text */
+.admin-dark .text-gray-900,
+.admin-dark .text-\[\#1f2937\] { color: #f1f5f9 !important; }
+.admin-dark .text-gray-800 { color: #e2e8f0 !important; }
+.admin-dark .text-gray-700,
+.admin-dark .text-gray-600 { color: #cbd5e1 !important; }
+.admin-dark .text-gray-500 { color: #94a3b8 !important; }
+.admin-dark .text-gray-400 { color: #8a97a8 !important; }
+.admin-dark .text-gray-300 { color: #64748b !important; }
+
+/* Borders & dividers */
+.admin-dark .border-gray-50,
+.admin-dark .border-gray-100,
+.admin-dark .border-gray-200 { border-color: rgba(148, 163, 184, 0.16) !important; }
+.admin-dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(148, 163, 184, 0.16) !important;
+}
+
+/* Accent surfaces */
+.admin-dark .bg-\[\#faf5ff\] { background-color: rgba(124, 58, 237, 0.20) !important; }
+.admin-dark .text-\[\#6A0DAD\] { color: #c4b5fd !important; }
+.admin-dark .bg-\[\#fef2f2\] { background-color: rgba(239, 68, 68, 0.14) !important; }
+
+/* Interactive states */
+.admin-dark .hover\:bg-gray-50:hover { background-color: #1b2638 !important; }
+.admin-dark .hover\:bg-gray-100:hover { background-color: #243044 !important; }
+.admin-dark .hover\:text-gray-900:hover { color: #f1f5f9 !important; }
+.admin-dark .hover\:text-gray-700:hover { color: #e2e8f0 !important; }
+.admin-dark .read-only\:bg-gray-100:read-only,
+.admin-dark .disabled\:bg-gray-100:disabled { background-color: #1e293b !important; }
+
+/* Ensure Scrollbar track is always visible to prevent horizontal jitter */
+html {
+  overflow-y: scroll;
+  scroll-behavior: smooth;
+}
+
+/* Custom Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a2f3a;
+  border-radius: 20px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--accent-hover);
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--accent-color);
+  box-shadow: inset 0 0 1px 1px var(--accent-shadow);
+  background-clip: content-box;
+}
+
+/* Firefox Support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a2f3a #0f172a;
+}
+
+/* Compact PremiumSelect for Sidebar Filters */
+.premium-select-filter button {
+  padding-top: 0.625rem !important; /* 10px */
+  padding-bottom: 0.625rem !important;
+  padding-left: 1rem !important;
+  border-radius: 0.75rem !important; /* xl */
+  background-color: var(--surface-2) !important;
+  border-color: var(--border) !important;
+  font-size: 0.875rem !important; /* text-sm */
+}
+
+.premium-select-filter button:hover {
+  border-color: var(--accent-border) !important;
+}
+
+.premium-select-filter button:focus {
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 0 0 2px var(--accent-soft-bg) !important;
+}
+
+/* Fix browser autofill styling for dark theme, taking accent color into consideration */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #0f172a inset !important;
+  -webkit-text-fill-color: white !important;
+  border: 1px solid var(--accent-color) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Maintain border color when input has a value (via placeholder check) */
+input:not(:placeholder-shown):not([type="radio"]):not([type="checkbox"]):not([type="range"]):not([type="file"]),
+textarea:not(:placeholder-shown) {
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 0 10px var(--accent-soft-bg);
+}
+
+/* ---- Light theme (Royal Gold) overrides for global chrome ---- */
+.theme-gold ::-webkit-scrollbar-track {
+  background: #f1e9da;
+}
+.theme-gold ::-webkit-scrollbar-thumb {
+  background: #d8c9a6;
+}
+.theme-gold ::-webkit-scrollbar-thumb:hover {
+  background-color: var(--accent-color);
+}
+.theme-gold * {
+  scrollbar-color: #d8c9a6 #f1e9da;
+}
+.theme-gold input:-webkit-autofill,
+.theme-gold input:-webkit-autofill:hover,
+.theme-gold input:-webkit-autofill:focus,
+.theme-gold input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
+  -webkit-text-fill-color: #1c1330 !important;
+}
+
+/* ============================================================
+   LANDING PAGE — premium light theme (royal purple / gold / ivory)
+   Scoped under .landing-root so the dark platform UI is untouched.
+   ============================================================ */
+.landing-root {
+  --ink: #1c1330; /* deep aubergine ink for text on ivory */
+  --muted: #6b6280;
+  background: #fbf7f0;
+  color: var(--ink);
+  font-family: var(--font-outfit), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: clip;
+}
+
+.landing-root ::selection {
+  background: rgba(124, 58, 237, 0.18);
+  color: #2e1065;
+}
+
+/* Tasteful focus ring for keyboard users only */
+.landing-root :focus-visible {
+  outline: 2px solid #7c3aed;
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* Text wrapping helpers (graceful no-op in older engines) */
+.text-balance {
+  text-wrap: balance;
+}
+.text-pretty {
+  text-wrap: pretty;
+}
+
+/* Gold foil text */
+.text-gold-foil {
+  background: linear-gradient(120deg, #b08a20 0%, #ead08a 35%, #fff7df 50%, #c9a227 65%, #8c6b1f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Royal gradient text */
+.text-royal-foil {
+  background: linear-gradient(120deg, #4c1d95 0%, #7c3aed 50%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Subtle grain overlay for depth on solid panels */
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Animated SVG connection line for the hero (GSAP drives dashoffset) */
+.connection-path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .landing-root *,
+  .landing-root *::before,
+  .landing-root *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

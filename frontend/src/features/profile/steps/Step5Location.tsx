@@ -1,6 +1,7 @@
 "use client";
 
 import { useForm } from "react-hook-form";
+import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useCountries, useStates, useCities } from "@/hooks/useMasterData";
@@ -10,7 +11,9 @@ const locationSchema = z.object({
   countryId: z.string().min(1, "Country is required"),
   stateId: z.string().min(1, "State is required"),
   cityId: z.string().min(1, "City is required"),
-  citizenship: z.string().min(1, "Citizenship is required"),
+  // citizenship is not persisted by the backend, so it loads empty when editing.
+  // Keep it optional so a missing value never blocks the wizard.
+  citizenship: z.string().optional().or(z.literal("")),
 });
 
 type LocationData = z.infer<typeof locationSchema>;
@@ -27,11 +30,18 @@ export default function Step5Location({ initialData, onNext, onBack }: Props) {
     watch,
     handleSubmit,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<LocationData>({
     resolver: zodResolver(locationSchema),
     defaultValues: initialData || {},
   });
+
+  useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 0) {
+      reset(initialData);
+    }
+  }, [initialData, reset]);
 
   const selectedCountry = watch("countryId");
   const selectedState = watch("stateId");

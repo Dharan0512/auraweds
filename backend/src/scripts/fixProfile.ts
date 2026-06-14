@@ -1,4 +1,4 @@
-import { User, UserProfile, PartnerPreference } from "../models/sequelize";
+import { User, UserProfile, UserPreference } from "../models/sequelize";
 import { sequelize } from "../config/db.postgres";
 
 async function fix() {
@@ -22,7 +22,6 @@ async function fix() {
         maritalStatus: "Never Married",
         physicalStatus: "Normal",
         childrenCount: 0,
-        familyStatus: "Middle Class",
       });
       console.log("Profile created.");
     } else {
@@ -30,12 +29,12 @@ async function fix() {
     }
 
     // Check if preferences exist
-    const existingPrefs = await PartnerPreference.findOne({
+    const existingPrefs = await UserPreference.findOne({
       where: { userId },
     });
     if (!existingPrefs) {
       console.log(`Creating default preferences for user ${userId}...`);
-      await PartnerPreference.create({
+      await UserPreference.create({
         userId,
         minAge: 18,
         maxAge: 40,

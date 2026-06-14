@@ -31,7 +31,17 @@ Education.init(
       primaryKey: true,
     },
     level: {
-      type: DataTypes.ENUM("School", "UG", "PG", "Doctorate"),
+      type: DataTypes.ENUM(
+        "School",
+        "UG",
+        "PG",
+        "Doctorate",
+        "SSLC",
+        "HSC",
+        "Diploma",
+        "ITI",
+        "Other",
+      ),
       allowNull: false,
     },
     name: {

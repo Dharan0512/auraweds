@@ -18,6 +18,15 @@ export const useCastes = (religionId: string | null) => {
   });
 };
 
+export const useSubcastes = (casteId: string | null) => {
+  return useQuery({
+    queryKey: ["subcastes", casteId],
+    queryFn: () => masterService.getSubcastesByCaste(casteId!),
+    enabled: !!casteId, // Only fetch if caste is selected
+    staleTime: 1000 * 60 * 60 * 24,
+  });
+};
+
 export const useCountries = () => {
   return useQuery({
     queryKey: ["countries"],
@@ -78,11 +87,58 @@ export const useOccupations = (employmentTypeId: string | null) => {
   });
 };
 
+export const useCurrencies = () => {
+  return useQuery({
+    queryKey: ["currencies"],
+    queryFn: masterService.getCurrencies,
+    staleTime: 1000 * 60 * 60 * 24,
+  });
+};
+
 export const useIncomeRanges = (currencyId: string | number | null) => {
   return useQuery({
     queryKey: ["income-ranges", currencyId],
     queryFn: () => masterService.getIncomeRangesByCurrency(currencyId!),
     enabled: !!currencyId,
+    staleTime: 1000 * 60 * 60 * 24,
+  });
+};
+
+export const useStars = () => {
+  return useQuery({
+    queryKey: ["stars"],
+    queryFn: masterService.getStars,
+    staleTime: 1000 * 60 * 60 * 24,
+  });
+};
+
+export const useRasis = () => {
+  return useQuery({
+    queryKey: ["rasis"],
+    queryFn: masterService.getRasis,
+    staleTime: 1000 * 60 * 60 * 24,
+  });
+};
+
+export const useLaknams = () => {
+  return useQuery({
+    queryKey: ["laknams"],
+    queryFn: masterService.getLaknams,
+    staleTime: 1000 * 60 * 60 * 24,
+  });
+};
+
+export const useGothrams = () => {
+  return useQuery({
+    queryKey: ["gothrams"],
+    queryFn: masterService.getGothrams,
+    staleTime: 1000 * 60 * 60 * 24,
+  });
+};
+export const useAllCities = () => {
+  return useQuery({
+    queryKey: ["cities", "all"],
+    queryFn: masterService.getAllCities,
     staleTime: 1000 * 60 * 60 * 24,
   });
 };

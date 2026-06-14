@@ -9,6 +9,9 @@ export interface Religion extends MasterItem {}
 export interface Caste extends MasterItem {
   religionId: string;
 }
+export interface Subcaste extends MasterItem {
+  casteId: string;
+}
 export interface Country extends MasterItem {
   isoCode: string;
   phoneCode: string;
@@ -30,7 +33,21 @@ export interface Currency extends MasterItem {
 }
 export interface IncomeRange extends MasterItem {
   currencyId: string | number;
+  minValue?: number;
+  maxValue?: number;
+  displayLabel: string;
+  sortOrder?: number;
 }
+export interface Star extends MasterItem {
+  taName?: string;
+}
+export interface Rasi extends MasterItem {
+  taName?: string;
+}
+export interface Laknam extends MasterItem {
+  taName?: string;
+}
+export interface Gothram extends MasterItem {}
 
 export interface Height {
   id: number;
@@ -58,6 +75,15 @@ export const masterService = {
     return data;
   },
 
+  getSubcastesByCaste: async (
+    casteId: string | number,
+  ): Promise<Subcaste[]> => {
+    const { data } = await apiClient.get(
+      `/master/subcastes?caste_id=${casteId}`,
+    );
+    return data;
+  },
+
   getHeights: async (): Promise<Height[]> => {
     const { data } = await apiClient.get("/master/heights");
     return data;
@@ -77,6 +103,10 @@ export const masterService = {
 
   getCitiesByState: async (stateId: string | number): Promise<City[]> => {
     const { data } = await apiClient.get(`/master/cities?state_id=${stateId}`);
+    return data;
+  },
+  getAllCities: async (): Promise<City[]> => {
+    const { data } = await apiClient.get("/master/cities");
     return data;
   },
 
@@ -110,6 +140,22 @@ export const masterService = {
     const { data } = await apiClient.get(
       `/master/income-ranges?currency_id=${currencyId}`,
     );
+    return data;
+  },
+  getStars: async (): Promise<Star[]> => {
+    const { data } = await apiClient.get("/master/stars");
+    return data;
+  },
+  getRasis: async (): Promise<Rasi[]> => {
+    const { data } = await apiClient.get("/master/rasis");
+    return data;
+  },
+  getLaknams: async (): Promise<Laknam[]> => {
+    const { data } = await apiClient.get("/master/laknams");
+    return data;
+  },
+  getGothrams: async (): Promise<Gothram[]> => {
+    const { data } = await apiClient.get("/master/gothrams");
     return data;
   },
 };

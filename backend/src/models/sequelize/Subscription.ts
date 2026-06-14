@@ -9,7 +9,7 @@ interface SubscriptionAttributes {
   planId: number;
   startDate: Date;
   endDate: Date;
-  status: "active" | "expired" | "cancelled";
+  status: "active" | "expired" | "cancelled" | "cancelled_pending";
   createdAt?: Date;
 }
 
@@ -27,7 +27,8 @@ export class Subscription
   public planId!: number;
   public startDate!: Date;
   public endDate!: Date;
-  public status!: "active" | "expired" | "cancelled";
+  public status!: "active" | "expired" | "cancelled" | "cancelled_pending";
+  public Plan?: Plan;
 
   public readonly createdAt!: Date;
 }
@@ -35,18 +36,18 @@ export class Subscription
 Subscription.init(
   {
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
     userId: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       allowNull: false,
       references: { model: User, key: "id" },
       onDelete: "CASCADE",
     },
     planId: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       allowNull: false,
       references: { model: Plan, key: "id" },
       onDelete: "CASCADE",
@@ -60,7 +61,12 @@ Subscription.init(
       allowNull: false,
     },
     status: {
-      type: DataTypes.ENUM("active", "expired", "cancelled"),
+      type: DataTypes.ENUM(
+        "active",
+        "expired",
+        "cancelled",
+        "cancelled_pending",
+      ),
       defaultValue: "active",
     },
   },

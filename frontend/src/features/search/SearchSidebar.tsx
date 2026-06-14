@@ -1,14 +1,22 @@
+import { useState } from "react";
 import { MasterItem } from "@/services/masterService";
+import { useSubscription } from "@/hooks/useSubscription";
+import { Lock } from "lucide-react";
+import UpgradeModal from "@/components/ui/UpgradeModal";
+import SearchableDropdown from "@/components/ui/SearchableDropdown";
 
 interface SearchSidebarProps {
   filters: Record<string, string>;
   onChange: (updates: Record<string, string | null>) => void;
   onClear: () => void;
-  // Passing master data down for simplicity (could also call hooks inside here)
+  // Passing master data down for simplicity
   religions?: MasterItem[];
   castes?: MasterItem[];
+  subcastes?: MasterItem[];
   countries?: MasterItem[];
   states?: MasterItem[];
+  education?: MasterItem[];
+  incomeRanges?: MasterItem[];
 }
 
 export default function SearchSidebar({
@@ -17,8 +25,23 @@ export default function SearchSidebar({
   onClear,
   religions,
   castes,
-  states,
+  subcastes,
+  education,
+  incomeRanges,
 }: SearchSidebarProps) {
+  const { tier } = useSubscription();
+  const [showUpgrade, setShowUpgrade] = useState(false);
+
+  const isBasic = tier === "Basic Member";
+  const isGold = tier === "Gold";
+
+  // Currently selected caste/subcaste objects for the searchable dropdowns.
+  const selectedCaste =
+    castes?.find((c) => String(c.id) === String(filters.casteId)) || null;
+  const selectedSubcaste =
+    subcastes?.find((s) => String(s.id) === String(filters.subcasteId)) ||
+    null;
+
   const handleSelectChange = (
     e: React.ChangeEvent<HTMLSelectElement>,
     key: string,
@@ -93,7 +116,14 @@ export default function SearchSidebar({
           </label>
           <select
             value={filters.religionId || ""}
-            onChange={(e) => handleSelectChange(e, "religionId")}
+            onChange={(e) =>
+              // Reset caste + sub-caste because they depend on the religion.
+              onChange({
+                religionId: e.target.value || null,
+                casteId: null,
+                subcasteId: null,
+              })
+            }
             className="w-full rounded-md border-gray-300 text-sm focus:border-[#6A0DAD] focus:ring-[#6A0DAD]"
           >
             <option value="">Any Religion</option>
@@ -105,45 +135,167 @@ export default function SearchSidebar({
           </select>
         </div>
 
-        {/* Caste (Filtered by religion ideally) */}
-        {filters.religionId && castes && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Caste
-            </label>
+        {/* Caste - searchable, Silver/Gold only */}
+        <div className="relative">
+          <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center justify-between">
+            <span>Caste</span>
+            {isBasic && <Lock size={12} className="text-gray-400" />}
+          </label>
+          <div className="relative">
+            <SearchableDropdown
+              theme="light"
+              options={castes || []}
+              value={selectedCaste}
+              onChange={(val) =>
+                // Clear sub-caste whenever the caste changes so the
+                // sub-caste filter never references a stale caste.
+                onChange({
+                  casteId: val ? String(val.id) : null,
+                  subcasteId: null,
+                })
+              }
+              placeholder={
+                filters.religionId ? "Search caste..." : "Select a religion first"
+              }
+              disabled={isBasic || !filters.religionId}
+            />
+            {isBasic && (
+              <div
+                className="absolute inset-0 cursor-pointer"
+                onClick={() => setShowUpgrade(true)}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Sub-caste - searchable, Silver/Gold only */}
+        <div className="relative">
+          <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center justify-between">
+            <span>Sub-caste</span>
+            {isBasic && <Lock size={12} className="text-gray-400" />}
+          </label>
+          <div className="relative">
+            <SearchableDropdown
+              theme="light"
+              options={subcastes || []}
+              value={selectedSubcaste}
+              onChange={(val) =>
+                onChange({ subcasteId: val ? String(val.id) : null })
+              }
+              placeholder={
+                filters.casteId ? "Search sub-caste..." : "Select a caste first"
+              }
+              disabled={isBasic || !filters.casteId}
+            />
+            {isBasic && (
+              <div
+                className="absolute inset-0 cursor-pointer"
+                onClick={() => setShowUpgrade(true)}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Education - Silver/Gold only */}
+        <div className="relative">
+          <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center justify-between">
+            <span>Education</span>
+            {isBasic && <Lock size={12} className="text-gray-400" />}
+          </label>
+          <div className="relative">
             <select
-              value={filters.casteId || ""}
-              onChange={(e) => handleSelectChange(e, "casteId")}
-              className="w-full rounded-md border-gray-300 text-sm focus:border-[#6A0DAD] focus:ring-[#6A0DAD]"
+              value={filters.educationId || ""}
+              onChange={(e) => handleSelectChange(e, "educationId")}
+              disabled={isBasic}
+              className={`w-full rounded-md border-gray-300 text-sm focus:border-[#6A0DAD] focus:ring-[#6A0DAD] ${isBasic ? "bg-gray-50 opacity-60" : ""}`}
             >
-              <option value="">Any Caste</option>
-              {castes?.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
+              <option value="">Any Education</option>
+              {education?.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.name}
                 </option>
               ))}
             </select>
+            {isBasic && (
+              <div
+                className="absolute inset-0 cursor-pointer"
+                onClick={() => setShowUpgrade(true)}
+              />
+            )}
           </div>
-        )}
-
-        {/* Mother Tongue */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Mother Tongue
-          </label>
-          <select
-            value={filters.motherTongue || ""}
-            onChange={(e) => handleSelectChange(e, "motherTongue")}
-            className="w-full rounded-md border-gray-300 text-sm focus:border-[#6A0DAD] focus:ring-[#6A0DAD]"
-          >
-            <option value="">Any Mother Tongue</option>
-            <option value="English">English</option>
-            <option value="Hindi">Hindi</option>
-            <option value="Telugu">Telugu</option>
-            <option value="Tamil">Tamil</option>
-            <option value="Malayalam">Malayalam</option>
-          </select>
         </div>
+
+        {/* Income - Silver/Gold only */}
+        <div className="relative">
+          <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center justify-between">
+            <span>Annual Income</span>
+            {isBasic && <Lock size={12} className="text-gray-400" />}
+          </label>
+          <div className="relative">
+            <select
+              value={filters.incomeRangeId || ""}
+              onChange={(e) => handleSelectChange(e, "incomeRangeId")}
+              disabled={isBasic}
+              className={`w-full rounded-md border-gray-300 text-sm focus:border-[#6A0DAD] focus:ring-[#6A0DAD] ${isBasic ? "bg-gray-50 opacity-60" : ""}`}
+            >
+              <option value="">Any Income</option>
+              {incomeRanges?.map((i) => (
+                <option key={i.id} value={i.id}>
+                  {i.name}
+                </option>
+              ))}
+            </select>
+            {isBasic && (
+              <div
+                className="absolute inset-0 cursor-pointer"
+                onClick={() => setShowUpgrade(true)}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Horoscope Filter - Gold only */}
+        <div className="pt-2 border-t border-gray-50">
+          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+            <span>Premium Filters</span>
+            {!isGold && <Lock size={12} className="text-purple-400" />}
+          </label>
+
+          <div className="relative">
+            <div
+              className={`space-y-3 ${!isGold ? "opacity-50 blur-[1px]" : ""}`}
+            >
+              <select
+                disabled={!isGold}
+                className="w-full rounded-md border-gray-300 text-sm focus:border-[#6A0DAD] focus:ring-[#6A0DAD]"
+              >
+                <option value="">Star / Rasi</option>
+                <option>Ashwini</option>
+                <option>Bharani</option>
+              </select>
+            </div>
+            {!isGold && (
+              <div
+                className="absolute inset-0 cursor-pointer flex items-center justify-center"
+                onClick={() => setShowUpgrade(true)}
+              >
+                <span className="text-[10px] font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded border border-purple-100 shadow-sm">
+                  Unlock Gold Features
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Upgrade Modal */}
+        <UpgradeModal
+          isOpen={showUpgrade}
+          onClose={() => setShowUpgrade(false)}
+          onSuccess={() => {
+            setShowUpgrade(false);
+            window.location.reload();
+          }}
+        />
       </div>
     </div>
   );

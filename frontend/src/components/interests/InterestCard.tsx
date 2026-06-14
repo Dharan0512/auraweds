@@ -1,0 +1,368 @@
+"use client";
+
+import React from "react";
+import {
+  Check,
+  X,
+  User,
+  MessageCircle,
+  Phone,
+  Clock,
+  ShieldCheck,
+  Lock,
+  Star,
+  Ban,
+} from "lucide-react";
+import { Interest } from "@/services/interestService";
+import { MatchProfile } from "@/services/matchService";
+import { getImageUrl, maskPhoneNumber } from "@/lib/utils";
+import ConnectButton from "../ui/ConnectButton";
+
+function timeAgo(date: Date) {
+  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+  let interval = seconds / 31536000;
+  if (interval > 1) return Math.floor(interval) + " years";
+  interval = seconds / 2592000;
+  if (interval > 1) return Math.floor(interval) + " months";
+  interval = seconds / 86400;
+  if (interval > 1) return Math.floor(interval) + " days";
+  interval = seconds / 3600;
+  if (interval > 1) return Math.floor(interval) + " hours";
+  interval = seconds / 60;
+  if (interval > 1) return Math.floor(interval) + " minutes";
+  return Math.floor(seconds) + " seconds";
+}
+
+interface InterestCardProps {
+  interest: Interest;
+  type: "received" | "sent" | "accepted" | "rejected" | "blocked";
+  userTier: string;
+  onAction?: (id: string | number, action: "accepted" | "rejected") => void;
+  onViewProfile: (userId: string | number) => void;
+  onMessage?: (userId: string | number) => void;
+  onContact?: (userId: string | number) => void;
+  onWithdraw?: (id: string | number) => void;
+  onRemove?: (id: string | number) => void;
+  onSendReminder?: (id: string | number) => void;
+  onBlock?: (id: string | number) => void;
+}
+
+export default function InterestCard({
+  interest,
+  type,
+  userTier,
+  onAction,
+  onViewProfile,
+  onMessage,
+  onContact,
+  onWithdraw,
+  onRemove,
+  onSendReminder,
+  onBlock,
+}: InterestCardProps) {
+  const profile: MatchProfile = interest.profile;
+  const isFree = userTier === "Basic Member";
+  const isGold = userTier === "Gold" || userTier === "Elite Gold";
+  const isSilver = userTier === "Silver";
+  // Silver and Gold both get full contact access on the interests page
+  const canRevealContact = isGold || isSilver;
+
+  if (!profile) return null;
+
+  const age = profile.basicDetails.dob
+    ? new Date().getFullYear() -
+      new Date(profile.basicDetails.dob).getFullYear()
+    : 25;
+
+  const getStatusBadge = () => {
+    switch (interest.status) {
+      case "ACCEPTED":
+        return (
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">
+            <Check size={12} /> Accepted
+          </span>
+        );
+      case "DECLINED":
+        return (
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/10 text-rose-400 text-[10px] font-bold uppercase tracking-wider border border-rose-500/20">
+            <X size={12} /> Declined
+          </span>
+        );
+      case "WITHDRAWN":
+        return (
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-500/10 text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-wider border border-slate-500/20">
+            <X size={12} /> Withdrawn
+          </span>
+        );
+      case "BLOCKED":
+        return (
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 text-red-500 text-[10px] font-bold uppercase tracking-wider border border-red-500/20">
+            <Ban size={12} /> Blocked
+          </span>
+        );
+      default:
+        return (
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-[10px] font-bold uppercase tracking-wider border border-amber-500/20">
+            <Clock size={12} /> Pending
+          </span>
+        );
+    }
+  };
+
+  const firstName = profile.basicDetails.firstName || "";
+  const lastName = profile.basicDetails.lastName || "";
+
+  const name = `${firstName} ${lastName}`.trim();
+
+  const isExpired =
+    new Date().getTime() - new Date(interest.createdAt).getTime() >
+    5 * 24 * 60 * 60 * 1000;
+
+  return (
+    <div
+      className={`theme-card relative group p-5 rounded-[2rem] bg-[var(--surface)] backdrop-blur-xl border transition-all duration-500 hover:-translate-y-1 ${type === "accepted" ? "border-[var(--accent-border)] bg-gradient-to-br from-[var(--surface)] to-[var(--accent-soft-bg)]" : "border-[var(--border)] hover:border-[var(--accent-border)]"}`}
+    >
+      {/* Decorative Gradient Background */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+      <div className="flex gap-5">
+        {/* Photo Container */}
+        <div className="relative shrink-0 w-28 h-28 rounded-2xl overflow-hidden border-2 border-[var(--border)] group-hover:border-[#D4AF37]/30 transition-colors duration-500">
+          <img
+            src={getImageUrl(profile.photos[0], profile.basicDetails.firstName)}
+            alt={profile.basicDetails.firstName}
+            className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
+          />
+          {type === "received" && !interest.viewedAt && (
+            <div className="absolute top-3 right-3 w-3 h-3 bg-[var(--accent-2)] rounded-full ring-4 ring-[var(--surface-solid)] shadow-[0_0_15px_rgba(212,175,55,0.8)] animate-pulse"></div>
+          )}
+
+          {/* Match Score Overlay */}
+          <div className="absolute bottom-0 inset-x-0 h-1/3 bg-gradient-to-t from-slate-950/80 to-transparent flex items-end justify-center pb-2">
+            <span className="text-[10px] font-black text-white bg-[#D4AF37] px-2 py-0.5 rounded-full shadow-lg">
+              {profile.matchScore}% SYNC
+            </span>
+          </div>
+        </div>
+
+        {/* Info Content */}
+        <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
+          <div>
+            <div className="flex items-start justify-between mb-2 gap-3">
+              <div className="flex flex-col flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-xl font-bold text-[var(--text)] truncate hover:text-[var(--accent-2)] transition-colors cursor-pointer">
+                    {name}, {age}
+                  </h3>
+                  {profile.badge?.mobileVerified && (
+                    <div className="bg-emerald-500/10 p-1 rounded-full border border-emerald-500/20">
+                      <ShieldCheck size={14} className="text-emerald-400" />
+                    </div>
+                  )}
+                  {type === "accepted" && (
+                    <div className="bg-[#D4AF37]/10 p-1 rounded-full border border-[#D4AF37]/20">
+                      <Star
+                        size={14}
+                        className="text-[#D4AF37] fill-[#D4AF37]/20"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 text-[var(--text-muted)] text-[11px] font-medium">
+                  <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-[var(--surface-2)] border border-[var(--border)]">
+                    <User size={12} className="text-[var(--text-subtle)]" />
+                    {profile.basicDetails.religion}
+                  </span>
+                  <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-[var(--surface-2)] border border-[var(--border)]">
+                    📍 {profile.basicDetails.location.split(",")[0]}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-col items-end gap-2 shrink-0 mt-1">
+                {new Date().getTime() - new Date(interest.createdAt).getTime() <
+                  24 * 60 * 60 * 1000 && (
+                  <span className="px-3 py-1 rounded-full bg-indigo-500 text-white text-[9px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(99,102,241,0.5)]">
+                    New
+                  </span>
+                )}
+                <span className="text-[10px] text-[var(--text-subtle)] font-bold uppercase tracking-widest flex items-center gap-1">
+                  <Clock size={10} className="text-[var(--text-subtle)]" />
+                  {timeAgo(new Date(interest.createdAt))}
+                </span>
+              </div>
+            </div>
+
+            {/* Highlights (Optional) */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[var(--text-muted)] text-[10px] font-medium min-h-[1rem] mb-4">
+              {profile.professionalInfo.profession && (
+                <span className="flex items-center gap-1">
+                  💼 {profile.professionalInfo.profession}
+                </span>
+              )}
+              {profile.professionalInfo.education && (
+                <span className="flex items-center gap-1 truncate max-w-[150px]">
+                  🎓 {profile.professionalInfo.education}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-4 mt-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              {(type === "sent" || type === "rejected") && (
+                <div className="flex items-center gap-3">
+                  {getStatusBadge()}
+                  {interest.status === "PENDING" && interest.viewedAt && (
+                    <span className="text-[10px] text-[var(--text-subtle)] font-bold flex items-center gap-1">
+                      <Clock size={10} /> Viewed
+                    </span>
+                  )}
+                </div>
+              )}
+              {type === "received" && getStatusBadge()}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {type === "received" && interest.status === "PENDING" && (
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => onAction?.(interest.id, "accepted")}
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-[0_4px_12px_rgba(16,185,129,0.3)] text-[10px] font-black uppercase tracking-widest active:scale-95"
+                  >
+                    <Check size={14} /> Accept
+                  </button>
+                  <button
+                    onClick={() => onAction?.(interest.id, "rejected")}
+                    className="p-2.5 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white transition-all border border-rose-500/20 active:scale-95"
+                    title="Decline Interest"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              )}
+
+              {type === "sent" && interest.status === "PENDING" && (
+                <>
+                  <button
+                    onClick={() => onWithdraw?.(interest.id)}
+                    className="px-4 py-2 rounded-xl bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-rose-400 hover:bg-rose-500/10 border border-[var(--border)] transition-all text-[10px] font-bold uppercase tracking-widest"
+                  >
+                    Withdraw
+                  </button>
+                  {isExpired && (
+                    <button
+                      onClick={() => onSendReminder?.(interest.id)}
+                      disabled={!isGold}
+                      className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${isGold ? "bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 hover:bg-[#D4AF37]/20" : "bg-[var(--surface-2)] text-[var(--text-subtle)] border border-[var(--border)] cursor-not-allowed"}`}
+                    >
+                      {isGold ? (
+                        "Send Reminder"
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <Lock size={10} /> Reminder
+                        </div>
+                      )}
+                    </button>
+                  )}
+                </>
+              )}
+
+              {type === "accepted" && (
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => onMessage?.(profile.userId)}
+                    className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:shadow-[0_4px_15px_rgba(79,70,229,0.4)] transition-all text-[10px] font-black uppercase tracking-widest active:scale-95"
+                  >
+                    <MessageCircle size={14} /> Send Message
+                  </button>
+                  <button
+                    onClick={() => onContact?.(profile.userId)}
+                    disabled={!canRevealContact}
+                    className={`flex items-center gap-2 px-5 py-3 rounded-xl transition-all font-black uppercase tracking-widest border-2 ${canRevealContact ? "bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/30 hover:bg-[#D4AF37]/20 text-[10px]" : "bg-[var(--surface)] text-[var(--text-muted)] border-[var(--border)] hover:border-[#D4AF37]/30 hover:text-[#D4AF37]"}`}
+                  >
+                    {canRevealContact ? (
+                      <>
+                        <Phone size={14} /> Call Now
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center gap-0.5">
+                        <div className="flex items-center gap-1.5 leading-none">
+                          <Lock size={12} className="text-[#D4AF37]" />{" "}
+                          <span className="font-mono tracking-wider text-[11px]">
+                            {maskPhoneNumber(
+                              profile.basicDetails.mobile,
+                              canRevealContact,
+                              false
+                            ) || "Hidden Profile"}
+                          </span>
+                        </div>
+                        <span className="text-[7.5px] text-[#D4AF37] font-bold">
+                          Upgrade to View Full
+                        </span>
+                      </div>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {type === "rejected" && (
+                <button
+                  onClick={() => onRemove?.(interest.id)}
+                  className="p-2.5 rounded-xl bg-[var(--surface-2)] text-[var(--text-subtle)] hover:text-[var(--text)] transition-all border border-[var(--border)]"
+                  title="Remove from list"
+                >
+                  <X size={18} />
+                </button>
+              )}
+
+              {(type === "accepted" || type === "received") && onBlock && (
+                <button
+                  onClick={() => onBlock(interest.id)}
+                  className="p-2.5 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all border border-red-500/20 active:scale-95"
+                  title="Block Profile"
+                >
+                  <Ban size={18} />
+                </button>
+              )}
+
+              <button
+                onClick={() => onViewProfile(profile.userId)}
+                className="p-2.5 rounded-xl bg-[var(--surface-2)] text-[var(--text)] hover:bg-[var(--surface-hover)] transition-all border border-[var(--border)]"
+                title="View Profile"
+              >
+                <User size={18} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {isFree && type === "received" && (
+        <div className="mt-5 pt-4 border-t border-[var(--border)] flex items-center justify-between bg-[var(--surface-2)] -mx-5 -mb-5 px-5 pb-5 rounded-b-[2rem]">
+          <div className="flex items-center gap-4">
+            <div className="p-2.5 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#B8860B] text-slate-950 shadow-[0_0_15px_rgba(212,175,55,0.3)]">
+              <Lock size={16} />
+            </div>
+            <div>
+              <p className="text-[11px] text-[var(--text)] font-bold leading-none mb-1">
+                Detailed Profile is Locked
+              </p>
+              <p className="text-[10px] text-[var(--text-muted)] font-medium tracking-tight">
+                Upgrade to{" "}
+                <span className="text-[#D4AF37] font-bold">
+                  Silver Membership
+                </span>{" "}
+                to reveal details
+              </p>
+            </div>
+          </div>
+          <button className="px-6 py-2.5 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-slate-950 rounded-2xl font-black uppercase tracking-wider text-[10px] shadow-lg hover:scale-[1.02] active:scale-95 transition-all">
+            Upgrade Now
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -160,7 +160,9 @@ export default function EditProfileForm({
   const renderCurrentStep = () => {
     switch (activeTab) {
       case 0:
-        return <Step1BasicInfo initialData={formData} onNext={handleNext} />;
+        return (
+          <Step1BasicInfo initialData={formData} onNext={handleNext} isEdit />
+        );
       case 1:
         return (
           <Step2PersonalDetails

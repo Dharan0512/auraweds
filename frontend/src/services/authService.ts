@@ -20,4 +20,12 @@ export const authService = {
     const { data } = await apiClient.get("/auth/me");
     return data;
   },
+
+  changePassword: async (passwordData: any) => {
+    const { data } = await apiClient.post(
+      "/auth/change-password",
+      passwordData,
+    );
+    return data;
+  },
 };

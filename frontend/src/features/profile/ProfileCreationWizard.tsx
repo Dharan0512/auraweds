@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import toast from "react-hot-toast";
 import ProfileStepper from "@/components/forms/ProfileStepper";
 import Step1BasicInfo from "./steps/Step1BasicInfo";
 import Step2PersonalDetails from "./steps/Step2PersonalDetails";
@@ -35,7 +36,7 @@ export default function ProfileCreationWizard() {
       window.location.href = "/dashboard";
     } catch (error) {
       console.error("Failed to create profile", error);
-      alert("Failed to create profile. Please try again.");
+      toast.error("Failed to create profile. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

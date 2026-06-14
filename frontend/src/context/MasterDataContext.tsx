@@ -12,6 +12,7 @@ import { fetchApi } from "@/lib/api";
 type MasterItem = {
   id: number;
   name: string;
+  taName?: string;
 };
 
 type MasterItemWithCode = MasterItem & {
@@ -39,8 +40,13 @@ interface MasterDataContextType {
   fetchStates: (countryId: number) => Promise<MasterItem[]>;
   fetchCities: (stateId: number) => Promise<MasterItem[]>;
   fetchCastes: (religionId: number) => Promise<MasterItem[]>;
+  fetchSubcastes: (casteId: number) => Promise<MasterItem[]>;
   fetchOccupations: (employmentTypeId: number) => Promise<MasterItem[]>;
   fetchIncomeRanges: (currencyId: number) => Promise<MasterIncomeRange[]>;
+  stars: MasterItem[];
+  rasis: MasterItem[];
+  laknams: MasterItem[];
+  gothrams: MasterItem[];
   loading: boolean;
 }
 
@@ -56,6 +62,10 @@ export function MasterDataProvider({ children }: { children: ReactNode }) {
   const [educations, setEducations] = useState<MasterItemWithLevel[]>([]);
   const [employmentTypes, setEmploymentTypes] = useState<MasterItem[]>([]);
   const [currencies, setCurrencies] = useState<MasterItemWithCode[]>([]);
+  const [stars, setStars] = useState<MasterItem[]>([]);
+  const [rasis, setRasis] = useState<MasterItem[]>([]);
+  const [laknams, setLaknams] = useState<MasterItem[]>([]);
+  const [gothrams, setGothrams] = useState<MasterItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -70,6 +80,10 @@ export function MasterDataProvider({ children }: { children: ReactNode }) {
           educationsData,
           employmentsData,
           currenciesData,
+          starsData,
+          rasisData,
+          laknamsData,
+          gothramsData,
         ] = await Promise.all([
           fetchApi("/master/countries"),
           fetchApi("/master/religions"),
@@ -78,6 +92,10 @@ export function MasterDataProvider({ children }: { children: ReactNode }) {
           fetchApi("/master/educations"),
           fetchApi("/master/employment-types"),
           fetchApi("/master/currencies"),
+          fetchApi("/master/stars"),
+          fetchApi("/master/rasis"),
+          fetchApi("/master/laknams"),
+          fetchApi("/master/gothrams"),
         ]);
 
         setCountries(countriesData || []);
@@ -87,6 +105,10 @@ export function MasterDataProvider({ children }: { children: ReactNode }) {
         setEducations(educationsData || []);
         setEmploymentTypes(employmentsData || []);
         setCurrencies(currenciesData || []);
+        setStars(starsData || []);
+        setRasis(rasisData || []);
+        setLaknams(laknamsData || []);
+        setGothrams(gothramsData || []);
       } catch (err) {
         console.error("Failed to load master data", err);
       } finally {
@@ -121,6 +143,14 @@ export function MasterDataProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const fetchSubcastes = async (casteId: number) => {
+    try {
+      return await fetchApi(`/master/subcastes?caste_id=${casteId}`);
+    } catch {
+      return [];
+    }
+  };
+
   const fetchOccupations = async (employmentTypeId: number) => {
     try {
       return await fetchApi(
@@ -149,9 +179,14 @@ export function MasterDataProvider({ children }: { children: ReactNode }) {
         educations,
         employmentTypes,
         currencies,
+        stars,
+        rasis,
+        laknams,
+        gothrams,
         fetchStates,
         fetchCities,
         fetchCastes,
+        fetchSubcastes,
         fetchOccupations,
         fetchIncomeRanges,
         loading,

@@ -1,83 +1,263 @@
 /**
  * Maps nested backend profile data into a flat structure for the wizard form.
  */
-export const mapProfileToFormData = (profile: any) => {
+/**
+ * profileMapper.ts
+ *
+ * Maps the raw backend profile object → flat form data used by EditProfileForm steps.
+ * Field names here MUST match what each Step component's useForm schema expects.
+ */
+/*
+{
+    "user": {
+        "id": 128,
+        "createdFor": "Self",
+        "gender": "Male",
+        "firstName": "Arun", 
+        "lastName": "Kumar",
+        "mobile": "09940238132",
+        "email": "arun@gmail.com",
+        "role": "user",
+        "isActive": true,
+        "lastLoginAt": "2026-04-05T06:47:56.262Z"
+    },
+    "profile": {
+        "id": 131,
+        "userId": 128,
+        "dob": "1990-08-14",
+        "heightCm": 162,
+        "physicalStatus": "Normal",
+        "maritalStatus": "Never Married",
+        "childrenCount": 0,
+        "childrenLivingWith": false,
+        "religionId": 1,
+        "casteId": 1,
+        "subcaste": "karava naidu",
+        "shortBio": "Already part of AuraWeds...",
+        "convenientTimeToCall": "Anytime",
+        "countryId": 1,
+        "stateId": 1,
+        "cityId": 1,
+        "familyStatus": "Middle Class",
+        "profileVisibility": "Members Only",
+        "approvalStatus": "approved",
+        "profileStrength": 15,
+        "privacySettings": {
+            "showValues": true,
+            "showHoroscope": true,
+            "showAstroMatch": true,
+            "showExactIncome": false,
+            "showSocialLinks": true,
+            "showBirthDetails": true,
+            "showFamilyDetails": true
+        },
+        "Religion": { "id": 1, "name": "Hindu" },
+        "Caste": { "id": 1, "name": "Naidu" },
+        "FamilyDetail": {
+            "familyStatus": "Middle Class",
+            "siblingsCount": 1,
+            "ownHouse": true
+        },
+        "LocationLifestyle": {
+            "diet": "Veg",
+            "relocatePreference": "Flexible"
+        }
+    },
+    "preferences": {
+        "minAge": 18,
+        "maxAge": 40,
+        "Religion": { "id": 1, "name": "Hindu" }
+    },
+    "photos": []
+}
+*/
+export function mapProfileToFormData(profile: any): Record<string, any> {
+  console.log("Mapping profile to form data:", profile);
   if (!profile) return {};
 
+  const user = profile.user || {};
+  const profileData = profile.profile || {};
+  const preferences = profile.preferences || {};
+  // Sequelize returns these associations under their plural model names
+  // (FamilyDetails / HoroscopeDetails). Keep the singular fallback for any
+  // legacy/serialized responses that still use it.
+  const family = profileData.FamilyDetails || profileData.FamilyDetail || {};
+  const horoscope =
+    profileData.HoroscopeDetails || profileData.HoroscopeDetail || {};
+  const location = profileData.LocationLifestyle || {};
+  const education = profileData.EducationCareer || {};
+
   return {
-    // Basic Info (User Model)
-    createdFor: profile.user?.createdFor || "Myself",
-    gender: profile.user?.gender || "Male",
-    firstName: profile.user?.firstName || "",
-    lastName: profile.user?.lastName || "",
-    mobile: profile.user?.mobile || "",
+    // ── Step 1: Basic Identity (Identity Tab) ───────────────────────────────
+    createdFor: user.createdFor,
+    gender: user.gender ?? "Male",
+    firstName: user.firstName ?? "",
+    lastName: user.lastName ?? "",
+    mobile: user.mobile ?? "",
+    convenientTimeToCall: profileData.convenientTimeToCall ?? "Anytime",
+    linkedInUrl: profileData.linkedInUrl ?? "",
+    instagramUrl: profileData.instagramUrl ?? "",
+    facebookUrl: profileData.facebookUrl ?? "",
 
-    // Personal Details (Profile Model)
-    dob: profile.profile?.dob || "",
-    height: profile.profile?.heightCm?.toString() || "170",
-    maritalStatus: profile.profile?.maritalStatus || "Never Married",
-    childrenCount: profile.profile?.childrenCount?.toString() || "0",
-    childrenLivingWith: profile.profile?.childrenLivingWith || false,
-    physicalStatus: profile.profile?.physicalStatus || "Normal",
+    // ── Step 2: Personal Details (Personal Tab) ─────────────────────────────
+    dob: profileData.dob ?? "",
+    height: profileData.heightCm != null ? String(profileData.heightCm) : "",
+    physicalStatus: profileData.physicalStatus ?? "Normal",
+    maritalStatus: profileData.maritalStatus ?? "Never Married",
+    // The dropdown collapses "3 or more" into the option id "3+", but the
+    // backend stores it as the integer 3. Map any count >= 3 back to "3+".
+    childrenCount:
+      profileData.childrenCount != null
+        ? profileData.childrenCount >= 3
+          ? "3+"
+          : String(profileData.childrenCount)
+        : "0",
+    childrenLivingWith: profileData.childrenLivingWith ?? false,
 
-    // Religion/Community
-    religionId: profile.profile?.religionId?.toString() || "",
-    casteId: profile.profile?.casteId?.toString() || "",
-    subCaste: profile.profile?.subcaste || "",
-    motherTongue: profile.profile?.motherTongueId?.toString() || "",
+    // ── Step 3: Religion & Heritage (Spiritual Tab) ────────────────────────
+    religionId:
+      profileData.religionId != null ? String(profileData.religionId) : "",
+    casteId: profileData.casteId != null ? String(profileData.casteId) : "",
+    subcasteId:
+      profileData.subcasteId != null ? String(profileData.subcasteId) : "",
+    subCaste: profileData.subcaste ?? "",
+    motherTongue:
+      profileData.motherTongueId != null
+        ? String(profileData.motherTongueId)
+        : "",
 
-    // Education/Career
-    educationId: profile.profile?.educationId?.toString() || "",
-    educationDetail: profile.profile?.educationDetail || "",
-    employmentTypeId: profile.profile?.employmentTypeId?.toString() || "1",
-    occupationId: profile.profile?.occupationId?.toString() || "",
-    incomeRangeId: profile.profile?.incomeRangeId?.toString() || "",
+    // Family Details
+    fatherName: family.fatherName ?? "",
+    fatherOccupation: family.fatherOccupation ?? "",
+    motherName: family.motherName ?? "",
+    motherOccupation: family.motherOccupation ?? "",
+    familyType: family.familyType ?? "Nuclear",
+    siblingsCount:
+      family.siblingsCount != null ? String(family.siblingsCount) : "0",
+    ownHouse: family.ownHouse ?? false,
+    nativeDistrict: family.nativeDistrict ?? "",
 
-    // Location
-    countryId: profile.profile?.countryId?.toString() || "",
-    stateId: profile.profile?.stateId?.toString() || "",
-    cityId: profile.profile?.cityId?.toString() || "",
-    citizenship: profile.profile?.countryId?.toString() || "",
+    // Horoscope Details
+    showHoroscope:
+      profileData.privacySettings?.showHoroscope ??
+      horoscope.showHoroscope ??
+      true,
+    starId: horoscope.starId != null ? String(horoscope.starId) : "",
+    rasiId: horoscope.rasiId != null ? String(horoscope.rasiId) : "",
+    laknamId: horoscope.laknamId != null ? String(horoscope.laknamId) : "",
+    gothramId: horoscope.gothramId != null ? String(horoscope.gothramId) : "",
+    sevvaiDhosham: horoscope.sevvaiDhosham ?? "No",
+    rahuKetuDhosham: horoscope.rahuKetuDhosham ?? "No",
+    birthTime: horoscope.birthTime ?? "",
+    birthPlace: horoscope.birthPlace ?? "",
+    birthCityId:
+      horoscope.birthCityId != null ? String(horoscope.birthCityId) : "",
+    horoscopeImageUrl:
+      horoscope.horoscopeImageUrl ?? horoscope.horoscopeImage ?? "",
 
-    // Lifestyle
-    diet: profile.profile?.diet || "Veg",
-    spirituality: profile.profile?.spirituality || "Not Spiritual",
-    drink: profile.profile?.drink || "No",
-    smoke: profile.profile?.smoke || "No",
-    ambition: profile.profile?.ambition || "Moderate",
-    careerAfterMarriage: profile.profile?.careerAfterMarriage || "Yes",
-    relocation: profile.profile?.relocation || "No",
-    fitness: profile.profile?.fitness || "Regular",
-    familyStatus: profile.profile?.familyStatus || "Middle Class",
-    aboutMe: profile.profile?.aboutMe || "",
+    // ── Step 4: Education & Ambition (Ambition Tab) ────────────────────────
+    highestEducation: education.highestEducation ?? "",
+    employmentType: education.employmentType ?? "",
+    designation: education.designation ?? "",
+    incomeRange: education.incomeRange ?? "",
 
-    // Preferences
-    partnerAgeMin: profile.preferences?.minAge || 22,
-    partnerAgeMax: profile.preferences?.maxAge || 30,
-    partnerHeightMin: profile.preferences?.minHeightCm || 150,
-    partnerHeightMax: profile.preferences?.maxHeightCm || 190,
-    partnerMaritalStatus: profile.preferences?.maritalStatus || "Never Married",
-    partnerReligion: profile.preferences?.religionId?.toString() || "",
-    partnerCaste: profile.preferences?.casteId?.toString() || "",
-    partnerEducation: profile.preferences?.educationId?.toString() || "",
-    partnerCountry: profile.preferences?.countryId?.toString() || "",
-    partnerState: profile.preferences?.stateId?.toString() || "",
+    // ── Step 5: Location (Location Tab) ─────────────────────────────────────
+    // Note: root profileId might be null in some backend responses, so we check location object too
+    countryId:
+      profileData.countryId != null ? String(profileData.countryId) : "",
+    stateId: profileData.stateId != null ? String(profileData.stateId) : "",
+    cityId: profileData.cityId != null ? String(profileData.cityId) : "",
+    citizenship:
+      profileData.citizenship != null
+        ? String(profileData.citizenship)
+        : location.citizenship != null
+          ? String(location.citizenship)
+          : "",
+
+    // ── Step 6: Partner Preferences (Partner Pref Tab) ──────────────────────
+    // These MUST be Numbers as per Step6Preferences.tsx schema
+    partnerAgeMin: preferences.minAge != null ? Number(preferences.minAge) : 22,
+    partnerAgeMax: preferences.maxAge != null ? Number(preferences.maxAge) : 35,
+    partnerHeightMin:
+      preferences.minHeightCm != null ? Number(preferences.minHeightCm) : 150,
+    partnerHeightMax:
+      preferences.maxHeightCm != null ? Number(preferences.maxHeightCm) : 190,
+    partnerMaritalStatus: preferences.maritalStatus ?? "Never Married",
+    partnerReligion:
+      preferences.religionId != null ? String(preferences.religionId) : "",
+    partnerCastes: Array.isArray(preferences.partnerCastes)
+      ? preferences.partnerCastes.map(String)
+      : [],
+    partnerEducation:
+      preferences.educationId != null ? String(preferences.educationId) : "",
+    partnerCountry:
+      preferences.countryId != null ? String(preferences.countryId) : "",
+    partnerState:
+      preferences.stateId != null ? String(preferences.stateId) : "",
+    partnerLocationPreference: preferences.preferredLocation ?? "",
+
+    // ── Step 7: Lifestyle (Lifestyle Tab) ───────────────────────────────────
+    diet: location.diet || "Veg",
+    drink: location.drink || "No",
+    smoke: location.smoke || "No",
+    fitness: location.fitnessLevel || "Occasional",
+    relocation: location.relocatePreference || "Flexible",
+    careerAfterMarriage: education.careerPlanAfterMarriage || "Flexible",
+    
+    // Convert numeric scales (1-5) from backend to UI labels
+    spirituality: (() => {
+      const val = Number(location.spiritualInclination);
+      if (val >= 4) return "Very Spiritual";
+      if (val === 3) return "Moderately Spiritual";
+      return "Not Spiritual";
+    })(),
+    ambition: (() => {
+      const val = Number(location.ambition);
+      if (val >= 4) return "High";
+      if (val === 3) return "Moderate";
+      return "Low";
+    })(),
+    
+    familyStatus: family.familyStatus || profileData.familyStatus || "Middle Class",
+    aboutMe: profileData.shortBio || "",
+
+    // Form visibility
+    profileVisibility: profileData.profileVisibility ?? "Public",
   };
-};
+}
 
 /**
- * Compares current form data with initial data and returns only modified fields.
- * This reduces payload size for PATCH requests.
+ * Returns only the fields that changed between initialData and currentData.
+ * Skips undefined values and shallow-equal arrays.
  */
-export const getFormDataDiff = (initialData: any, currentData: any) => {
-  const diff: any = {};
+export function getFormDataDiff(
+  initialData: Record<string, any>,
+  currentData: Record<string, any>,
+): Record<string, any> {
+  const diff: Record<string, any> = {};
 
-  Object.keys(currentData).forEach((key) => {
-    // Deep comparison for primitives and simple values
-    if (currentData[key] !== initialData[key]) {
-      diff[key] = currentData[key];
+  for (const key of Object.keys(currentData)) {
+    const initial = initialData[key];
+    const current = currentData[key];
+
+    if (current === undefined) continue;
+
+    if (Array.isArray(current)) {
+      if (
+        !Array.isArray(initial) ||
+        initial.length !== current.length ||
+        current.some((v, i) => String(v) !== String(initial[i]))
+      ) {
+        diff[key] = current;
+      }
+      continue;
     }
-  });
+
+    // Loose comparison handles "150" vs 150 etc.
+    if (String(initial) !== String(current)) {
+      diff[key] = current;
+    }
+  }
 
   return diff;
-};
+}

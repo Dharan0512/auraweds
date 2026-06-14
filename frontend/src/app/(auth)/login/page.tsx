@@ -1,156 +1,154 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import {
+  Infinity as InfinityIcon,
+  ArrowLeft,
+  ShieldCheck,
+  Users,
+  Heart,
+  Sparkles,
+} from "lucide-react";
+import LoginCard from "@/components/auth/LoginCard";
+
+const FEATURES = [
+  {
+    icon: ShieldCheck,
+    title: "100% ID-verified members",
+    desc: "Every profile is manually vetted for authenticity.",
+  },
+  {
+    icon: Users,
+    title: "Family-assisted matchmaking",
+    desc: "Bring the people you trust into your search.",
+  },
+  {
+    icon: Heart,
+    title: "Privacy-first connections",
+    desc: "You decide who sees you, and when.",
+  },
+];
 
 export default function LoginPage() {
-  const { login, loading, error } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await login({ email, password });
-  };
-
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Premium Background Elements */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-900/20 blur-[120px] rounded-full animate-pulse" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-900/20 blur-[120px] rounded-full animate-pulse delay-700" />
+    <main className="relative flex min-h-screen bg-slate-950 text-white">
+      {/* ---------- Brand panel (desktop) ---------- */}
+      <aside className="relative hidden w-1/2 overflow-hidden lg:flex">
+        {/* base gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#1a0b3d] via-[#4c1d95] to-[#6d28d9]" />
 
-      <div className="relative z-10 w-full max-w-md">
-        <div className="text-center mb-10">
-          <Link href="/" className="inline-block mb-6 group">
-            <h1 className="text-4xl font-black tracking-tighter text-white">
-              AURA<span className="text-[#D4AF37]">WEDS</span>
-            </h1>
-            <div className="h-1 w-0 group-hover:w-full bg-gradient-to-r from-purple-500 to-[#D4AF37] transition-all duration-500 rounded-full" />
+        {/* animated ambient orbs */}
+        <div className="absolute -left-24 top-1/4 h-96 w-96 rounded-full bg-purple-500/30 blur-3xl animate-float-slow" />
+        <div className="absolute -right-20 bottom-10 h-80 w-80 rounded-full bg-gold/20 blur-3xl animate-float" />
+        <div
+          aria-hidden
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              "radial-gradient(ellipse 50% 50% at 18% 18%, rgba(201,162,39,0.20), transparent), radial-gradient(ellipse 55% 55% at 92% 88%, rgba(167,139,250,0.28), transparent)",
+          }}
+        />
+
+        {/* faint grid texture */}
+        <div
+          aria-hidden
+          className="absolute inset-0 opacity-[0.06]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)",
+            backgroundSize: "44px 44px",
+            maskImage:
+              "radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent)",
+          }}
+        />
+
+        <div className="relative z-10 flex w-full flex-col justify-between p-14">
+          <Link href="/" className="flex items-center gap-3">
+            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white/10 text-white ring-1 ring-white/20 backdrop-blur-sm">
+              <InfinityIcon className="h-5 w-5" />
+            </span>
+            <span className="font-serif text-xl font-bold tracking-tight">
+              Aura<span className="text-gold"> Weds</span>
+            </span>
           </Link>
-          <h2 className="text-2xl font-bold text-white tracking-tight">
-            Welcome Back to <span className="text-purple-400">Excellence</span>
-          </h2>
-          <p className="mt-3 text-slate-400 font-medium">
-            Continue your premium matchmaking journey
-          </p>
-        </div>
 
-        <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-8 sm:p-10 rounded-[40px] shadow-2xl relative group transition-all duration-500 hover:border-white/20">
-          {/* Subtle Inner Glow */}
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent rounded-[40px] pointer-events-none" />
+          <div className="max-w-md">
+            <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-semibold tracking-wide text-white/70 backdrop-blur-sm">
+              <Sparkles className="h-3.5 w-3.5 text-gold" />
+              Where lasting bonds begin
+            </span>
 
-          <form className="space-y-6 relative z-10" onSubmit={handleSubmit}>
-            {error && (
-              <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl animate-in fade-in slide-in-from-top-2">
-                <p className="text-rose-400 text-sm font-bold flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                  {error}
-                </p>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1 ml-1">
-                Security Identity (Email)
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="identity@premium.com"
-                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-5 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-[#D4AF37] transition-all font-medium"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between items-center ml-1">
-                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-                  Access Key (Password)
-                </label>
-                <Link
-                  href="#"
-                  className="text-[10px] font-black uppercase tracking-[0.1em] text-purple-400 hover:text-white transition-colors"
-                >
-                  Forgot Key?
-                </Link>
-              </div>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-5 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-[#D4AF37] transition-all font-medium"
-              />
-            </div>
-
-            <div className="flex items-center">
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <div className="relative flex items-center">
-                  <input
-                    type="checkbox"
-                    id="remember-me"
-                    className="peer w-5 h-5 opacity-0 absolute cursor-pointer"
-                  />
-                  <div className="w-5 h-5 border border-white/20 rounded-md bg-white/5 peer-checked:bg-[#D4AF37] peer-checked:border-[#D4AF37] transition-all flex items-center justify-center">
-                    <svg
-                      className="w-3 h-3 text-slate-900 opacity-0 peer-checked:opacity-100 transition-opacity"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <span className="text-sm font-semibold text-slate-400 group-hover:text-slate-200 transition-colors">
-                  Remember my access
-                </span>
-              </label>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full relative group overflow-hidden bg-white text-slate-950 py-4 rounded-2xl font-black uppercase tracking-widest text-sm shadow-[0_20px_40px_rgba(0,0,0,0.3)] hover:shadow-[0_25px_50px_rgba(0,0,0,0.4)] transition-all duration-300 active:scale-95 disabled:opacity-50"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-100 to-white opacity-0 group-hover:opacity-100 transition-opacity" />
-              <span className="relative">
-                {loading ? "Authorizing..." : "Enter Portal"}
+            <h1 className="font-serif text-5xl font-bold leading-[1.1]">
+              Welcome back to your{" "}
+              <span className="bg-gradient-to-r from-gold-300 via-gold to-gold-600 bg-clip-text text-transparent">
+                journey.
               </span>
-            </button>
-          </form>
+            </h1>
+            <p className="mt-5 text-lg leading-relaxed text-white/65">
+              Sign in to continue discovering verified, family-approved matches —
+              privately and on your terms.
+            </p>
 
-          <p className="mt-10 text-center text-sm font-medium text-slate-400">
-            New to the legacy?{" "}
-            <Link
-              href="/register"
-              className="text-[#D4AF37] hover:text-white font-bold underline decoration-[#D4AF37]/30 underline-offset-4 transition-all"
-            >
-              Start Your Journey
-            </Link>
+            <ul className="mt-10 space-y-3">
+              {FEATURES.map(({ icon: Icon, title, desc }) => (
+                <li
+                  key={title}
+                  className="group flex items-start gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-sm transition-colors duration-300 hover:border-gold/30 hover:bg-white/[0.07]"
+                >
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gold/15 text-gold ring-1 ring-gold/20 transition-transform duration-300 group-hover:scale-110">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-white">{title}</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-white/50">
+                      {desc}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <p className="text-xs text-white/40">
+            © {new Date().getFullYear()} Aura Weds. Made with love in India.
           </p>
         </div>
+      </aside>
 
-        <div className="mt-12 text-center">
-          <p className="text-[10px] text-slate-600 font-bold uppercase tracking-[0.3em]">
-            © AuraWeds Premium Matrimony • EST. 2024
-          </p>
+      {/* ---------- Form panel ---------- */}
+      <section className="relative flex w-full flex-col items-center justify-center px-5 py-12 sm:px-8 lg:w-1/2">
+        {/* ambient glow behind the card */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              "radial-gradient(ellipse 60% 45% at 50% 0%, rgba(124,58,237,0.22), transparent), radial-gradient(ellipse 50% 40% at 50% 100%, rgba(201,162,39,0.10), transparent)",
+          }}
+        />
+
+        <Link
+          href="/"
+          className="group absolute left-5 top-6 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-400 transition-colors hover:text-gold sm:left-8"
+        >
+          <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
+          Home
+        </Link>
+
+        <div className="relative z-10 flex w-full max-w-md flex-col items-center">
+          {/* mobile brand */}
+          <Link href="/" className="mb-8 flex items-center gap-2.5 lg:hidden">
+            <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-[#D4AF37] to-purple-600 text-slate-950">
+              <InfinityIcon className="h-5 w-5" />
+            </span>
+            <span className="font-serif text-xl font-bold tracking-tight">
+              Aura<span className="text-gold"> Weds</span>
+            </span>
+          </Link>
+
+          <LoginCard />
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

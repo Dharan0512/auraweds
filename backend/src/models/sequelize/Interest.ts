@@ -6,14 +6,21 @@ interface InterestAttributes {
   id: number;
   senderId: number;
   receiverId: number;
-  status: "pending" | "accepted" | "rejected";
+  status:
+    | "PENDING"
+    | "ACCEPTED"
+    | "DECLINED"
+    | "WITHDRAWN"
+    | "EXPIRED"
+    | "BLOCKED";
+  viewedAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 interface InterestCreationAttributes extends Optional<
   InterestAttributes,
-  "id" | "status"
+  "id" | "status" | "viewedAt"
 > {}
 
 export class Interest
@@ -23,7 +30,14 @@ export class Interest
   public id!: number;
   public senderId!: number;
   public receiverId!: number;
-  public status!: "pending" | "accepted" | "rejected";
+  public status!:
+    | "PENDING"
+    | "ACCEPTED"
+    | "DECLINED"
+    | "WITHDRAWN"
+    | "EXPIRED"
+    | "BLOCKED";
+  public viewedAt?: Date;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -32,25 +46,36 @@ export class Interest
 Interest.init(
   {
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
     senderId: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       allowNull: false,
-      references: { model: User, key: "id" },
+      references: { model: "users", key: "id" },
       onDelete: "CASCADE",
     },
     receiverId: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       allowNull: false,
-      references: { model: User, key: "id" },
+      references: { model: "users", key: "id" },
       onDelete: "CASCADE",
     },
     status: {
-      type: DataTypes.ENUM("pending", "accepted", "rejected"),
-      defaultValue: "pending",
+      type: DataTypes.ENUM(
+        "PENDING",
+        "ACCEPTED",
+        "DECLINED",
+        "WITHDRAWN",
+        "EXPIRED",
+        "BLOCKED",
+      ),
+      defaultValue: "PENDING",
+    },
+    viewedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
   },
   {
@@ -61,15 +86,22 @@ Interest.init(
       {
         unique: true,
         fields: ["senderId", "receiverId"],
-        name: "unique_interest",
+        where: {
+          status: "PENDING",
+        },
+        name: "unique_pending_interest",
       },
       {
-        fields: ["receiverId", "status"],
-        name: "idx_interests_receiver",
+        fields: ["senderId", "status", "createdAt"],
+        name: "idx_interests_sender_status",
       },
       {
-        fields: ["senderId", "status"],
-        name: "idx_interests_sender",
+        fields: ["receiverId", "status", "createdAt"],
+        name: "idx_interests_receiver_status",
+      },
+      {
+        fields: ["status"],
+        name: "idx_interests_status",
       },
     ],
   },

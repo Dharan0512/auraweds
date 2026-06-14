@@ -19,7 +19,7 @@ const migrationOrder = [
   "Caste",
   "User",
   "UserProfile",
-  "PartnerPreference",
+  "UserPreference",
   "UserPhoto",
   "Subscription",
   "Payment",

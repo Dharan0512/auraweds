@@ -1,6 +1,7 @@
 "use client";
 
 import { useForm, Controller } from "react-hook-form";
+import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 
@@ -14,6 +15,8 @@ import {
 import SearchableDropdown from "@/components/ui/SearchableDropdown";
 import PremiumSelect from "@/components/ui/PremiumSelect";
 
+import MultiSearchableDropdown from "@/components/ui/MultiSearchableDropdown";
+
 const preferencesSchema = z
   .object({
     partnerAgeMin: z.number().min(18),
@@ -22,10 +25,11 @@ const preferencesSchema = z
     partnerHeightMax: z.number().optional(),
     partnerMaritalStatus: z.string().optional(),
     partnerReligion: z.string().optional(),
-    partnerCaste: z.string().optional(),
+    partnerCastes: z.array(z.string()).default([]),
     partnerEducation: z.string().optional(),
     partnerCountry: z.string().optional(),
     partnerState: z.string().optional(),
+    partnerLocationPreference: z.string().optional(),
   })
   .refine((data) => data.partnerAgeMin <= data.partnerAgeMax, {
     message: "Min age cannot be greater than max age",
@@ -53,29 +57,55 @@ export default function Step6Preferences({
     control,
     watch,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<PreferencesData>({
     resolver: zodResolver(preferencesSchema),
-    defaultValues: initialData || {
-      partnerAgeMin: 22,
-      partnerAgeMax: 30,
-      partnerHeightMin: 150,
-      partnerHeightMax: 190,
-      partnerMaritalStatus: "Never Married",
-    },
+    defaultValues: initialData?.partnerCastes
+      ? initialData
+      : {
+          ...initialData,
+          partnerAgeMin: 22,
+          partnerAgeMax: 30,
+          partnerHeightMin: 150,
+          partnerHeightMax: 190,
+          partnerMaritalStatus: "Never Married",
+          // Set default caste as mother tongue if it exists
+          partnerCastes: initialData?.motherTongue
+            ? [initialData.motherTongue.toString()]
+            : [],
+        },
   });
 
+  useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 0) {
+      reset({
+        partnerAgeMin: 22,
+        partnerAgeMax: 30,
+        partnerHeightMin: 150,
+        partnerHeightMax: 190,
+        partnerMaritalStatus: "Never Married",
+        ...initialData,
+      });
+    }
+  }, [initialData, reset]);
+
   const selectedReligion = watch("partnerReligion") || null;
-  const selectedCaste = watch("partnerCaste") || null;
+  const selectedCastes = watch("partnerCastes") || [];
   const selectedEducation = watch("partnerEducation") || null;
   const selectedCountry = watch("partnerCountry") || null;
   const selectedState = watch("partnerState") || null;
 
   const { data: religions } = useReligions();
-  const { data: castes } = useCastes(selectedReligion);
+  const { data: castesData } = useCastes(selectedReligion);
   const { data: educations } = useEducations();
   const { data: countries } = useCountries();
   const { data: states } = useStates(selectedCountry);
+
+  // Add "Any" option to castes
+  const castes = castesData
+    ? [{ id: "any", name: "Any Caste" }, ...castesData]
+    : [];
 
   return (
     <form onSubmit={handleSubmit(onNext)} className="space-y-10">
@@ -168,7 +198,7 @@ export default function Step6Preferences({
               }
               onChange={(opt) => {
                 setValue("partnerReligion", opt?.id.toString() || "");
-                setValue("partnerCaste", "");
+                setValue("partnerCastes", []);
               }}
               placeholder="Any Religion"
             />
@@ -176,15 +206,11 @@ export default function Step6Preferences({
 
           {/* Caste */}
           <div className="space-y-3">
-            <label>Preferred Caste</label>
-            <SearchableDropdown
+            <label>Preferred Caste(s)</label>
+            <MultiSearchableDropdown
               options={castes || []}
-              value={
-                castes?.find((c) => c.id.toString() === selectedCaste) || null
-              }
-              onChange={(opt) =>
-                setValue("partnerCaste", opt?.id.toString() || "")
-              }
+              value={selectedCastes}
+              onChange={(ids) => setValue("partnerCastes", ids)}
               placeholder="Any Caste"
               disabled={!selectedReligion}
             />
@@ -244,6 +270,16 @@ export default function Step6Preferences({
               }
               placeholder="Any State"
               disabled={!selectedCountry}
+            />
+          </div>
+
+          <div className="space-y-3 sm:col-span-2">
+            <label>Specific Location Preference (City/Area)</label>
+            <textarea
+              {...register("partnerLocationPreference")}
+              rows={2}
+              placeholder="Specify preferred cities or neighborhoods..."
+              className="w-full bg-slate-900/50 border-white/10 rounded-2xl p-4 text-white"
             />
           </div>
         </div>
