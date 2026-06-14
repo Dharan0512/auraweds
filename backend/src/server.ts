@@ -40,6 +40,36 @@ app.use("/uploads", express.static("uploads"));
 // Rate-limit all API routes
 app.use("/api", apiLimiter);
 
+/**
+ * Lazy DB initialization.
+ *
+ * On Vercel each cold start spins up a fresh function instance, so we connect
+ * once per instance (cached via initPromise) instead of relying on a long-lived
+ * startServer(). This guarantees routes have a live DB connection before they run.
+ */
+let initPromise: Promise<void> | null = null;
+const ensureInitialized = async () => {
+  if (!initPromise) {
+    initPromise = connectPostgres().catch((err) => {
+      // Reset so the next request can retry instead of caching a failed connect.
+      initPromise = null;
+      throw err;
+    });
+  }
+  return initPromise;
+};
+
+// Ensure DB connectivity before handling any API request (serverless-safe).
+app.use("/api", async (_req: Request, res: Response, next) => {
+  try {
+    await ensureInitialized();
+    next();
+  } catch (error) {
+    logger.error("DB initialization failed", { error });
+    res.status(503).json({ success: false, message: "Service unavailable" });
+  }
+});
+
 // Health Route (verifies DB connectivity)
 app.get("/api/health", async (req: Request, res: Response) => {
   try {
@@ -145,4 +175,15 @@ const startServer = async () => {
   }
 };
 
-startServer();
+// On Vercel (serverless) we export the Express app as the request handler and
+// connect to the DB lazily per cold start. Locally we run a full HTTP server
+// with socket.io support.
+if (process.env.VERCEL) {
+  void ensureInitialized().catch((error) =>
+    logger.error("Initial DB connection failed", { error }),
+  );
+} else {
+  startServer();
+}
+
+export default app;
