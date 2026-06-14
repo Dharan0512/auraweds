@@ -35,4 +35,24 @@ export const env = {
   ),
   jwtExpiry: process.env.JWT_EXPIRY || "7d",
   jwtRefreshExpiry: process.env.JWT_REFRESH_EXPIRY || "30d",
+  supabase: {
+    url: process.env.SUPABASE_URL,
+    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    bucket: process.env.SUPABASE_STORAGE_BUCKET || "uploads",
+  },
 };
+
+// Supabase Storage handles all image storage (required on read-only serverless FS).
+const supabaseConfigured =
+  !!env.supabase.url && !!env.supabase.serviceRoleKey;
+
+if (!supabaseConfigured) {
+  const msg =
+    "Supabase Storage is not configured. Set SUPABASE_URL and " +
+    "SUPABASE_SERVICE_ROLE_KEY (and optionally SUPABASE_STORAGE_BUCKET).";
+  if (isProduction) {
+    logger.error(msg);
+    throw new Error(msg);
+  }
+  logger.warn(`${msg} Image uploads will fail until configured.`);
+}

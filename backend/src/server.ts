@@ -35,7 +35,7 @@ app.use(corsMiddleware);
 app.use(compression());
 app.use(express.json({ limit: "1mb" }));
 app.use(requestLogger);
-app.use("/uploads", express.static("uploads"));
+// Images are served from Supabase Storage; no local static uploads dir.
 
 // Rate-limit all API routes
 app.use("/api", apiLimiter);

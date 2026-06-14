@@ -7,17 +7,25 @@ const postgresUri =
   process.env.POSTGRES_URI ||
   "postgres://postgres:postgres@localhost:5432/auraweds";
 
+// Managed Postgres providers (Supabase, Neon, RDS, etc.) require SSL. Enable it
+// in production / on Vercel; keep it off for a plain local Postgres.
+const useSSL =
+  process.env.PGSSL === "true" ||
+  process.env.NODE_ENV === "production" ||
+  !!process.env.VERCEL;
+
 export const sequelize = new Sequelize(postgresUri, {
   dialect: "postgres",
   logging: false,
   dialectModule: pg,
-  dialectOptions: {
-    // For many cloud providers, you might need SSL
-    // ssl: {
-    //   require: true,
-    //   rejectUnauthorized: false
-    // }
-  },
+  dialectOptions: useSSL
+    ? {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false,
+        },
+      }
+    : {},
 });
 
 export const connectPostgres = async () => {

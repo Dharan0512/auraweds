@@ -54,7 +54,7 @@ export const corsOptions: CorsOptions = {
 export const corsMiddleware = cors(corsOptions);
 
 export const secureHeaders = helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }, // allow /uploads images cross-origin
+  crossOriginResourcePolicy: { policy: "cross-origin" }, // allow Supabase Storage images cross-origin
 });
 
 /** Strict limiter for auth endpoints (brute-force protection). */

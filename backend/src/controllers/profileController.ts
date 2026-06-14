@@ -1,8 +1,10 @@
 import { Response } from "express";
 import { Op, WhereOptions } from "sequelize";
-import fs from "fs";
-import path from "path";
 import { AuthRequest } from "../middlewares/authMiddleware";
+import {
+  uploadBufferToStorage,
+  deleteFromStorage,
+} from "../config/supabaseStorage";
 import {
   User,
   UserProfile,
@@ -396,18 +398,20 @@ export const uploadPhotos = async (
     }
 
     const userId = req.user.id;
-    // req.file is populated by multer
-    const file = (req as any).file;
+    // req.file is populated by multer memoryStorage (buffer in memory).
+    const file = (req as any).file as Express.Multer.File | undefined;
 
     if (!file) {
       res.status(400).json({ message: "Please upload a file" });
       return;
     }
 
-    // Files are stored under a per-user subdirectory (see uploadMiddleware).
-    // Build the URL to match the actual on-disk location so it can be served
-    // and later unlinked correctly on deletion.
-    const photoUrl = `/uploads/user_${userId}/${file.filename}`;
+    // Upload the buffer to Supabase Storage; store the returned public URL.
+    const photoUrl = await uploadBufferToStorage(file.buffer, {
+      folder: `user_${userId}/photos`,
+      originalName: file.originalname,
+      contentType: file.mimetype,
+    });
 
     const photo = await UserPhoto.create({
       userId,
@@ -447,12 +451,9 @@ export const deletePhoto = async (
       return;
     }
 
-    // Delete physical file from disk if it exists
+    // Remove the asset from Supabase Storage (best-effort; never blocks deletion).
     if (photo.url) {
-      const filePath = path.join(process.cwd(), photo.url);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
+      await deleteFromStorage(photo.url);
     }
 
     await photo.destroy();
@@ -476,20 +477,24 @@ export const uploadHoroscope = async (
     }
 
     const userId = req.user.id;
-    const file = (req as any).file;
+    const file = (req as any).file as Express.Multer.File | undefined;
 
     if (!file) {
       res.status(400).json({ message: "Please upload a file" });
       return;
     }
 
-    const imageUrl = `/uploads/user_${userId}/${file.filename}`;
-
     const profile = await UserProfile.findOne({ where: { userId } });
     if (!profile) {
       res.status(404).json({ message: "Profile not found" });
       return;
     }
+
+    const imageUrl = await uploadBufferToStorage(file.buffer, {
+      folder: `user_${userId}/horoscope`,
+      originalName: file.originalname,
+      contentType: file.mimetype,
+    });
 
     const [horoscope] = await HoroscopeDetails.upsert({
       userProfileId: profile.id,
@@ -532,11 +537,8 @@ export const deleteHoroscope = async (
       return;
     }
 
-    // Delete physical file from disk if it exists
-    const filePath = path.join(process.cwd(), horoscope.horoscopeImageUrl);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
+    // Remove the asset from Supabase Storage (best-effort).
+    await deleteFromStorage(horoscope.horoscopeImageUrl);
 
     horoscope.horoscopeImageUrl = null;
     await horoscope.save();
