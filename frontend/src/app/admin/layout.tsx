@@ -34,25 +34,28 @@ export default function AdminLayout({
           setPendingCasteRequests(data.stats.pendingCasteRequests);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const navItems = [
     { label: "Dashboard Overview", href: "/admin", exact: true },
     { label: "User Management", href: "/admin/users" },
     { label: "ID Verifications", href: "/admin/verifications", badge: 12 },
+
     {
       label: "Caste Requests",
       href: "/admin/caste-requests",
       badge: pendingCasteRequests || undefined,
     },
+    { label: "DB Management", href: "/admin/db" },
     { label: "Reported Profiles", href: "/admin/reports" },
     { label: "Success Stories", href: "/admin/success" },
+
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex font-sans">
-      <aside className="w-64 bg-white border-r border-gray-100 flex-shrink-0">
+    <div className="h-[125vh] bg-gray-50 flex font-sans overflow-hidden">
+      <aside className="w-64 bg-white border-r border-gray-100 flex-shrink-0 h-full flex flex-col">
         <div className="h-20 flex items-center px-6">
           <Link
             href="/admin"
@@ -62,7 +65,7 @@ export default function AdminLayout({
             <span className="text-gray-400 text-sm font-medium">Admin</span>
           </Link>
         </div>
-        <nav className="p-4 space-y-2">
+        <nav className="p-4 space-y-2 overflow-y-auto flex-1">
           {navItems.map((item) => {
             const isActive = item.exact
               ? pathname === item.href
@@ -72,11 +75,10 @@ export default function AdminLayout({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`group flex items-center px-4 py-2.5 text-sm font-medium rounded-lg justify-between transition-colors ${
-                  isActive
+                className={`group flex items-center px-4 py-2.5 text-sm font-medium rounded-lg justify-between transition-colors ${isActive
                     ? "bg-[#faf5ff] text-[#6A0DAD]"
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                }`}
+                  }`}
               >
                 <span>{item.label}</span>
                 {item.badge !== undefined && (
@@ -90,7 +92,9 @@ export default function AdminLayout({
         </nav>
       </aside>
 
-      <main className="flex-1 overflow-y-auto">{children}</main>
+      <main className="flex-1 h-full overflow-hidden flex flex-col">
+        {children}
+      </main>
     </div>
   );
 }

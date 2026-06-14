@@ -22,6 +22,13 @@ import {
   rejectSubcasteRequest,
   mergeSubcasteRequest,
 } from "../controllers/casteRequestController";
+import {
+  listTables,
+  getTableData,
+  createRow,
+  updateRow,
+  deleteRow,
+} from "../controllers/dbAdminController";
 import { protect, isAdmin } from "../middlewares/authMiddleware";
 
 const router = Router();
@@ -51,5 +58,12 @@ router.get("/subcaste-requests", getSubcasteRequests);
 router.patch("/subcaste-requests/:id/approve", approveSubcasteRequest);
 router.patch("/subcaste-requests/:id/reject", rejectSubcasteRequest);
 router.patch("/subcaste-requests/:id/merge", mergeSubcasteRequest);
+
+// Generic DB management (browse / add / edit / delete any table)
+router.get("/db/tables", listTables);
+router.get("/db/tables/:table", getTableData);
+router.post("/db/tables/:table", createRow);
+router.put("/db/tables/:table", updateRow);
+router.delete("/db/tables/:table", deleteRow);
 
 export default router;
