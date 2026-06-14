@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import toast from "react-hot-toast";
 import {
   subscriptionService,
@@ -26,6 +27,10 @@ export default function UpgradeModal({
   const [status, setStatus] = useState<SubscriptionStatusResponse | null>(null);
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [waitlistSent, setWaitlistSent] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Portal target is only available on the client.
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     if (isOpen) {
@@ -42,7 +47,7 @@ export default function UpgradeModal({
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const PRICING = {
     "Basic Member": { "3M": 0, "6M": 0, "12M": 0 },
@@ -180,24 +185,26 @@ export default function UpgradeModal({
     }
   };
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/80 backdrop-blur-md"
+      className="fixed inset-0 z-[200] overflow-y-auto bg-slate-950/80 backdrop-blur-md"
       onClick={onClose}
     >
+      {/* Close Button — pinned to the viewport so it stays above the platform
+          nav and remains reachable no matter how the modal is scrolled. */}
+      <button
+        onClick={onClose}
+        aria-label="Close"
+        className="fixed top-4 right-4 sm:top-6 sm:right-6 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all z-[210] border border-white/10 shadow-lg backdrop-blur-md"
+      >
+        <X size={24} />
+      </button>
+
       <div className="min-h-full flex items-start justify-center p-4 py-8 sm:p-12">
         <div
           className="relative w-full max-w-7xl bg-slate-900 border border-white/5 rounded-[3rem] shadow-2xl overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Close Button */}
-          <button
-            onClick={onClose}
-            className="absolute top-6 right-6 p-3 bg-white/5 hover:bg-white/10 rounded-full text-white transition-all z-50 border border-white/5"
-          >
-            <X size={24} />
-          </button>
-
           <div className="p-8 md:p-16 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[#D4AF37] text-xs font-black uppercase tracking-widest mb-8">
               <Crown size={14} /> Premium Membership
@@ -304,7 +311,8 @@ export default function UpgradeModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
