@@ -44,10 +44,19 @@ export const getDashboardStats = async (
           createdAt: { [Op.gte]: today },
         },
       }),
+      // Premium = active subscriptions, including the free Guest tier (which
+      // carries Silver-tier privileges). Restricted to regular users (role
+      // "user") so it matches the premium users list, which excludes admins.
       Subscription.count({
-        where: {
-          status: "active",
-        },
+        where: { status: "active" },
+        include: [
+          {
+            model: User,
+            attributes: [],
+            required: true,
+            where: { role: "user" },
+          },
+        ],
       }),
       Payment.findOne({
         attributes: [
@@ -114,14 +123,29 @@ export const getUsers = async (
       ];
     }
 
+    // "Premium" means the user has an active subscription. The Guest tier
+    // (monthlyPrice = 0) carries Silver-tier privileges, so it counts as
+    // premium alongside the paid plans. We resolve the matching user ids up
+    // front rather than filtering through a hasMany include join, because
+    // combining `required`/`limit`/`order` on a to-many include with
+    // findAndCountAll produces incorrect rows and counts.
+    if (premiumOnly) {
+      const premiumSubs = await Subscription.findAll({
+        attributes: ["userId"],
+        where: { status: "active" },
+        raw: true,
+      });
+      const premiumUserIds = [
+        ...new Set(premiumSubs.map((s: any) => s.userId)),
+      ];
+      where.id = { [Op.in]: premiumUserIds };
+    }
+
     const { count, rows: users } = await User.findAndCountAll({
       where,
       limit: Number(limit),
       offset,
       order: [["createdAt", "DESC"]],
-      // When filtering premium users we constrain the subscription join to
-      // active subscriptions and make it required, so only paying users return.
-      subQuery: false,
       distinct: true,
       include: [
         {
@@ -130,10 +154,10 @@ export const getUsers = async (
         },
         {
           model: Subscription,
-          required: premiumOnly,
-          where: premiumOnly ? { status: "active" } : undefined,
-          limit: 1,
-          order: [["createdAt", "DESC"]],
+          // Only surface the active subscription so the table shows the plan the
+          // user is actually on (a user may have older, inactive subscriptions).
+          required: false,
+          where: { status: "active" },
           include: [Plan],
         },
       ],

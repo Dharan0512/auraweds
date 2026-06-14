@@ -390,7 +390,7 @@
     {
       "id": 13,
       "name": "Guest",
-      "monthlyPrice": "0.00",
+      "monthlyPrice": "1.00",
       "features": null,
       "isActive": true
     }
